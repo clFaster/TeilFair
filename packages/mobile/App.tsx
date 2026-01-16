@@ -8,11 +8,13 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { GroupScreen } from './src/screens/GroupScreen';
 import { AddExpenseScreen } from './src/screens/AddExpenseScreen';
+import { EditExpenseScreen } from './src/screens/EditExpenseScreen';
 
 export type RootStackParamList = {
   Home: undefined;
   Group: { groupId: string; token: string };
   AddExpense: undefined;
+  EditExpense: { expenseId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,6 +51,14 @@ function AppContent() {
             component={AddExpenseScreen}
             options={{ 
               title: 'Add Expense',
+              presentation: 'modal',
+            }}
+          />
+          <Stack.Screen 
+            name="EditExpense" 
+            component={EditExpenseScreen}
+            options={{ 
+              title: 'Edit Expense',
               presentation: 'modal',
             }}
           />

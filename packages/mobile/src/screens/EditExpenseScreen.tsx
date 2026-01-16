@@ -12,16 +12,24 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
+import type { RootStackParamList } from '../../App';
 
-export function AddExpenseScreen() {
+type EditExpenseRouteProp = RouteProp<RootStackParamList, 'EditExpense'>;
+
+export function EditExpenseScreen() {
   const navigation = useNavigation();
-  const { members, group, addExpense, addMember } = useGroupStore();
+  const route = useRoute<EditExpenseRouteProp>();
+  const { expenseId } = route.params;
+  const { members, group, expenses, updateExpense } = useGroupStore();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  const expense = expenses.find(e => e.id === expenseId);
   
   const [description, setDescription] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
@@ -39,38 +47,55 @@ export function AddExpenseScreen() {
   const [includedMembers, setIncludedMembers] = useState<Set<string>>(new Set());
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
   
-  // New member
-  const [newMemberName, setNewMemberName] = useState('');
-  const [isAddingMember, setIsAddingMember] = useState(false);
-  
   const [loading, setLoading] = useState(false);
 
+  // Initialize from expense
   useEffect(() => {
-    if (members.length > 0) {
-      setIncludedMembers(new Set(members.map(m => m.id)));
-      if (!singlePayer) {
-        setSinglePayer(members[0].id);
+    if (expense) {
+      setDescription(expense.description);
+      setTotalAmount(expense.totalAmount.toString());
+      setExpenseDate(new Date(expense.date));
+      
+      // Initialize payers
+      if (expense.payers.length === 1) {
+        setSinglePayer(expense.payers[0].memberId);
+        setShowMultiplePayers(false);
+      } else {
+        setShowMultiplePayers(true);
+        const payerMap: Record<string, string> = {};
+        expense.payers.forEach(p => {
+          payerMap[p.memberId] = p.amount.toString();
+        });
+        setMultiplePayers(payerMap);
       }
+      
+      // Initialize splits
+      const hasCustomSplit = expense.splits.some(s => s.shareType === 'fixed');
+      if (hasCustomSplit) {
+        setShowCustomSplit(true);
+        const splitMap: Record<string, string> = {};
+        expense.splits.forEach(s => {
+          splitMap[s.memberId] = s.share.toString();
+        });
+        setCustomSplits(splitMap);
+      }
+      setIncludedMembers(new Set(expense.splits.map(s => s.memberId)));
     }
-  }, [members]);
+  }, [expense]);
 
-  const handleAddNewMember = async () => {
-    if (!newMemberName.trim()) return;
-    
-    setIsAddingMember(true);
-    try {
-      const newMember = await addMember(newMemberName.trim());
-      setNewMemberName('');
-      setIncludedMembers(prev => new Set([...prev, newMember.id]));
-      if (!singlePayer) {
-        setSinglePayer(newMember.id);
-      }
-    } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add member');
-    } finally {
-      setIsAddingMember(false);
-    }
-  };
+  if (!expense) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: theme.colors.text }}>Expense not found</Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.colors.primary.a0, marginTop: 16 }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const handlePayerChange = (memberId: string, amount: string) => {
     setMultiplePayers(prev => {
@@ -206,7 +231,7 @@ export function AddExpenseScreen() {
     
     setLoading(true);
     try {
-      await addExpense({
+      await updateExpense(expenseId, {
         description: description.trim() || 'Expense',
         totalAmount: amount,
         date: expenseDate,
@@ -215,7 +240,7 @@ export function AddExpenseScreen() {
       });
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add expense');
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update expense');
     } finally {
       setLoading(false);
     }
@@ -312,192 +337,158 @@ export function AddExpenseScreen() {
           )}
         </View>
 
-        {/* Add Member */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>Members</Text>
-          {members.length === 0 && (
-            <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
-              Add at least one member to create an expense
-            </Text>
-          )}
-          <View style={styles.addMemberRow}>
-            <TextInput
-              style={[styles.input, { flex: 1, backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-              placeholder="Add new member..."
-              placeholderTextColor={theme.colors.textSecondary}
-              value={newMemberName}
-              onChangeText={setNewMemberName}
-              onSubmitEditing={handleAddNewMember}
-              returnKeyType="done"
-            />
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-              onPress={handleAddNewMember}
-              disabled={isAddingMember || !newMemberName.trim()}
-            >
-              <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-                {isAddingMember ? '...' : 'Add'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Payer */}
-        {members.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Who paid?</Text>
-            
-            {!showMultiplePayers ? (
-              <>
-                <View style={styles.payerList}>
-                  {members.map(member => (
-                    <TouchableOpacity
-                      key={member.id}
-                      style={[
-                        styles.payerOption,
-                        { 
-                          backgroundColor: theme.colors.card, 
-                          borderColor: singlePayer === member.id ? theme.colors.primary.a0 : theme.colors.border,
-                          borderWidth: singlePayer === member.id ? 2 : 1,
-                        }
-                      ]}
-                      onPress={() => setSinglePayer(member.id)}
-                    >
-                      <View style={[
-                        styles.radio,
-                        { borderColor: singlePayer === member.id ? theme.colors.primary.a0 : theme.colors.border }
-                      ]}>
-                        {singlePayer === member.id && (
-                          <View style={[styles.radioInner, { backgroundColor: theme.colors.primary.a0 }]} />
-                        )}
-                      </View>
-                      <Text style={{ color: theme.colors.text, fontWeight: '500' }}>{member.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <TouchableOpacity
-                  style={styles.advancedToggle}
-                  onPress={() => setShowMultiplePayers(true)}
-                >
-                  <Text style={[styles.advancedText, { color: theme.colors.textSecondary }]}>
-                    + Multiple payers
-                  </Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
-                  Total: {formatCurrency(totalPaidMultiple)} / {formatCurrency(parseFloat(totalAmount) || 0)}
-                </Text>
-                {members.map(member => (
-                  <View key={member.id} style={styles.payerRow}>
-                    <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
-                    <TextInput
-                      style={[styles.amountInput, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-                      placeholder="0.00"
-                      placeholderTextColor={theme.colors.textSecondary}
-                      value={multiplePayers[member.id] || ''}
-                      onChangeText={(v) => handlePayerChange(member.id, v)}
-                      keyboardType="decimal-pad"
-                    />
-                  </View>
-                ))}
-                <TouchableOpacity
-                  style={styles.advancedToggle}
-                  onPress={() => {
-                    setShowMultiplePayers(false);
-                    setMultiplePayers({});
-                  }}
-                >
-                  <Text style={[styles.advancedText, { color: theme.colors.primary.a0 }]}>
-                    - Use single payer
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
-
-        {/* Split */}
-        {members.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>
-              Split between ({includedMembers.size} {includedMembers.size === 1 ? 'person' : 'people'})
-            </Text>
-            
-            {!showCustomSplit ? (
-              <>
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.colors.text }]}>Who paid?</Text>
+          
+          {!showMultiplePayers ? (
+            <>
+              <View style={styles.payerList}>
                 {members.map(member => (
                   <TouchableOpacity
                     key={member.id}
                     style={[
-                      styles.splitOption,
+                      styles.payerOption,
                       { 
                         backgroundColor: theme.colors.card, 
-                        borderColor: includedMembers.has(member.id) ? theme.colors.primary.a0 : theme.colors.border,
-                        borderWidth: includedMembers.has(member.id) ? 2 : 1,
+                        borderColor: singlePayer === member.id ? theme.colors.primary.a0 : theme.colors.border,
+                        borderWidth: singlePayer === member.id ? 2 : 1,
                       }
                     ]}
-                    onPress={() => toggleMemberInSplit(member.id)}
+                    onPress={() => setSinglePayer(member.id)}
                   >
                     <View style={[
-                      styles.checkbox,
-                      { 
-                        borderColor: includedMembers.has(member.id) ? theme.colors.primary.a0 : theme.colors.border,
-                        backgroundColor: includedMembers.has(member.id) ? theme.colors.primary.a0 : 'transparent',
-                      }
+                      styles.radio,
+                      { borderColor: singlePayer === member.id ? theme.colors.primary.a0 : theme.colors.border }
                     ]}>
-                      {includedMembers.has(member.id) && (
-                        <Text style={styles.checkmark}>✓</Text>
+                      {singlePayer === member.id && (
+                        <View style={[styles.radioInner, { backgroundColor: theme.colors.primary.a0 }]} />
                       )}
                     </View>
-                    <Text style={{ flex: 1, color: theme.colors.text, fontWeight: '500' }}>{member.name}</Text>
-                    {includedMembers.has(member.id) && totalAmount && (
-                      <Text style={{ color: theme.colors.textSecondary }}>
-                        {formatCurrency(splitAmount)}
-                      </Text>
-                    )}
+                    <Text style={{ color: theme.colors.text, fontWeight: '500' }}>{member.name}</Text>
                   </TouchableOpacity>
                 ))}
+              </View>
+              <TouchableOpacity
+                style={styles.advancedToggle}
+                onPress={() => setShowMultiplePayers(true)}
+              >
+                <Text style={[styles.advancedText, { color: theme.colors.textSecondary }]}>
+                  + Multiple payers
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
+                Total: {formatCurrency(totalPaidMultiple)} / {formatCurrency(parseFloat(totalAmount) || 0)}
+              </Text>
+              {members.map(member => (
+                <View key={member.id} style={styles.payerRow}>
+                  <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
+                  <TextInput
+                    style={[styles.amountInput, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
+                    placeholder="0.00"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    value={multiplePayers[member.id] || ''}
+                    onChangeText={(v) => handlePayerChange(member.id, v)}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.advancedToggle}
+                onPress={() => {
+                  setShowMultiplePayers(false);
+                  setMultiplePayers({});
+                }}
+              >
+                <Text style={[styles.advancedText, { color: theme.colors.primary.a0 }]}>
+                  - Use single payer
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* Split */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.colors.text }]}>
+            Split between ({includedMembers.size} {includedMembers.size === 1 ? 'person' : 'people'})
+          </Text>
+          
+          {!showCustomSplit ? (
+            <>
+              {members.map(member => (
                 <TouchableOpacity
-                  style={styles.advancedToggle}
-                  onPress={() => setShowCustomSplit(true)}
+                  key={member.id}
+                  style={[
+                    styles.splitOption,
+                    { 
+                      backgroundColor: theme.colors.card, 
+                      borderColor: includedMembers.has(member.id) ? theme.colors.primary.a0 : theme.colors.border,
+                      borderWidth: includedMembers.has(member.id) ? 2 : 1,
+                    }
+                  ]}
+                  onPress={() => toggleMemberInSplit(member.id)}
                 >
-                  <Text style={[styles.advancedText, { color: theme.colors.textSecondary }]}>
-                    + Custom split amounts
-                  </Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                {members.map(member => (
-                  <View key={member.id} style={styles.payerRow}>
-                    <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
-                    <TextInput
-                      style={[styles.amountInput, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-                      placeholder="0.00"
-                      placeholderTextColor={theme.colors.textSecondary}
-                      value={customSplits[member.id] || ''}
-                      onChangeText={(v) => handleCustomSplitChange(member.id, v)}
-                      keyboardType="decimal-pad"
-                    />
+                  <View style={[
+                    styles.checkbox,
+                    { 
+                      borderColor: includedMembers.has(member.id) ? theme.colors.primary.a0 : theme.colors.border,
+                      backgroundColor: includedMembers.has(member.id) ? theme.colors.primary.a0 : 'transparent',
+                    }
+                  ]}>
+                    {includedMembers.has(member.id) && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
                   </View>
-                ))}
-                <TouchableOpacity
-                  style={styles.advancedToggle}
-                  onPress={() => {
-                    setShowCustomSplit(false);
-                    setCustomSplits({});
-                  }}
-                >
-                  <Text style={[styles.advancedText, { color: theme.colors.primary.a0 }]}>
-                    - Use equal split
-                  </Text>
+                  <Text style={{ flex: 1, color: theme.colors.text, fontWeight: '500' }}>{member.name}</Text>
+                  {includedMembers.has(member.id) && totalAmount && (
+                    <Text style={{ color: theme.colors.textSecondary }}>
+                      {formatCurrency(splitAmount)}
+                    </Text>
+                  )}
                 </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
+              ))}
+              <TouchableOpacity
+                style={styles.advancedToggle}
+                onPress={() => setShowCustomSplit(true)}
+              >
+                <Text style={[styles.advancedText, { color: theme.colors.textSecondary }]}>
+                  + Custom split amounts
+                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {members.map(member => (
+                <View key={member.id} style={styles.payerRow}>
+                  <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
+                  <TextInput
+                    style={[styles.amountInput, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
+                    placeholder="0.00"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    value={customSplits[member.id] || ''}
+                    onChangeText={(v) => handleCustomSplitChange(member.id, v)}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.advancedToggle}
+                onPress={() => {
+                  setShowCustomSplit(false);
+                  setCustomSplits({});
+                }}
+              >
+                <Text style={[styles.advancedText, { color: theme.colors.primary.a0 }]}>
+                  - Use equal split
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
       </ScrollView>
 
       {/* Fixed Footer */}
@@ -519,13 +510,13 @@ export function AddExpenseScreen() {
           style={[
             styles.footerButton, 
             { backgroundColor: theme.colors.primary.a0 },
-            (loading || members.length < 1) && { opacity: 0.5 }
+            loading && { opacity: 0.5 }
           ]}
           onPress={handleSubmit}
-          disabled={loading || members.length < 1}
+          disabled={loading}
         >
           <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-            {loading ? 'Adding...' : 'Add Expense'}
+            {loading ? 'Saving...' : 'Save Changes'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -562,10 +553,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
   },
-  addMemberRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
   dateTimeRow: {
     flexDirection: 'row',
     gap: 12,
@@ -577,10 +564,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  addButton: {
+  button: {
+    paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 12,
-    justifyContent: 'center',
   },
   payerList: {
     gap: 8,

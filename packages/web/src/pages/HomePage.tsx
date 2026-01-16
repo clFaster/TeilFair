@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
-import { ThemeSettings } from '../components/ThemeSettings';
+import { useTheme } from '../theme/ThemeProvider';
+import { LogoIcon } from '../components/LogoIcon';
 
 export function HomePage() {
   const navigate = useNavigate();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
+  const { mode, setThemePreference } = useTheme();
   
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
@@ -65,31 +69,47 @@ export function HomePage() {
     }
   };
 
+  const cycleTheme = () => {
+    setThemePreference(mode === 'light' ? 'dark' : 'light');
+  };
+
+  const getThemeIcon = () => {
+    return mode === 'dark' ? faMoon : faSun;
+  };
+
   return (
-    <div>
+    <div className="app">
       <header className="header">
         <div className="header-content">
-          <Link to="/" className="logo">TeilFair</Link>
+          <Link to="/" className="logo">
+            <LogoIcon size={32} />
+            <span>TeilFair</span>
+          </Link>
+          <button className="theme-toggle" onClick={cycleTheme} title={`Theme: ${mode}`}>
+            <FontAwesomeIcon icon={getThemeIcon()} style={{ fontSize: '16px' }} />
+          </button>
         </div>
       </header>
       
       <div className="container">
-        <div className="card text-center">
-          <h1 className="mb-2">Split expenses fairly</h1>
-          <p className="text-muted mb-4">
+        <div className="card hero-card text-center">
+          <h1 className="mb-2" style={{ fontSize: '28px', fontWeight: 700 }}>Split expenses fairly</h1>
+          <p className="text-secondary mb-4" style={{ fontSize: '16px', maxWidth: '400px', margin: '0 auto 24px' }}>
             Create a group, add expenses, and see who owes whom. No sign-up required.
           </p>
           
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-3 justify-center flex-wrap">
             <button 
-              className="btn btn-primary"
-              onClick={() => { setShowCreate(true); setShowJoin(false); }}
+              className="btn btn-lg"
+              style={{ background: 'white', color: 'var(--clr-primary-a0)' }}
+              onClick={() => { setShowCreate(true); setShowJoin(false); setError(''); }}
             >
               Create Group
             </button>
             <button 
-              className="btn btn-secondary"
-              onClick={() => { setShowJoin(true); setShowCreate(false); }}
+              className="btn btn-lg"
+              style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.4)' }}
+              onClick={() => { setShowJoin(true); setShowCreate(false); setError(''); }}
             >
               Join Group
             </button>
@@ -129,15 +149,15 @@ export function HomePage() {
                 </select>
               </div>
               
-              {error && <p className="text-danger text-sm mb-2">{error}</p>}
+              {error && <p className="text-danger text-sm mb-3">{error}</p>}
               
-              <div className="flex gap-2">
-                <button type="submit" className="btn btn-primary" disabled={loading}>
+              <div className="flex gap-3">
+                <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
                   {loading ? 'Creating...' : 'Create Group'}
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-secondary"
+                  className="btn btn-secondary btn-lg"
                   onClick={() => setShowCreate(false)}
                 >
                   Cancel
@@ -164,15 +184,15 @@ export function HomePage() {
                 />
               </div>
               
-              {error && <p className="text-danger text-sm mb-2">{error}</p>}
+              {error && <p className="text-danger text-sm mb-3">{error}</p>}
               
-              <div className="flex gap-2">
-                <button type="submit" className="btn btn-primary" disabled={loading}>
+              <div className="flex gap-3">
+                <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
                   {loading ? 'Joining...' : 'Join Group'}
                 </button>
                 <button 
                   type="button" 
-                  className="btn btn-secondary"
+                  className="btn btn-secondary btn-lg"
                   onClick={() => setShowJoin(false)}
                 >
                   Cancel
@@ -184,14 +204,14 @@ export function HomePage() {
 
         {recentGroups.length > 0 && (
           <div className="card">
-            <h2 className="card-title mb-4">Recent Groups</h2>
+            <h2 className="card-title mb-3">Recent Groups</h2>
             <ul className="list">
               {recentGroups.map((group) => (
                 <li key={group.id} className="list-item">
-                  <div>
-                    <span className="font-bold">{group.name}</span>
-                    <span className={`badge ml-2 ${group.permission === 'write' ? 'badge-write' : 'badge-read'}`}>
-                      {group.permission}
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold">{group.name}</span>
+                    <span className={`badge ${group.permission === 'write' ? 'badge-write' : 'badge-read'}`}>
+                      {group.permission === 'write' ? 'edit' : 'view'}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -203,7 +223,7 @@ export function HomePage() {
                       Open
                     </button>
                     <button
-                      className="btn btn-sm btn-secondary"
+                      className="btn btn-sm btn-ghost"
                       onClick={() => removeFromRecent(group.id)}
                     >
                       Remove
@@ -216,19 +236,19 @@ export function HomePage() {
         )}
 
         <div className="card">
-          <h3 className="font-bold mb-2">How it works</h3>
-          <ol className="text-sm text-muted" style={{ paddingLeft: '1.5rem' }}>
-            <li className="mb-1">Create a group and share the link with friends</li>
-            <li className="mb-1">Add expenses as they happen - multiple people can pay</li>
-            <li className="mb-1">Split costs equally or with custom amounts</li>
+          <h3 className="font-semibold mb-3">How it works</h3>
+          <ol className="text-secondary" style={{ paddingLeft: '1.5rem', lineHeight: 2 }}>
+            <li>Create a group and share the link with friends</li>
+            <li>Add expenses as they happen - multiple people can pay</li>
+            <li>Split costs equally or with custom amounts</li>
             <li>See who owes whom and settle up easily</li>
           </ol>
         </div>
-
-        <div className="card">
-          <ThemeSettings />
-        </div>
       </div>
+      
+      <footer className="footer">
+        TeilFair - Split expenses fairly
+      </footer>
     </div>
   );
 }

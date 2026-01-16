@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import type { Expense } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
+import { EditExpenseModal } from './EditExpenseModal';
 
 interface ExpensesListProps {
   canEdit: boolean;
@@ -6,16 +9,26 @@ interface ExpensesListProps {
 
 export function ExpensesList({ canEdit }: ExpensesListProps) {
   const { expenses, members, group, deleteExpense } = useGroupStore();
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const getMemberName = (memberId: string) => {
     return members.find(m => m.id === memberId)?.name || 'Unknown';
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString(undefined, {
+    const d = new Date(date);
+    return d.toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    const d = new Date(date);
+    return d.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -41,42 +54,59 @@ export function ExpensesList({ canEdit }: ExpensesListProps) {
   }
 
   return (
-    <div>
-      {expenses.map((expense) => {
-        const payerNames = expense.payers
-          .map(p => `${getMemberName(p.memberId)} (${formatCurrency(p.amount)})`)
-          .join(', ');
-        
-        const splitInfo = expense.splits.length === members.length
-          ? 'Split equally'
-          : `Split between ${expense.splits.length} people`;
+    <>
+      <div>
+        {expenses.map((expense) => {
+          const payerNames = expense.payers
+            .map(p => `${getMemberName(p.memberId)} (${formatCurrency(p.amount)})`)
+            .join(', ');
+          
+          const splitInfo = expense.splits.length === members.length
+            ? 'Split equally'
+            : `Split between ${expense.splits.length} people`;
 
-        return (
-          <div key={expense.id} className="expense-card">
-            <div className="expense-header">
-              <div>
-                <div className="font-bold">{expense.description}</div>
-                <div className="expense-date">{formatDate(expense.date)}</div>
+          return (
+            <div key={expense.id} className="expense-card">
+              <div className="expense-header">
+                <div>
+                  <div className="expense-description">{expense.description}</div>
+                  <div className="expense-date">
+                    {formatDate(expense.date)} at {formatTime(expense.date)}
+                  </div>
+                </div>
+                <div className="expense-amount">{formatCurrency(expense.totalAmount)}</div>
               </div>
-              <div className="expense-amount">{formatCurrency(expense.totalAmount)}</div>
-            </div>
-            <div className="expense-details">
-              <div>Paid by: {payerNames}</div>
-              <div>{splitInfo}</div>
-            </div>
-            {canEdit && (
-              <div className="mt-2">
-                <button 
-                  className="btn btn-sm btn-danger"
-                  onClick={() => handleDelete(expense.id)}
-                >
-                  Delete
-                </button>
+              <div className="expense-details">
+                <div>Paid by: {payerNames}</div>
+                <div>{splitInfo}</div>
               </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+              {canEdit && (
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    className="btn btn-sm btn-secondary"
+                    onClick={() => setEditingExpense(expense)}
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleDelete(expense.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          onClose={() => setEditingExpense(null)}
+        />
+      )}
+    </>
   );
 }

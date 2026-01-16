@@ -10,7 +10,6 @@ import { useTheme as useThemeHook, type ThemePreference } from './useTheme';
 interface ThemeContextValue {
   theme: Theme;
   mode: ThemeMode;
-  preference: ThemePreference;
   toggleTheme: () => void;
   setThemePreference: (preference: ThemePreference) => void;
   isDark: boolean;

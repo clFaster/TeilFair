@@ -1,6 +1,8 @@
 /**
  * TeilFair Color Palette
- * Defines the color system for both light and dark themes
+ * Inspired by the TeilFair logo: teal/cyan gradient with orange/gold accents
+ * Primary: Teal (#1da987) - represents fairness and balance
+ * Accent: Orange/Gold (#ff931e) - represents value and transactions
  */
 
 export interface ColorPalette {
@@ -8,7 +10,7 @@ export interface ColorPalette {
   dark: string;
   light: string;
   
-  // Primary colors
+  // Primary colors (Teal - from logo)
   primary: {
     a0: string;
     a10: string;
@@ -16,6 +18,13 @@ export interface ColorPalette {
     a30: string;
     a40: string;
     a50: string;
+  };
+  
+  // Accent colors (Orange/Gold - from logo)
+  accent: {
+    a0: string;
+    a10: string;
+    a20: string;
   };
   
   // Surface colors
@@ -28,7 +37,7 @@ export interface ColorPalette {
     a50: string;
   };
   
-  // Tonal surface colors
+  // Tonal surface colors (teal-tinted)
   surfaceTonal: {
     a0: string;
     a10: string;
@@ -62,6 +71,13 @@ export interface ColorPalette {
     a10: string;
     a20: string;
   };
+
+  // Settlement colors (purple/violet - distinct from other status colors)
+  settlement: {
+    bg: string;
+    border: string;
+    accent: string;
+  };
 }
 
 /**
@@ -69,65 +85,79 @@ export interface ColorPalette {
  */
 export const darkColors: ColorPalette = {
   // Base colors
-  dark: '#000000',
+  dark: '#0a0f0e',
   light: '#ffffff',
   
-  // Primary colors
+  // Primary colors (Teal - lighter for dark mode)
   primary: {
-    a0: '#7632a6',
-    a10: '#8649b0',
-    a20: '#9660ba',
-    a30: '#a676c4',
-    a40: '#b58cce',
-    a50: '#c4a2d8',
+    a0: '#1da987',  // Base teal from logo
+    a10: '#36cdb2', // Lighter teal from logo gradient
+    a20: '#5fd9d2', // Cyan from logo
+    a30: '#7ee4de',
+    a40: '#a3ede9',
+    a50: '#c8f5f3',
   },
   
-  // Surface colors
+  // Accent colors (Orange/Gold)
+  accent: {
+    a0: '#ff931e',  // Orange from logo
+    a10: '#ffab4d',
+    a20: '#ffc37d',
+  },
+  
+  // Surface colors (dark with slight teal tint)
   surface: {
-    a0: '#121212',
-    a10: '#282828',
-    a20: '#3f3f3f',
-    a30: '#575757',
-    a40: '#717171',
-    a50: '#8b8b8b',
+    a0: '#0f1514',  // Deep dark with teal undertone
+    a10: '#1a2320',
+    a20: '#2a3532',
+    a30: '#3d4a47',
+    a40: '#52605c',
+    a50: '#6a7975',
   },
   
-  // Tonal surface colors
+  // Tonal surface colors (teal-tinted for dark mode)
   surfaceTonal: {
-    a0: '#1c161f',
-    a10: '#312b34',
-    a20: '#47424a',
-    a30: '#5f5a61',
-    a40: '#777379',
-    a50: '#918d93',
+    a0: '#0f1917',
+    a10: '#1a2725',
+    a20: '#283735',
+    a30: '#3a4947',
+    a40: '#4d5c5a',
+    a50: '#63706e',
   },
   
-  // Success colors
+  // Success colors (green, harmonizes with teal)
   success: {
-    a0: '#22946e',
-    a10: '#47d5a6',
-    a20: '#9ae8ce',
+    a0: '#0c8d67',  // Deep green
+    a10: '#28be8a', // Medium green
+    a20: '#6bdd91', // Light green from logo
   },
   
-  // Warning colors
+  // Warning colors (gold/amber, matches accent)
   warning: {
-    a0: '#a87a2a',
-    a10: '#d7ac61',
-    a20: '#ecd7b2',
+    a0: '#c97d1a',
+    a10: '#fec118', // Gold from logo
+    a20: '#fdd827', // Yellow from logo
   },
   
-  // Danger colors
+  // Danger colors (pink/red from logo palette)
   danger: {
-    a0: '#9c2121',
-    a10: '#d94a4a',
-    a20: '#eb9e9e',
+    a0: '#c44455',
+    a10: '#e96474', // Pink from logo
+    a20: '#f2bdc1', // Light pink from logo
   },
   
-  // Info colors
+  // Info colors (blue from logo gradient)
   info: {
-    a0: '#21498a',
-    a10: '#4077d1',
-    a20: '#92b2e5',
+    a0: '#2e61b3', // Blue from logo gradient
+    a10: '#4a7dc7',
+    a20: '#7a9fd8',
+  },
+
+  // Settlement colors (purple/violet - distinct and readable)
+  settlement: {
+    bg: '#2d2246',
+    border: '#4c3a73',
+    accent: '#a78bfa',
   },
 };
 
@@ -136,64 +166,78 @@ export const darkColors: ColorPalette = {
  */
 export const lightColors: ColorPalette = {
   // Base colors
-  dark: '#000000',
+  dark: '#0a0f0e',
   light: '#ffffff',
   
-  // Primary colors
+  // Primary colors (Teal - darker for light mode for contrast)
   primary: {
-    a0: '#7632a6',
-    a10: '#692e92',
-    a20: '#5c297f',
-    a30: '#4f256c',
-    a40: '#422059',
-    a50: '#361c48',
+    a0: '#1da987',  // Base teal from logo
+    a10: '#189274', // Darker
+    a20: '#147b62', // Even darker
+    a30: '#0f6550',
+    a40: '#0b4f3f',
+    a50: '#073a2e',
   },
   
-  // Surface colors
+  // Accent colors (Orange/Gold)
+  accent: {
+    a0: '#e8850c',  // Slightly darker for light mode
+    a10: '#ff931e', // Orange from logo
+    a20: '#ffab4d',
+  },
+  
+  // Surface colors (clean whites and grays)
   surface: {
     a0: '#ffffff',
-    a10: '#f0f0f0',
-    a20: '#e1e1e1',
-    a30: '#d3d3d3',
-    a40: '#c5c5c5',
-    a50: '#b6b6b6',
+    a10: '#f5f7f7', // Slight teal tint
+    a20: '#e8eceb',
+    a30: '#d8dddc',
+    a40: '#c5cbca',
+    a50: '#a8b0ae',
   },
   
-  // Tonal surface colors
+  // Tonal surface colors (teal-tinted for light mode)
   surfaceTonal: {
-    a0: '#f2eaf6',
-    a10: '#e5dee8',
-    a20: '#d8d1db',
-    a30: '#cbc5cd',
-    a40: '#beb9c0',
-    a50: '#b1aeb3',
+    a0: '#f0f7f6',  // Very light teal tint
+    a10: '#e3efed',
+    a20: '#d4e5e2',
+    a30: '#c4d9d6',
+    a40: '#b2cbc8',
+    a50: '#9ebdb9',
   },
   
   // Success colors
   success: {
-    a0: '#1b7f5c',
-    a10: '#28be8a',
-    a20: '#58dbad',
+    a0: '#0c8d67',  // Deep green
+    a10: '#1da987', // Medium (same as primary for consistency)
+    a20: '#d4f5e9', // Light green bg
   },
   
   // Warning colors
   warning: {
-    a0: '#b8871f',
-    a10: '#dfae44',
-    a20: '#ebca85',
+    a0: '#b87a15',
+    a10: '#e8960c',
+    a20: '#fff4d9', // Light yellow bg
   },
   
   // Danger colors
   danger: {
-    a0: '#b13535',
-    a10: '#d06262',
-    a20: '#e29d9d',
+    a0: '#c44455',
+    a10: '#e96474',
+    a20: '#fde8ea', // Light pink bg
   },
   
   // Info colors
   info: {
-    a0: '#1e56a3',
-    a10: '#347ada',
-    a20: '#74a4e6',
+    a0: '#2e61b3',
+    a10: '#3a71c4',
+    a20: '#e3ecf7', // Light blue bg
+  },
+
+  // Settlement colors (purple/violet - distinct and readable)
+  settlement: {
+    bg: '#f3f0ff',
+    border: '#d4c9f7',
+    accent: '#7c3aed',
   },
 };

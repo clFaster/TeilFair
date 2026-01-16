@@ -323,7 +323,7 @@ export async function createExpense(
       group_id: groupId,
       description: input.description,
       total_amount: input.totalAmount,
-      expense_date: input.date.toISOString().split('T')[0],
+      expense_date: input.date.toISOString(),
     })
     .select()
     .single();
@@ -392,7 +392,7 @@ export async function updateExpense(
     .update({
       description: input.description,
       total_amount: input.totalAmount,
-      expense_date: input.date.toISOString().split('T')[0],
+      expense_date: input.date.toISOString(),
     })
     .eq('id', expenseId)
     .select()

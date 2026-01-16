@@ -31,8 +31,8 @@ export function createNativeTheme(mode: ThemeMode): NativeTheme {
     colors: {
       ...colors,
       // Convenience aliases for common use cases
-      text: mode === 'dark' ? colors.light : colors.dark,
-      textSecondary: mode === 'dark' ? colors.surface.a50 : colors.surface.a40,
+      text: mode === 'dark' ? '#f0f5f4' : colors.dark,
+      textSecondary: mode === 'dark' ? '#8a9996' : '#4a5754',
       background: colors.surface.a0,
       card: colors.surfaceTonal.a0,
       border: colors.surface.a20,

@@ -11,21 +11,19 @@ import { nativeThemes, type NativeTheme } from './index';
 
 const THEME_STORAGE_KEY = 'teilfair-theme-preference';
 
-export type ThemePreference = 'light' | 'dark' | 'system';
+export type ThemePreference = 'light' | 'dark';
 
 /**
  * Hook for managing theme in React Native
+ * Initializes with system preference, then allows toggling between light/dark
  */
 export function useTheme() {
   const systemColorScheme = useColorScheme();
-  const [preference, setPreference] = useState<ThemePreference>('system');
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    // Default to system preference on initial load
+    return systemColorScheme === 'dark' ? 'dark' : 'light';
+  });
   const [isLoading, setIsLoading] = useState(true);
-
-  // Determine actual mode based on preference
-  // Handle null case from useColorScheme (defaults to light)
-  const mode: ThemeMode = preference === 'system' 
-    ? (systemColorScheme === 'dark' ? 'dark' : 'light')
-    : preference;
 
   const theme: NativeTheme = nativeThemes[mode];
 
@@ -37,9 +35,10 @@ export function useTheme() {
   const loadThemePreference = async () => {
     try {
       const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (saved === 'dark' || saved === 'light' || saved === 'system') {
-        setPreference(saved);
+      if (saved === 'dark' || saved === 'light') {
+        setMode(saved);
       }
+      // If no saved preference, keep system default (already set in useState)
     } catch (error) {
       console.error('Failed to load theme preference:', error);
     } finally {
@@ -48,20 +47,17 @@ export function useTheme() {
   };
 
   const toggleTheme = async () => {
-    const newPreference: ThemePreference = 
-      preference === 'light' ? 'dark' :
-      preference === 'dark' ? 'system' : 'light';
-    
-    setPreference(newPreference);
+    const newMode: ThemeMode = mode === 'light' ? 'dark' : 'light';
+    setMode(newMode);
     try {
-      await AsyncStorage.setItem(THEME_STORAGE_KEY, newPreference);
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode);
     } catch (error) {
       console.error('Failed to save theme preference:', error);
     }
   };
 
   const setThemePreference = async (newPreference: ThemePreference) => {
-    setPreference(newPreference);
+    setMode(newPreference);
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newPreference);
     } catch (error) {
@@ -72,8 +68,6 @@ export function useTheme() {
   return {
     theme,
     mode,
-    preference,
-    systemColorScheme,
     toggleTheme,
     setThemePreference,
     isDark: mode === 'dark',

@@ -11,8 +11,6 @@ import { useTheme as useThemeHook, type ThemePreference } from './useTheme';
 interface ThemeContextValue {
   theme: NativeTheme;
   mode: ThemeMode;
-  preference: ThemePreference;
-  systemColorScheme: 'light' | 'dark' | null | undefined;
   toggleTheme: () => Promise<void>;
   setThemePreference: (preference: ThemePreference) => Promise<void>;
   isDark: boolean;

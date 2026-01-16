@@ -15,11 +15,11 @@ export function ExampleThemeUsage() {
         borderRadius: theme.borderRadius.md,
       }}
     >
-      <h1 style={{ color: theme.colors.text }}>
+      <h1 style={{ color: isDark ? theme.colors.light : theme.colors.dark }}>
         TeilFair Theme Example
       </h1>
       
-      <p style={{ color: theme.colors.textSecondary }}>
+      <p style={{ color: theme.colors.surface.a50 }}>
         Current mode: {mode}
       </p>
 

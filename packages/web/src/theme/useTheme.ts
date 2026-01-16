@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { themes, type ThemeMode, type Theme } from '@teilfair/shared';
 import { injectTheme } from './index';
 
-export type ThemePreference = 'light' | 'dark' | 'system';
+export type ThemePreference = 'light' | 'dark';
 
 function getSystemTheme(): ThemeMode {
   if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -18,56 +18,38 @@ function getSystemTheme(): ThemeMode {
 
 /**
  * Hook for managing theme in the web application
+ * Initializes with system preference, then allows toggling between light/dark
  */
 export function useTheme() {
-  const [preference, setPreference] = useState<ThemePreference>(() => {
+  const [mode, setMode] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('teilfair-theme-preference');
-    if (saved === 'dark' || saved === 'light' || saved === 'system') {
+    if (saved === 'dark' || saved === 'light') {
       return saved;
     }
-    return 'system';
+    // Initialize with system preference
+    return getSystemTheme();
   });
 
-  const [systemTheme, setSystemTheme] = useState<ThemeMode>(getSystemTheme);
-
-  // Determine actual mode based on preference
-  const mode: ThemeMode = preference === 'system' ? systemTheme : preference;
   const theme: Theme = themes[mode];
-
-  // Listen for system theme changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => {
-      setSystemTheme(e.matches ? 'dark' : 'light');
-    };
-    
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
 
   useEffect(() => {
     // Inject theme on mount and when mode changes
     injectTheme(mode);
     // Save preference to localStorage
-    localStorage.setItem('teilfair-theme-preference', preference);
-  }, [mode, preference]);
+    localStorage.setItem('teilfair-theme-preference', mode);
+  }, [mode]);
 
   const toggleTheme = () => {
-    setPreference((prev) => {
-      if (prev === 'light') return 'dark';
-      if (prev === 'dark') return 'system';
-      return 'light';
-    });
+    setMode(prev => prev === 'light' ? 'dark' : 'light');
   };
 
   const setThemePreference = (newPreference: ThemePreference) => {
-    setPreference(newPreference);
+    setMode(newPreference);
   };
 
   return {
     theme,
     mode,
-    preference,
     toggleTheme,
     setThemePreference,
     isDark: mode === 'dark',
