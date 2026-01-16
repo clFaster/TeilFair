@@ -8,21 +8,29 @@ const TOKEN_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456
 
 /**
  * Generate a cryptographically secure random token
- * Works in browser (crypto.getRandomValues) and Node.js (crypto.randomBytes)
+ * Works in browser (crypto.getRandomValues) and React Native (with react-native-get-random-values polyfill)
  */
 export function generateToken(length: number = TOKEN_LENGTH): string {
   let result = '';
   
-  // Browser/React Native environment
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-    for (let i = 0; i < length; i++) {
-      result += TOKEN_CHARS[array[i] % TOKEN_CHARS.length];
+  // Browser/React Native environment with crypto polyfill
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    try {
+      const array = new Uint8Array(length);
+      crypto.getRandomValues(array);
+      for (let i = 0; i < length; i++) {
+        result += TOKEN_CHARS[array[i] % TOKEN_CHARS.length];
+      }
+    } catch (error) {
+      throw new Error(`Failed to generate random token: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   } else {
-    // Fallback for environments without crypto (should not happen in production)
-    throw new Error('No cryptographic random number generator available');
+    // Crypto API not available - provide helpful error message
+    const envInfo = typeof globalThis !== 'undefined' ? 'React Native/Mobile' : 'Browser';
+    throw new Error(
+      `No cryptographic random number generator available in ${envInfo}. ` +
+      'For React Native, ensure react-native-get-random-values is installed and imported at app startup.'
+    );
   }
   
   return result;
@@ -32,24 +40,37 @@ export function generateToken(length: number = TOKEN_LENGTH): string {
  * Generate a UUID v4
  */
 export function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try {
+      return crypto.randomUUID();
+    } catch (error) {
+      // Fall through to manual implementation if randomUUID fails
+    }
   }
   
-  // Fallback UUID generation
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    
-    // Set version (4) and variant (2) bits
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    
-    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  // Fallback UUID generation using getRandomValues
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    try {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      
+      // Set version (4) and variant (2) bits
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      
+      const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    } catch (error) {
+      throw new Error(`Failed to generate UUID: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
   
-  throw new Error('No cryptographic random number generator available');
+  // Crypto API not available
+  const envInfo = typeof globalThis !== 'undefined' ? 'React Native/Mobile' : 'Browser';
+  throw new Error(
+    `No cryptographic random number generator available in ${envInfo}. ` +
+    'For React Native, ensure react-native-get-random-values is installed and imported at app startup.'
+  );
 }
 
 /**
