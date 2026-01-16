@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserPlus, faChevronDown, faChevronUp, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 
@@ -82,9 +84,7 @@ export function AddExpenseForm({
     try {
       const newMember = await addMember(newMemberName.trim());
       setNewMemberName('');
-      // Auto-select the new member for split
       setIncludedMembers(prev => new Set([...prev, newMember.id]));
-      // If no payer selected, set the new member as payer
       if (!singlePayer) {
         setSinglePayer(newMember.id);
       }
@@ -109,7 +109,6 @@ export function AddExpenseForm({
     setIncludedMembers(prev => {
       const next = new Set(prev);
       if (next.has(memberId)) {
-        // Don't allow removing if it's the last one
         if (next.size > 1) {
           next.delete(memberId);
         }
@@ -134,13 +133,11 @@ export function AddExpenseForm({
       return;
     }
     
-    // Validate at least one member is selected for split
     if (includedMembers.size < 1) {
       setError('Please select at least one person to split with');
       return;
     }
     
-    // Build payers array
     let payerEntries: Array<{ memberId: string; amount: number }>;
     
     if (showMultiplePayers) {
@@ -166,7 +163,6 @@ export function AddExpenseForm({
       payerEntries = [{ memberId: singlePayer, amount }];
     }
     
-    // Build splits array
     let splits: Array<{ memberId: string; share: number; shareType: ShareType }>;
     
     if (showCustomSplit) {
@@ -191,7 +187,6 @@ export function AddExpenseForm({
         shareType: 'fixed' as ShareType,
       }));
     } else {
-      // Equal split among included members
       splits = Array.from(includedMembers).map(memberId => ({
         memberId,
         share: 1,
@@ -239,13 +234,13 @@ export function AddExpenseForm({
         <div className="expense-form-header">
           <h2>Add Expense</h2>
           {onCancel && (
-            <button type="button" className="btn btn-icon btn-ghost" onClick={onCancel}>×</button>
+            <button type="button" className="btn btn-icon btn-ghost" onClick={onCancel}>&times;</button>
           )}
         </div>
       )}
       
       <div className="expense-form-body">
-        {/* Basic Info */}
+        {/* Description */}
         <div className="input-group">
           <label htmlFor="description">Description</label>
           <input
@@ -258,6 +253,7 @@ export function AddExpenseForm({
           />
         </div>
         
+        {/* Amount */}
         <div className="input-group">
           <label htmlFor="amount">Amount ({group?.currency})</label>
           <input
@@ -270,9 +266,11 @@ export function AddExpenseForm({
             value={totalAmount}
             onChange={e => setTotalAmount(e.target.value)}
             required
+            style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600 }}
           />
         </div>
         
+        {/* Date & Time */}
         <div className="input-row">
           <div className="input-group" style={{ flex: 2 }}>
             <label htmlFor="date">Date</label>
@@ -296,38 +294,38 @@ export function AddExpenseForm({
           </div>
         </div>
 
-        {/* Add Member Section */}
-        <div className="input-group">
-          <label>Members</label>
-          {members.length === 0 && (
+        {/* Quick Add Member */}
+        {members.length === 0 && (
+          <div className="input-group">
+            <label>Add Members First</label>
             <p className="text-secondary text-sm mb-2">
-              Add at least one member to create an expense
+              You need at least one member to create an expense
             </p>
-          )}
-          <div className="input-row mb-2">
-            <input
-              type="text"
-              className="input"
-              placeholder="Add new member..."
-              value={newMemberName}
-              onChange={e => setNewMemberName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddNewMember();
-                }
-              }}
-            />
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleAddNewMember}
-              disabled={isAddingMember || !newMemberName.trim()}
-            >
-              {isAddingMember ? '...' : 'Add'}
-            </button>
+            <div className="input-row">
+              <input
+                type="text"
+                className="input"
+                placeholder="Enter member name..."
+                value={newMemberName}
+                onChange={e => setNewMemberName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddNewMember();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleAddNewMember}
+                disabled={isAddingMember || !newMemberName.trim()}
+              >
+                <FontAwesomeIcon icon={isAddingMember ? faSpinner : faUserPlus} spin={isAddingMember} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
         
         {/* Payer Section */}
         {members.length > 0 && (
@@ -353,18 +351,29 @@ export function AddExpenseForm({
                   className="advanced-toggle"
                   onClick={() => setShowMultiplePayers(true)}
                 >
-                  <span className="advanced-toggle-icon">▼</span>
-                  <span>Multiple payers (advanced)</span>
+                  <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
+                  <span>Multiple payers</span>
                 </button>
               </>
             ) : (
-              <>
-                <div className="text-sm text-secondary mb-2">
-                  Total: {formatCurrency(totalPaidMultiple)} / {formatCurrency(parseFloat(totalAmount) || 0)}
+              <div className="advanced-content">
+                <div style={{ 
+                  padding: '12px 16px', 
+                  background: 'var(--color-surface)', 
+                  borderRadius: 'var(--radius-md)',
+                  marginBottom: '12px'
+                }}>
+                  <div className="text-sm">
+                    <span className="text-muted">Total entered: </span>
+                    <span className={totalPaidMultiple === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
+                      {formatCurrency(totalPaidMultiple)}
+                    </span>
+                    <span className="text-muted"> / {formatCurrency(parseFloat(totalAmount) || 0)}</span>
+                  </div>
                 </div>
                 {members.map(member => (
-                  <div key={member.id} className="flex gap-2 items-center mb-1">
-                    <span style={{ minWidth: '100px' }}>{member.name}</span>
+                  <div key={member.id} className="flex gap-3 items-center mb-2">
+                    <span style={{ minWidth: '100px', fontWeight: 500 }}>{member.name}</span>
                     <input
                       type="number"
                       step="0.01"
@@ -385,10 +394,10 @@ export function AddExpenseForm({
                     setMultiplePayers({});
                   }}
                 >
-                  <span className="advanced-toggle-icon open">▼</span>
-                  <span>Use single payer</span>
+                  <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
+                  <span>Single payer</span>
                 </button>
-              </>
+              </div>
             )}
           </div>
         )}
@@ -396,11 +405,24 @@ export function AddExpenseForm({
         {/* Split Section */}
         {members.length > 0 && (
           <div className="input-group">
-            <label>Split between ({includedMembers.size} {includedMembers.size === 1 ? 'person' : 'people'})</label>
+            <label>
+              Split between 
+              <span style={{ 
+                marginLeft: '8px', 
+                padding: '2px 8px', 
+                background: 'var(--color-primary)', 
+                color: 'white', 
+                borderRadius: 'var(--radius-full)',
+                fontSize: 'var(--font-size-xs)',
+                fontWeight: 600
+              }}>
+                {includedMembers.size}
+              </span>
+            </label>
             
             {!showCustomSplit ? (
               <>
-                <div className="mb-2">
+                <div style={{ marginBottom: '12px' }}>
                   {members.map(member => (
                     <div 
                       key={member.id} 
@@ -408,7 +430,11 @@ export function AddExpenseForm({
                       onClick={() => toggleMemberInSplit(member.id)}
                       style={{ marginBottom: '8px' }}
                     >
-                      <div className={`checkbox ${includedMembers.has(member.id) ? 'checked' : ''}`} />
+                      <div className={`checkbox ${includedMembers.has(member.id) ? 'checked' : ''}`}>
+                        {includedMembers.has(member.id) && (
+                          <FontAwesomeIcon icon={faCheck} style={{ color: 'white', fontSize: '10px' }} />
+                        )}
+                      </div>
                       <span className="name">{member.name}</span>
                       {includedMembers.has(member.id) && totalAmount && (
                         <span className="amount">{formatCurrency(splitAmount)}</span>
@@ -421,15 +447,15 @@ export function AddExpenseForm({
                   className="advanced-toggle"
                   onClick={() => setShowCustomSplit(true)}
                 >
-                  <span className="advanced-toggle-icon">▼</span>
-                  <span>Custom split amounts (advanced)</span>
+                  <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
+                  <span>Custom split amounts</span>
                 </button>
               </>
             ) : (
-              <>
+              <div className="advanced-content">
                 {members.map(member => (
-                  <div key={member.id} className="flex gap-2 items-center mb-1">
-                    <span style={{ minWidth: '100px' }}>{member.name}</span>
+                  <div key={member.id} className="flex gap-3 items-center mb-2">
+                    <span style={{ minWidth: '100px', fontWeight: 500 }}>{member.name}</span>
                     <input
                       type="number"
                       step="0.01"
@@ -450,15 +476,55 @@ export function AddExpenseForm({
                     setCustomSplits({});
                   }}
                 >
-                  <span className="advanced-toggle-icon open">▼</span>
-                  <span>Use equal split</span>
+                  <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
+                  <span>Equal split</span>
                 </button>
-              </>
+              </div>
             )}
           </div>
         )}
+
+        {/* Quick Add Member (when there are already members) */}
+        {members.length > 0 && (
+          <div className="input-group">
+            <label>Add new member</label>
+            <div className="input-row">
+              <input
+                type="text"
+                className="input"
+                placeholder="Enter name..."
+                value={newMemberName}
+                onChange={e => setNewMemberName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddNewMember();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleAddNewMember}
+                disabled={isAddingMember || !newMemberName.trim()}
+                style={{ flexShrink: 0 }}
+              >
+                <FontAwesomeIcon icon={isAddingMember ? faSpinner : faUserPlus} spin={isAddingMember} />
+              </button>
+            </div>
+          </div>
+        )}
         
-        {error && <p className="text-danger text-sm">{error}</p>}
+        {error && (
+          <div style={{ 
+            padding: '12px 16px', 
+            background: 'var(--clr-danger-a20)', 
+            borderRadius: 'var(--radius-md)',
+            marginTop: '8px'
+          }}>
+            <p className="text-danger text-sm">{error}</p>
+          </div>
+        )}
       </div>
       
       <div className="expense-form-footer">
@@ -473,7 +539,14 @@ export function AddExpenseForm({
           disabled={loading || members.length < 1}
           style={!showCancelButton ? { width: '100%' } : undefined}
         >
-          {loading ? 'Adding...' : 'Add Expense'}
+          {loading ? (
+            <>
+              <FontAwesomeIcon icon={faSpinner} spin />
+              <span>Adding...</span>
+            </>
+          ) : (
+            'Add Expense'
+          )}
         </button>
       </div>
     </form>

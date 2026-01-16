@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faChevronDown, faChevronUp, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { ShareType, Expense } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 
@@ -10,31 +12,26 @@ interface EditExpenseModalProps {
 export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
   const { members, group, updateExpense } = useGroupStore();
   
-  // Parse the expense date properly
   const expenseDate = new Date(expense.date);
   
   const [description, setDescription] = useState(expense.description);
   const [totalAmount, setTotalAmount] = useState(expense.totalAmount.toString());
   const [date, setDate] = useState(() => {
-    // Format as YYYY-MM-DD in local time
     const year = expenseDate.getFullYear();
     const month = String(expenseDate.getMonth() + 1).padStart(2, '0');
     const day = String(expenseDate.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   });
   const [time, setTime] = useState(() => {
-    // Format as HH:MM in local time
     const hours = String(expenseDate.getHours()).padStart(2, '0');
     const minutes = String(expenseDate.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
   });
   
-  // Payer state
   const [singlePayer, setSinglePayer] = useState<string>('');
   const [showMultiplePayers, setShowMultiplePayers] = useState(false);
   const [multiplePayers, setMultiplePayers] = useState<Record<string, string>>({});
   
-  // Split state
   const [showCustomSplit, setShowCustomSplit] = useState(false);
   const [includedMembers, setIncludedMembers] = useState<Set<string>>(new Set());
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
@@ -42,9 +39,7 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Initialize from expense data
   useEffect(() => {
-    // Initialize payers
     if (expense.payers.length === 1) {
       setSinglePayer(expense.payers[0].memberId);
       setShowMultiplePayers(false);
@@ -57,7 +52,6 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
       setMultiplePayers(payerMap);
     }
     
-    // Initialize splits
     const hasCustomSplit = expense.splits.some(s => s.shareType === 'fixed');
     if (hasCustomSplit) {
       setShowCustomSplit(true);
@@ -116,7 +110,6 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
       return;
     }
     
-    // Build payers array
     let payerEntries: Array<{ memberId: string; amount: number }>;
     
     if (showMultiplePayers) {
@@ -142,7 +135,6 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
       payerEntries = [{ memberId: singlePayer, amount }];
     }
     
-    // Build splits array
     let splits: Array<{ memberId: string; share: number; shareType: ShareType }>;
     
     if (showCustomSplit) {
@@ -174,15 +166,14 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
       }));
     }
     
-    // Combine date and time
-    const expenseDate = new Date(`${date}T${time || '12:00'}`);
+    const newExpenseDate = new Date(`${date}T${time || '12:00'}`);
     
     setLoading(true);
     try {
       await updateExpense(expense.id, {
         description: description.trim() || 'Expense',
         totalAmount: amount,
-        date: expenseDate,
+        date: newExpenseDate,
         payers: payerEntries,
         splits,
       });
@@ -214,13 +205,16 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Edit Expense</h2>
-          <button className="btn btn-icon btn-ghost" onClick={onClose}>×</button>
+          <h2>
+            <FontAwesomeIcon icon={faEdit} style={{ marginRight: '10px', opacity: 0.7 }} />
+            Edit Expense
+          </h2>
+          <button className="btn-close" onClick={onClose}>&times;</button>
         </div>
         
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
-            {/* Basic Info */}
+            {/* Description */}
             <div className="input-group">
               <label htmlFor="edit-description">Description</label>
               <input
@@ -233,6 +227,7 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
               />
             </div>
             
+            {/* Amount */}
             <div className="input-group">
               <label htmlFor="edit-amount">Amount ({group?.currency})</label>
               <input
@@ -245,9 +240,11 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
                 value={totalAmount}
                 onChange={e => setTotalAmount(e.target.value)}
                 required
+                style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600 }}
               />
             </div>
             
+            {/* Date & Time */}
             <div className="input-row">
               <div className="input-group" style={{ flex: 2 }}>
                 <label htmlFor="edit-date">Date</label>
@@ -294,18 +291,29 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
                     className="advanced-toggle"
                     onClick={() => setShowMultiplePayers(true)}
                   >
-                    <span className="advanced-toggle-icon">▼</span>
-                    <span>Multiple payers (advanced)</span>
+                    <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
+                    <span>Multiple payers</span>
                   </button>
                 </>
               ) : (
-                <>
-                  <div className="text-sm text-secondary mb-2">
-                    Total: {formatCurrency(totalPaidMultiple)} / {formatCurrency(parseFloat(totalAmount) || 0)}
+                <div className="advanced-content">
+                  <div style={{ 
+                    padding: '12px 16px', 
+                    background: 'var(--color-surface)', 
+                    borderRadius: 'var(--radius-md)',
+                    marginBottom: '12px'
+                  }}>
+                    <div className="text-sm">
+                      <span className="text-muted">Total entered: </span>
+                      <span className={totalPaidMultiple === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
+                        {formatCurrency(totalPaidMultiple)}
+                      </span>
+                      <span className="text-muted"> / {formatCurrency(parseFloat(totalAmount) || 0)}</span>
+                    </div>
                   </div>
                   {members.map(member => (
-                    <div key={member.id} className="flex gap-2 items-center mb-1">
-                      <span style={{ minWidth: '100px' }}>{member.name}</span>
+                    <div key={member.id} className="flex gap-3 items-center mb-2">
+                      <span style={{ minWidth: '100px', fontWeight: 500 }}>{member.name}</span>
                       <input
                         type="number"
                         step="0.01"
@@ -326,20 +334,33 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
                       setMultiplePayers({});
                     }}
                   >
-                    <span className="advanced-toggle-icon open">▼</span>
-                    <span>Use single payer</span>
+                    <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
+                    <span>Single payer</span>
                   </button>
-                </>
+                </div>
               )}
             </div>
             
             {/* Split Section */}
             <div className="input-group">
-              <label>Split between ({includedMembers.size} {includedMembers.size === 1 ? 'person' : 'people'})</label>
+              <label>
+                Split between 
+                <span style={{ 
+                  marginLeft: '8px', 
+                  padding: '2px 8px', 
+                  background: 'var(--color-primary)', 
+                  color: 'white', 
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600
+                }}>
+                  {includedMembers.size}
+                </span>
+              </label>
               
               {!showCustomSplit ? (
                 <>
-                  <div className="mb-2">
+                  <div style={{ marginBottom: '12px' }}>
                     {members.map(member => (
                       <div 
                         key={member.id} 
@@ -347,7 +368,11 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
                         onClick={() => toggleMemberInSplit(member.id)}
                         style={{ marginBottom: '8px' }}
                       >
-                        <div className={`checkbox ${includedMembers.has(member.id) ? 'checked' : ''}`} />
+                        <div className={`checkbox ${includedMembers.has(member.id) ? 'checked' : ''}`}>
+                          {includedMembers.has(member.id) && (
+                            <FontAwesomeIcon icon={faCheck} style={{ color: 'white', fontSize: '10px' }} />
+                          )}
+                        </div>
                         <span className="name">{member.name}</span>
                         {includedMembers.has(member.id) && totalAmount && (
                           <span className="amount">{formatCurrency(splitAmount)}</span>
@@ -360,15 +385,15 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
                     className="advanced-toggle"
                     onClick={() => setShowCustomSplit(true)}
                   >
-                    <span className="advanced-toggle-icon">▼</span>
-                    <span>Custom split amounts (advanced)</span>
+                    <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
+                    <span>Custom split amounts</span>
                   </button>
                 </>
               ) : (
-                <>
+                <div className="advanced-content">
                   {members.map(member => (
-                    <div key={member.id} className="flex gap-2 items-center mb-1">
-                      <span style={{ minWidth: '100px' }}>{member.name}</span>
+                    <div key={member.id} className="flex gap-3 items-center mb-2">
+                      <span style={{ minWidth: '100px', fontWeight: 500 }}>{member.name}</span>
                       <input
                         type="number"
                         step="0.01"
@@ -389,14 +414,23 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
                       setCustomSplits({});
                     }}
                   >
-                    <span className="advanced-toggle-icon open">▼</span>
-                    <span>Use equal split</span>
+                    <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
+                    <span>Equal split</span>
                   </button>
-                </>
+                </div>
               )}
             </div>
             
-            {error && <p className="text-danger text-sm">{error}</p>}
+            {error && (
+              <div style={{ 
+                padding: '12px 16px', 
+                background: 'var(--clr-danger-a20)', 
+                borderRadius: 'var(--radius-md)',
+                marginTop: '8px'
+              }}>
+                <p className="text-danger text-sm">{error}</p>
+              </div>
+            )}
           </div>
           
           <div className="modal-footer">
@@ -408,7 +442,14 @@ export function EditExpenseModal({ expense, onClose }: EditExpenseModalProps) {
               className="btn btn-primary" 
               disabled={loading}
             >
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </button>
           </div>
         </form>

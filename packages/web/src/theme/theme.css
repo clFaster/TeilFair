@@ -1,67 +1,77 @@
 /**
  * TeilFair Theme Styles
- * Colors inspired by the TeilFair logo: teal/cyan gradient with orange/gold accents
+ * A sophisticated, trustworthy fintech aesthetic
+ * Typography: DM Sans (headings) + Source Sans 3 (body)
+ * Colors: Deep teal primary with warm gold accents
  */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
 
 /* ============================================
    LIGHT THEME (Default)
    ============================================ */
 :root,
 [data-theme='light'] {
+  /* Typography */
+  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-body: 'Source Sans 3', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
   /* Base colors */
-  --clr-dark-a0: #0a0f0e;
+  --clr-dark-a0: #0d1716;
   --clr-light-a0: #ffffff;
 
-  /* Primary colors (Teal from logo) */
-  --clr-primary-a0: #1da987;
-  --clr-primary-a10: #189274;
-  --clr-primary-a20: #147b62;
-  --clr-primary-a30: #0f6550;
-  --clr-primary-a40: #0b4f3f;
-  --clr-primary-a50: #073a2e;
+  /* Primary colors - Deep teal palette */
+  --clr-primary-a0: #0a7d6c;
+  --clr-primary-a10: #0c9582;
+  --clr-primary-a20: #10ad98;
+  --clr-primary-a30: #1bc4ae;
+  --clr-primary-a40: #3fd4c0;
+  --clr-primary-a50: #7ae5d8;
 
-  /* Accent colors (Orange/Gold from logo) */
-  --clr-accent-a0: #e8850c;
-  --clr-accent-a10: #ff931e;
-  --clr-accent-a20: #ffab4d;
+  /* Accent colors - Warm gold/amber */
+  --clr-accent-a0: #d97706;
+  --clr-accent-a10: #f59e0b;
+  --clr-accent-a20: #fbbf24;
 
-  /* Surface colors */
+  /* Surface colors - Warm whites */
   --clr-surface-a0: #ffffff;
-  --clr-surface-a10: #f5f7f7;
-  --clr-surface-a20: #e8eceb;
-  --clr-surface-a30: #d8dddc;
-  --clr-surface-a40: #c5cbca;
-  --clr-surface-a50: #a8b0ae;
+  --clr-surface-a10: #fafbfb;
+  --clr-surface-a20: #f0f4f3;
+  --clr-surface-a30: #e2e8e6;
+  --clr-surface-a40: #cdd5d3;
+  --clr-surface-a50: #a8b5b2;
 
-  /* Tonal surface colors (teal-tinted) */
-  --clr-surface-tonal-a0: #f0f7f6;
-  --clr-surface-tonal-a10: #e3efed;
-  --clr-surface-tonal-a20: #d4e5e2;
-  --clr-surface-tonal-a30: #c4d9d6;
-  --clr-surface-tonal-a40: #b2cbc8;
-  --clr-surface-tonal-a50: #9ebdb9;
+  /* Tonal surface colors */
+  --clr-surface-tonal-a0: #f5f9f8;
+  --clr-surface-tonal-a10: #ebf2f0;
+  --clr-surface-tonal-a20: #dde8e5;
+  --clr-surface-tonal-a30: #cddbd7;
+  --clr-surface-tonal-a40: #b8ccc7;
+  --clr-surface-tonal-a50: #a0bab4;
 
   /* Success colors */
-  --clr-success-a0: #0c8d67;
-  --clr-success-a10: #1da987;
-  --clr-success-a20: #d4f5e9;
+  --clr-success-a0: #059669;
+  --clr-success-a10: #10b981;
+  --clr-success-a20: #d1fae5;
 
   /* Warning colors */
-  --clr-warning-a0: #b87a15;
-  --clr-warning-a10: #e8960c;
-  --clr-warning-a20: #fff4d9;
+  --clr-warning-a0: #b45309;
+  --clr-warning-a10: #d97706;
+  --clr-warning-a20: #fef3c7;
 
   /* Danger colors */
-  --clr-danger-a0: #c44455;
-  --clr-danger-a10: #e96474;
-  --clr-danger-a20: #fde8ea;
+  --clr-danger-a0: #dc2626;
+  --clr-danger-a10: #ef4444;
+  --clr-danger-a20: #fee2e2;
 
-  /* Info colors (Blue from logo gradient) */
-  --clr-info-a0: #2e61b3;
-  --clr-info-a10: #3a71c4;
-  --clr-info-a20: #e3ecf7;
+  /* Info colors */
+  --clr-info-a0: #2563eb;
+  --clr-info-a10: #3b82f6;
+  --clr-info-a20: #dbeafe;
 
-  /* Semantic aliases - optimized for contrast */
+  /* Semantic aliases */
   --color-primary: var(--clr-primary-a0);
   --color-primary-hover: var(--clr-primary-a10);
   --color-primary-active: var(--clr-primary-a20);
@@ -70,24 +80,24 @@
   --color-danger: var(--clr-danger-a0);
   --color-warning: var(--clr-warning-a0);
   --color-info: var(--clr-info-a0);
-  --color-bg: var(--clr-surface-a0);
+  --color-bg: var(--clr-surface-a10);
   --color-surface: var(--clr-surface-tonal-a0);
   --color-surface-elevated: var(--clr-surface-a0);
   --color-text: var(--clr-dark-a0);
-  --color-text-secondary: #4a5754;
-  --color-text-muted: #6b7876;
-  --color-border: var(--clr-surface-a20);
-  --color-border-strong: var(--clr-surface-a30);
+  --color-text-secondary: #3d4f4a;
+  --color-text-muted: #64756f;
+  --color-border: var(--clr-surface-a30);
+  --color-border-strong: var(--clr-surface-a40);
 
   /* Component-specific */
   --color-input-bg: var(--clr-surface-a0);
   --color-card-bg: var(--clr-surface-a0);
-  --color-header-bg: var(--clr-surface-a0);
+  --color-header-bg: rgba(255, 255, 255, 0.85);
 
-  /* Settlement colors - distinct purple/violet for clarity */
-  --color-settlement-bg: #f3f0ff;
-  --color-settlement-border: #d4c9f7;
-  --color-settlement-accent: #7c3aed;
+  /* Settlement colors */
+  --color-settlement-bg: #faf5ff;
+  --color-settlement-border: #e9d5ff;
+  --color-settlement-accent: #9333ea;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -100,21 +110,23 @@
 
   /* Border radius */
   --radius-none: 0px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
-  /* Typography */
-  --font-size-xs: 12px;
-  --font-size-sm: 14px;
-  --font-size-md: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 20px;
-  --font-size-xxl: 24px;
-  --font-size-xxxl: 32px;
-  --font-size-display: 48px;
+  /* Typography sizes */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-xxl: 1.5rem;
+  --font-size-xxxl: 2rem;
+  --font-size-display: 2.75rem;
+  --font-size-hero: 3.5rem;
 
   --font-weight-light: 300;
   --font-weight-regular: 400;
@@ -128,15 +140,21 @@
 
   /* Shadows */
   --shadow-none: none;
-  --shadow-sm: 0 1px 2px rgba(10, 15, 14, 0.05);
-  --shadow-md: 0 2px 4px rgba(10, 15, 14, 0.08);
-  --shadow-lg: 0 4px 8px rgba(10, 15, 14, 0.12);
-  --shadow-xl: 0 8px 16px rgba(10, 15, 14, 0.16);
+  --shadow-sm: 0 1px 2px rgba(13, 23, 22, 0.04), 0 1px 3px rgba(13, 23, 22, 0.06);
+  --shadow-md: 0 2px 4px rgba(13, 23, 22, 0.04), 0 4px 8px rgba(13, 23, 22, 0.08);
+  --shadow-lg: 0 4px 6px rgba(13, 23, 22, 0.04), 0 10px 24px rgba(13, 23, 22, 0.1);
+  --shadow-xl: 0 8px 16px rgba(13, 23, 22, 0.06), 0 20px 40px rgba(13, 23, 22, 0.12);
+  --shadow-glow: 0 0 20px rgba(10, 125, 108, 0.15);
+  --shadow-glow-accent: 0 0 20px rgba(245, 158, 11, 0.2);
 
-  /* Legacy compatibility */
-  --color-primary-dark: var(--clr-primary-a20);
-  --radius: var(--radius-md);
-  --shadow: var(--shadow-sm);
+  /* Background pattern */
+  --bg-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230a7d6c' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ============================================
@@ -144,62 +162,62 @@
    ============================================ */
 [data-theme='dark'] {
   /* Base colors */
-  --clr-dark-a0: #0a0f0e;
-  --clr-light-a0: #ffffff;
+  --clr-dark-a0: #0b1211;
+  --clr-light-a0: #f8fafa;
 
-  /* Primary colors (Teal - lighter for dark mode) */
-  --clr-primary-a0: #1da987;
-  --clr-primary-a10: #36cdb2;
-  --clr-primary-a20: #5fd9d2;
-  --clr-primary-a30: #7ee4de;
-  --clr-primary-a40: #a3ede9;
-  --clr-primary-a50: #c8f5f3;
+  /* Primary colors - Lighter teal for dark mode */
+  --clr-primary-a0: #14b8a6;
+  --clr-primary-a10: #2dd4bf;
+  --clr-primary-a20: #5eead4;
+  --clr-primary-a30: #99f6e4;
+  --clr-primary-a40: #ccfbf1;
+  --clr-primary-a50: #f0fdfa;
 
-  /* Accent colors (Orange/Gold) */
-  --clr-accent-a0: #ff931e;
-  --clr-accent-a10: #ffab4d;
-  --clr-accent-a20: #ffc37d;
+  /* Accent colors - Brighter gold */
+  --clr-accent-a0: #f59e0b;
+  --clr-accent-a10: #fbbf24;
+  --clr-accent-a20: #fcd34d;
 
-  /* Surface colors (dark with teal undertone) */
-  --clr-surface-a0: #0f1514;
-  --clr-surface-a10: #1a2320;
-  --clr-surface-a20: #2a3532;
-  --clr-surface-a30: #3d4a47;
-  --clr-surface-a40: #52605c;
-  --clr-surface-a50: #6a7975;
+  /* Surface colors - Deep teal-tinted blacks */
+  --clr-surface-a0: #0b1211;
+  --clr-surface-a10: #111a18;
+  --clr-surface-a20: #1a2623;
+  --clr-surface-a30: #26352f;
+  --clr-surface-a40: #354841;
+  --clr-surface-a50: #4a5f57;
 
   /* Tonal surface colors */
-  --clr-surface-tonal-a0: #0f1917;
-  --clr-surface-tonal-a10: #1a2725;
-  --clr-surface-tonal-a20: #283735;
-  --clr-surface-tonal-a30: #3a4947;
-  --clr-surface-tonal-a40: #4d5c5a;
-  --clr-surface-tonal-a50: #63706e;
+  --clr-surface-tonal-a0: #0f1816;
+  --clr-surface-tonal-a10: #152120;
+  --clr-surface-tonal-a20: #1d2d2a;
+  --clr-surface-tonal-a30: #283a36;
+  --clr-surface-tonal-a40: #364a45;
+  --clr-surface-tonal-a50: #485c56;
 
   /* Success colors */
-  --clr-success-a0: #0c8d67;
-  --clr-success-a10: #28be8a;
-  --clr-success-a20: #6bdd91;
+  --clr-success-a0: #10b981;
+  --clr-success-a10: #34d399;
+  --clr-success-a20: #0f3d2e;
 
   /* Warning colors */
-  --clr-warning-a0: #c97d1a;
-  --clr-warning-a10: #fec118;
-  --clr-warning-a20: #fdd827;
+  --clr-warning-a0: #f59e0b;
+  --clr-warning-a10: #fbbf24;
+  --clr-warning-a20: #3d2f0a;
 
   /* Danger colors */
-  --clr-danger-a0: #c44455;
-  --clr-danger-a10: #e96474;
-  --clr-danger-a20: #f2bdc1;
+  --clr-danger-a0: #ef4444;
+  --clr-danger-a10: #f87171;
+  --clr-danger-a20: #3d1515;
 
   /* Info colors */
-  --clr-info-a0: #2e61b3;
-  --clr-info-a10: #4a7dc7;
-  --clr-info-a20: #7a9fd8;
+  --clr-info-a0: #3b82f6;
+  --clr-info-a10: #60a5fa;
+  --clr-info-a20: #152747;
 
-  /* Semantic aliases - optimized for contrast */
-  --color-primary: var(--clr-primary-a10);
-  --color-primary-hover: var(--clr-primary-a20);
-  --color-primary-active: var(--clr-primary-a30);
+  /* Semantic aliases */
+  --color-primary: var(--clr-primary-a0);
+  --color-primary-hover: var(--clr-primary-a10);
+  --color-primary-active: var(--clr-primary-a20);
   --color-accent: var(--clr-accent-a0);
   --color-success: var(--clr-success-a10);
   --color-danger: var(--clr-danger-a10);
@@ -208,30 +226,32 @@
   --color-bg: var(--clr-surface-a0);
   --color-surface: var(--clr-surface-tonal-a10);
   --color-surface-elevated: var(--clr-surface-a10);
-  --color-text: #f0f5f4;
-  --color-text-secondary: #b8c4c1;
-  --color-text-muted: #8a9996;
-  --color-border: var(--clr-surface-a20);
-  --color-border-strong: var(--clr-surface-a30);
+  --color-text: var(--clr-light-a0);
+  --color-text-secondary: #b8c5c2;
+  --color-text-muted: #7a8a85;
+  --color-border: var(--clr-surface-a30);
+  --color-border-strong: var(--clr-surface-a40);
 
   /* Component-specific */
   --color-input-bg: var(--clr-surface-a10);
   --color-card-bg: var(--clr-surface-a10);
-  --color-header-bg: var(--clr-surface-a10);
+  --color-header-bg: rgba(11, 18, 17, 0.9);
 
-  /* Settlement colors - distinct purple/violet for clarity */
-  --color-settlement-bg: #2d2246;
-  --color-settlement-border: #4c3a73;
-  --color-settlement-accent: #a78bfa;
+  /* Settlement colors */
+  --color-settlement-bg: #1e1433;
+  --color-settlement-border: #3b2860;
+  --color-settlement-accent: #c084fc;
 
   /* Shadows for dark mode */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 30px rgba(20, 184, 166, 0.2);
+  --shadow-glow-accent: 0 0 30px rgba(251, 191, 36, 0.15);
 
-  /* Legacy compatibility */
-  --color-primary-dark: var(--clr-primary-a0);
+  /* Background pattern - adjusted for dark */
+  --bg-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2314b8a6' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* ============================================
