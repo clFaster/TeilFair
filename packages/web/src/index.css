@@ -1273,7 +1273,7 @@ h1, h2, h3, h4, h5, h6 {
   
   .main-content {
     flex: 1;
-    min-width: 0;
+    min-width: 450px;
     max-width: 760px;
     width: 100%;
     overflow-y: auto;
