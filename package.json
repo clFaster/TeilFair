@@ -1,0 +1,18 @@
+{
+  "name": "teilfair",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "web": "npm run dev -w @teilfair/web",
+    "mobile": "npm run start -w @teilfair/mobile",
+    "build:shared": "npm run build -w @teilfair/shared",
+    "build:web": "npm run build -w @teilfair/web",
+    "test": "npm run test -w @teilfair/shared"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
