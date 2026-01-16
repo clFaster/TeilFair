@@ -6,11 +6,11 @@
     "packages/*"
   ],
   "scripts": {
-    "web": "npm run dev -w @teilfair/web",
-    "mobile": "npm run start -w @teilfair/mobile",
-    "build:shared": "npm run build -w @teilfair/shared",
-    "build:web": "npm run build -w @teilfair/web",
-    "test": "npm run test -w @teilfair/shared"
+    "web": "pnpm --filter @teilfair/web run dev",
+    "mobile": "pnpm --filter @teilfair/mobile run start",
+    "build:shared": "pnpm --filter @teilfair/shared run build",
+    "build:web": "pnpm --filter @teilfair/web run build",
+    "test": "pnpm --filter @teilfair/shared run test"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
