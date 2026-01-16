@@ -1,0 +1,397 @@
+// Re-export the API functions from web package since they're mostly the same
+// The only difference is the supabase client initialization
+
+import type {
+  Group,
+  Member,
+  Expense,
+  CreateExpenseInput,
+  TokenPermission,
+} from '@teilfair/shared';
+import { generateToken, generateUUID } from '@teilfair/shared';
+import { supabase, createGroupClient } from './supabase';
+
+// Database row types (snake_case)
+interface GroupRow {
+  id: string;
+  name: string;
+  currency: string;
+  read_token: string;
+  write_token: string;
+  created_at: string;
+}
+
+interface MemberRow {
+  id: string;
+  group_id: string;
+  name: string;
+  created_at: string;
+}
+
+interface ExpenseRow {
+  id: string;
+  group_id: string;
+  description: string;
+  total_amount: number;
+  expense_date: string;
+  created_at: string;
+}
+
+interface ExpensePayerRow {
+  id: string;
+  expense_id: string;
+  member_id: string;
+  amount: number;
+}
+
+interface ExpenseSplitRow {
+  id: string;
+  expense_id: string;
+  member_id: string;
+  share: number;
+  share_type: 'ratio' | 'fixed' | 'percentage';
+}
+
+// Converters
+function groupFromRow(row: GroupRow): Group {
+  return {
+    id: row.id,
+    name: row.name,
+    currency: row.currency,
+    readToken: row.read_token,
+    writeToken: row.write_token,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function memberFromRow(row: MemberRow): Member {
+  return {
+    id: row.id,
+    groupId: row.group_id,
+    name: row.name,
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function expenseFromRow(
+  row: ExpenseRow,
+  payers: ExpensePayerRow[],
+  splits: ExpenseSplitRow[]
+): Expense {
+  return {
+    id: row.id,
+    groupId: row.group_id,
+    description: row.description,
+    totalAmount: Number(row.total_amount),
+    date: new Date(row.expense_date),
+    createdAt: new Date(row.created_at),
+    payers: payers.map((p) => ({
+      id: p.id,
+      expenseId: p.expense_id,
+      memberId: p.member_id,
+      amount: Number(p.amount),
+    })),
+    splits: splits.map((s) => ({
+      id: s.id,
+      expenseId: s.expense_id,
+      memberId: s.member_id,
+      share: Number(s.share),
+      shareType: s.share_type,
+    })),
+  };
+}
+
+export async function createGroup(name: string, currency: string = 'EUR'): Promise<Group> {
+  const readToken = generateToken();
+  const writeToken = generateToken();
+
+  const { data, error } = await supabase
+    .from('groups')
+    .insert({
+      name,
+      currency,
+      read_token: readToken,
+      write_token: writeToken,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return groupFromRow(data);
+}
+
+export async function getGroup(groupId: string, token: string): Promise<Group | null> {
+  const client = createGroupClient(token);
+  
+  const { data, error } = await client
+    .from('groups')
+    .select('*')
+    .eq('id', groupId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null;
+    throw error;
+  }
+  return groupFromRow(data);
+}
+
+export async function getTokenPermission(
+  groupId: string,
+  token: string
+): Promise<TokenPermission | null> {
+  const client = createGroupClient(token);
+  
+  const { data, error } = await client
+    .from('groups')
+    .select('read_token, write_token')
+    .eq('id', groupId)
+    .single();
+
+  if (error || !data) return null;
+  
+  if (token === data.write_token) return 'write';
+  if (token === data.read_token) return 'read';
+  return null;
+}
+
+export async function updateGroup(
+  groupId: string,
+  token: string,
+  updates: { name?: string; currency?: string }
+): Promise<Group> {
+  const client = createGroupClient(token);
+  
+  const { data, error } = await client
+    .from('groups')
+    .update(updates)
+    .eq('id', groupId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return groupFromRow(data);
+}
+
+export async function getMembers(groupId: string, token: string): Promise<Member[]> {
+  const client = createGroupClient(token);
+  
+  const { data, error } = await client
+    .from('members')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('created_at');
+
+  if (error) throw error;
+  return data.map(memberFromRow);
+}
+
+export async function addMember(
+  groupId: string,
+  token: string,
+  name: string
+): Promise<Member> {
+  const client = createGroupClient(token);
+  
+  const { data, error } = await client
+    .from('members')
+    .insert({ group_id: groupId, name })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return memberFromRow(data);
+}
+
+export async function updateMember(
+  memberId: string,
+  token: string,
+  name: string
+): Promise<Member> {
+  const client = createGroupClient(token);
+  
+  const { data, error } = await client
+    .from('members')
+    .update({ name })
+    .eq('id', memberId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return memberFromRow(data);
+}
+
+export async function deleteMember(memberId: string, token: string): Promise<void> {
+  const client = createGroupClient(token);
+  
+  const { error } = await client
+    .from('members')
+    .delete()
+    .eq('id', memberId);
+
+  if (error) throw error;
+}
+
+export async function getExpenses(groupId: string, token: string): Promise<Expense[]> {
+  const client = createGroupClient(token);
+  
+  const { data: expenses, error: expensesError } = await client
+    .from('expenses')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('expense_date', { ascending: false });
+
+  if (expensesError) throw expensesError;
+  if (!expenses.length) return [];
+
+  const expenseIds = expenses.map((e) => e.id);
+
+  const [payersResult, splitsResult] = await Promise.all([
+    client.from('expense_payers').select('*').in('expense_id', expenseIds),
+    client.from('expense_splits').select('*').in('expense_id', expenseIds),
+  ]);
+
+  if (payersResult.error) throw payersResult.error;
+  if (splitsResult.error) throw splitsResult.error;
+
+  const payersByExpense = new Map<string, ExpensePayerRow[]>();
+  const splitsByExpense = new Map<string, ExpenseSplitRow[]>();
+
+  for (const payer of payersResult.data) {
+    const list = payersByExpense.get(payer.expense_id) || [];
+    list.push(payer);
+    payersByExpense.set(payer.expense_id, list);
+  }
+
+  for (const split of splitsResult.data) {
+    const list = splitsByExpense.get(split.expense_id) || [];
+    list.push(split);
+    splitsByExpense.set(split.expense_id, list);
+  }
+
+  return expenses.map((e) =>
+    expenseFromRow(
+      e,
+      payersByExpense.get(e.id) || [],
+      splitsByExpense.get(e.id) || []
+    )
+  );
+}
+
+export async function createExpense(
+  groupId: string,
+  token: string,
+  input: CreateExpenseInput
+): Promise<Expense> {
+  const client = createGroupClient(token);
+  const expenseId = generateUUID();
+
+  const { data: expense, error: expenseError } = await client
+    .from('expenses')
+    .insert({
+      id: expenseId,
+      group_id: groupId,
+      description: input.description,
+      total_amount: input.totalAmount,
+      expense_date: input.date.toISOString().split('T')[0],
+    })
+    .select()
+    .single();
+
+  if (expenseError) throw expenseError;
+
+  const payersToInsert = input.payers.map((p) => ({
+    expense_id: expenseId,
+    member_id: p.memberId,
+    amount: p.amount,
+  }));
+
+  const { data: payers, error: payersError } = await client
+    .from('expense_payers')
+    .insert(payersToInsert)
+    .select();
+
+  if (payersError) throw payersError;
+
+  const splitsToInsert = input.splits.map((s) => ({
+    expense_id: expenseId,
+    member_id: s.memberId,
+    share: s.share,
+    share_type: s.shareType,
+  }));
+
+  const { data: splits, error: splitsError } = await client
+    .from('expense_splits')
+    .insert(splitsToInsert)
+    .select();
+
+  if (splitsError) throw splitsError;
+
+  return expenseFromRow(expense, payers, splits);
+}
+
+export async function deleteExpense(expenseId: string, token: string): Promise<void> {
+  const client = createGroupClient(token);
+  
+  const { error } = await client
+    .from('expenses')
+    .delete()
+    .eq('id', expenseId);
+
+  if (error) throw error;
+}
+
+export async function updateExpense(
+  expenseId: string,
+  token: string,
+  input: CreateExpenseInput
+): Promise<Expense> {
+  const client = createGroupClient(token);
+
+  const { data: expense, error: expenseError } = await client
+    .from('expenses')
+    .update({
+      description: input.description,
+      total_amount: input.totalAmount,
+      expense_date: input.date.toISOString().split('T')[0],
+    })
+    .eq('id', expenseId)
+    .select()
+    .single();
+
+  if (expenseError) throw expenseError;
+
+  await Promise.all([
+    client.from('expense_payers').delete().eq('expense_id', expenseId),
+    client.from('expense_splits').delete().eq('expense_id', expenseId),
+  ]);
+
+  const payersToInsert = input.payers.map((p) => ({
+    expense_id: expenseId,
+    member_id: p.memberId,
+    amount: p.amount,
+  }));
+
+  const { data: payers, error: payersError } = await client
+    .from('expense_payers')
+    .insert(payersToInsert)
+    .select();
+
+  if (payersError) throw payersError;
+
+  const splitsToInsert = input.splits.map((s) => ({
+    expense_id: expenseId,
+    member_id: s.memberId,
+    share: s.share,
+    share_type: s.shareType,
+  }));
+
+  const { data: splits, error: splitsError } = await client
+    .from('expense_splits')
+    .insert(splitsToInsert)
+    .select();
+
+  if (splitsError) throw splitsError;
+
+  return expenseFromRow(expense, payers, splits);
+}
