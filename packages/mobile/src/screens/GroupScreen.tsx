@@ -15,6 +15,7 @@ import type { RouteProp } from '@react-navigation/native';
 import * as Clipboard from 'expo-clipboard';
 import { createGroupUrls } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
+import { useTheme } from '../theme/ThemeProvider';
 import type { RootStackParamList } from '../../App';
 
 type GroupScreenRouteProp = RouteProp<RootStackParamList, 'Group'>;
@@ -25,6 +26,7 @@ export function GroupScreen() {
   const route = useRoute<GroupScreenRouteProp>();
   const navigation = useNavigation();
   const { groupId, token } = route.params;
+  const { theme } = useTheme();
   
   const {
     group,
@@ -138,18 +140,18 @@ export function GroupScreen() {
 
   if (loading && !group) {
     return (
-      <View style={styles.centered}>
-        <Text>Loading...</Text>
+      <View style={[styles.centered, { backgroundColor: theme.colors.surface.a0 }]}>
+        <Text style={{ color: theme.colors.text }}>Loading...</Text>
       </View>
     );
   }
 
   if (error && !group) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>{error}</Text>
+      <View style={[styles.centered, { backgroundColor: theme.colors.surface.a0 }]}>
+        <Text style={[styles.error, { color: theme.colors.danger.a10 }]}>{error}</Text>
         <TouchableOpacity
-          style={[styles.button, styles.primaryButton]}
+          style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
           onPress={() => navigation.goBack()}
         >
           <Text style={styles.primaryButtonText}>Go Back</Text>
@@ -160,65 +162,94 @@ export function GroupScreen() {
 
   if (!group) {
     return (
-      <View style={styles.centered}>
-        <Text>Group not found</Text>
+      <View style={[styles.centered, { backgroundColor: theme.colors.surface.a0 }]}>
+        <Text style={{ color: theme.colors.text }}>Group not found</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surface.a0 }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.colors.surfaceTonal.a0, borderBottomColor: theme.colors.border }]}>
         <View>
-          <Text style={styles.groupName}>{group.name}</Text>
-          <Text style={styles.currency}>{group.currency}</Text>
+          <Text style={[styles.groupName, { color: theme.colors.text }]}>{group.name}</Text>
+          <Text style={[styles.currency, { color: theme.colors.textSecondary }]}>{group.currency}</Text>
         </View>
         <View style={styles.headerRight}>
-          <View style={[styles.badge, canWrite ? styles.badgeWrite : styles.badgeRead]}>
-            <Text style={styles.badgeText}>{canWrite ? 'Edit' : 'View'}</Text>
+          <View style={[
+            styles.badge, 
+            { backgroundColor: canWrite ? theme.colors.success.a20 : theme.colors.info.a20 }
+          ]}>
+            <Text style={[
+              styles.badgeText,
+              { color: canWrite ? theme.colors.success.a0 : theme.colors.info.a0 }
+            ]}>
+              {canWrite ? 'Edit' : 'View'}
+            </Text>
           </View>
-          <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+          <TouchableOpacity 
+            style={[styles.shareButton, { backgroundColor: theme.colors.primary.a0 }]} 
+            onPress={handleShare}
+          >
             <Text style={styles.shareButtonText}>Share</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: theme.colors.surfaceTonal.a0, borderBottomColor: theme.colors.border }]}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'expenses' && styles.tabActive]}
+          style={[
+            styles.tab, 
+            activeTab === 'expenses' && { borderBottomColor: theme.colors.primary.a0 }
+          ]}
           onPress={() => setActiveTab('expenses')}
         >
-          <Text style={[styles.tabText, activeTab === 'expenses' && styles.tabTextActive]}>
+          <Text style={[
+            styles.tabText, 
+            { color: activeTab === 'expenses' ? theme.colors.primary.a0 : theme.colors.textSecondary }
+          ]}>
             Expenses
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'balances' && styles.tabActive]}
+          style={[
+            styles.tab, 
+            activeTab === 'balances' && { borderBottomColor: theme.colors.primary.a0 }
+          ]}
           onPress={() => setActiveTab('balances')}
         >
-          <Text style={[styles.tabText, activeTab === 'balances' && styles.tabTextActive]}>
+          <Text style={[
+            styles.tabText, 
+            { color: activeTab === 'balances' ? theme.colors.primary.a0 : theme.colors.textSecondary }
+          ]}>
             Balances
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'members' && styles.tabActive]}
+          style={[
+            styles.tab, 
+            activeTab === 'members' && { borderBottomColor: theme.colors.primary.a0 }
+          ]}
           onPress={() => setActiveTab('members')}
         >
-          <Text style={[styles.tabText, activeTab === 'members' && styles.tabTextActive]}>
+          <Text style={[
+            styles.tabText, 
+            { color: activeTab === 'members' ? theme.colors.primary.a0 : theme.colors.textSecondary }
+          ]}>
             Members ({members.length})
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={[styles.content, { backgroundColor: theme.colors.surface.a0 }]}>
         {/* Expenses Tab */}
         {activeTab === 'expenses' && (
           <View>
             {canWrite && (
               <TouchableOpacity
-                style={[styles.button, styles.primaryButton, styles.addButton]}
+                style={[styles.button, styles.addButton, { backgroundColor: theme.colors.primary.a0 }]}
                 onPress={() => navigation.navigate('AddExpense' as never)}
                 disabled={members.length < 2}
               >
@@ -227,29 +258,31 @@ export function GroupScreen() {
             )}
             
             {members.length < 2 && (
-              <Text style={styles.hint}>Add at least 2 members to start adding expenses</Text>
+              <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
+                Add at least 2 members to start adding expenses
+              </Text>
             )}
             
             {expenses.length === 0 ? (
-              <Text style={styles.emptyText}>No expenses yet</Text>
+              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No expenses yet</Text>
             ) : (
               expenses.map((expense) => (
-                <View key={expense.id} style={styles.expenseCard}>
+                <View key={expense.id} style={[styles.expenseCard, { backgroundColor: theme.colors.surfaceTonal.a0, borderColor: theme.colors.border }]}>
                   <View style={styles.expenseHeader}>
                     <View>
-                      <Text style={styles.expenseDescription}>{expense.description}</Text>
-                      <Text style={styles.expenseDate}>{formatDate(expense.date)}</Text>
+                      <Text style={[styles.expenseDescription, { color: theme.colors.text }]}>{expense.description}</Text>
+                      <Text style={[styles.expenseDate, { color: theme.colors.textSecondary }]}>{formatDate(expense.date)}</Text>
                     </View>
-                    <Text style={styles.expenseAmount}>
+                    <Text style={[styles.expenseAmount, { color: theme.colors.text }]}>
                       {formatCurrency(expense.totalAmount)}
                     </Text>
                   </View>
-                  <Text style={styles.expenseDetails}>
+                  <Text style={[styles.expenseDetails, { color: theme.colors.textSecondary }]}>
                     Paid by: {expense.payers.map(p => getMemberName(p.memberId)).join(', ')}
                   </Text>
                   {canWrite && (
                     <TouchableOpacity
-                      style={[styles.smallButton, styles.dangerButton]}
+                      style={[styles.smallButton, { backgroundColor: theme.colors.danger.a10 }]}
                       onPress={() => handleDeleteExpense(expense.id)}
                     >
                       <Text style={styles.dangerButtonText}>Delete</Text>
@@ -265,17 +298,17 @@ export function GroupScreen() {
         {activeTab === 'balances' && (
           <View>
             {memberBalances.length === 0 ? (
-              <Text style={styles.emptyText}>No balances yet</Text>
+              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No balances yet</Text>
             ) : (
               <>
-                <Text style={styles.sectionTitle}>Individual Balances</Text>
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Individual Balances</Text>
                 {memberBalances.map((balance) => (
-                  <View key={balance.memberId} style={styles.balanceRow}>
-                    <Text>{getMemberName(balance.memberId)}</Text>
+                  <View key={balance.memberId} style={[styles.balanceRow, { backgroundColor: theme.colors.surfaceTonal.a0, borderColor: theme.colors.border }]}>
+                    <Text style={{ color: theme.colors.text }}>{getMemberName(balance.memberId)}</Text>
                     <Text style={[
                       styles.balanceAmount,
-                      balance.netBalance > 0.01 ? styles.positive :
-                      balance.netBalance < -0.01 ? styles.negative : styles.zero,
+                      { color: balance.netBalance > 0.01 ? theme.colors.success.a10 :
+                        balance.netBalance < -0.01 ? theme.colors.danger.a10 : theme.colors.textSecondary }
                     ]}>
                       {balance.netBalance > 0.01 && '+'}
                       {formatCurrency(balance.netBalance)}
@@ -285,15 +318,15 @@ export function GroupScreen() {
 
                 {settlements.length > 0 && (
                   <>
-                    <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
+                    <Text style={[styles.sectionTitle, { marginTop: 24, color: theme.colors.text }]}>
                       Suggested Settlements
                     </Text>
                     {settlements.map((settlement, i) => (
-                      <View key={i} style={styles.settlementCard}>
-                        <Text style={styles.settlementText}>
+                      <View key={i} style={[styles.settlementCard, { backgroundColor: theme.colors.warning.a20, borderColor: theme.colors.border }]}>
+                        <Text style={[styles.settlementText, { color: theme.colors.text }]}>
                           {getMemberName(settlement.fromMemberId)} → {getMemberName(settlement.toMemberId)}
                         </Text>
-                        <Text style={styles.settlementAmount}>
+                        <Text style={[styles.settlementAmount, { color: theme.colors.text }]}>
                           {formatCurrency(settlement.amount)}
                         </Text>
                       </View>
@@ -311,32 +344,33 @@ export function GroupScreen() {
             {canWrite && (
               <View style={styles.addMemberRow}>
                 <TextInput
-                  style={[styles.input, { flex: 1 }]}
+                  style={[styles.input, { flex: 1, backgroundColor: theme.colors.surfaceTonal.a0, borderColor: theme.colors.border, color: theme.colors.text }]}
                   placeholder="New member name"
+                  placeholderTextColor={theme.colors.textSecondary}
                   value={newMemberName}
                   onChangeText={setNewMemberName}
                 />
                 <TouchableOpacity
-                  style={[styles.button, styles.primaryButton]}
+                  style={[styles.button, styles.primaryButton, { backgroundColor: theme.colors.primary.a0 }]}
                   onPress={handleAddMember}
                 >
-                  <Text style={styles.primaryButtonText}>Add</Text>
+                  <Text style={[styles.primaryButtonText, { color: theme.colors.light }]}>Add</Text>
                 </TouchableOpacity>
               </View>
             )}
             
             {members.length === 0 ? (
-              <Text style={styles.emptyText}>No members yet</Text>
+              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No members yet</Text>
             ) : (
               members.map((member) => (
-                <View key={member.id} style={styles.memberRow}>
-                  <Text style={styles.memberName}>{member.name}</Text>
+                <View key={member.id} style={[styles.memberRow, { borderColor: theme.colors.border }]}>
+                  <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
                   {canWrite && (
                     <TouchableOpacity
-                      style={[styles.smallButton, styles.dangerButton]}
+                      style={[styles.smallButton, { backgroundColor: theme.colors.danger.a10 }]}
                       onPress={() => handleDeleteMember(member.id, member.name)}
                     >
-                      <Text style={styles.dangerButtonText}>Delete</Text>
+                      <Text style={[styles.dangerButtonText, { color: theme.colors.light }]}>Delete</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -352,7 +386,6 @@ export function GroupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   centered: {
     flex: 1,
@@ -365,9 +398,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   groupName: {
     fontSize: 20,
@@ -375,7 +406,6 @@ const styles = StyleSheet.create({
   },
   currency: {
     fontSize: 14,
-    color: '#64748b',
   },
   headerRight: {
     flexDirection: 'row',
@@ -387,18 +417,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  badgeRead: {
-    backgroundColor: '#dbeafe',
-  },
-  badgeWrite: {
-    backgroundColor: '#dcfce7',
-  },
   badgeText: {
     fontSize: 12,
     fontWeight: '600',
   },
   shareButton: {
-    backgroundColor: '#e2e8f0',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
@@ -408,9 +431,7 @@ const styles = StyleSheet.create({
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   tab: {
     flex: 1,
@@ -419,16 +440,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabActive: {
-    borderBottomColor: '#6366f1',
-  },
   tabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#64748b',
-  },
-  tabTextActive: {
-    color: '#6366f1',
   },
   content: {
     flex: 1,
@@ -440,11 +454,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  primaryButton: {
-    backgroundColor: '#6366f1',
-  },
+  primaryButton: {},
   primaryButtonText: {
-    color: '#fff',
     fontWeight: '600',
   },
   smallButton: {
@@ -452,11 +463,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 6,
   },
-  dangerButton: {
-    backgroundColor: '#ef4444',
-  },
   dangerButtonText: {
-    color: '#fff',
     fontWeight: '500',
   },
   addButton: {
@@ -464,25 +471,20 @@ const styles = StyleSheet.create({
   },
   hint: {
     textAlign: 'center',
-    color: '#64748b',
     marginBottom: 16,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#64748b',
     paddingVertical: 32,
   },
   error: {
-    color: '#ef4444',
     marginBottom: 16,
   },
   expenseCard: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   expenseHeader: {
     flexDirection: 'row',
@@ -495,7 +497,6 @@ const styles = StyleSheet.create({
   },
   expenseDate: {
     fontSize: 12,
-    color: '#64748b',
   },
   expenseAmount: {
     fontSize: 18,
@@ -503,7 +504,6 @@ const styles = StyleSheet.create({
   },
   expenseDetails: {
     fontSize: 14,
-    color: '#64748b',
   },
   sectionTitle: {
     fontSize: 16,
@@ -515,27 +515,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   balanceAmount: {
     fontWeight: '600',
   },
-  positive: {
-    color: '#22c55e',
-  },
-  negative: {
-    color: '#ef4444',
-  },
-  zero: {
-    color: '#64748b',
-  },
   settlementCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#fef3c7',
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
+    borderWidth: 1,
   },
   settlementText: {
     fontWeight: '500',
@@ -550,12 +540,10 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    backgroundColor: '#fff',
   },
   memberRow: {
     flexDirection: 'row',
@@ -563,7 +551,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   memberName: {
     fontSize: 16,

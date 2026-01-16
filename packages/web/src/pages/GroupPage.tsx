@@ -6,6 +6,7 @@ import { ExpensesList } from '../components/ExpensesList';
 import { BalancesSummary } from '../components/BalancesSummary';
 import { AddExpenseModal } from '../components/AddExpenseModal';
 import { ShareModal } from '../components/ShareModal';
+import { ThemeSettings } from '../components/ThemeSettings';
 
 type Tab = 'expenses' | 'balances' | 'members';
 
@@ -148,6 +149,10 @@ export function GroupPage() {
           {activeTab === 'balances' && <BalancesSummary />}
 
           {activeTab === 'members' && <MembersList canEdit={canWrite} />}
+        </div>
+
+        <div className="card">
+          <ThemeSettings />
         </div>
       </div>
 

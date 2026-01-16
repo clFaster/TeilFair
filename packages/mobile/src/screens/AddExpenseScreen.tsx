@@ -11,10 +11,12 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
+import { useTheme } from '../theme/ThemeProvider';
 
 export function AddExpenseScreen() {
   const navigation = useNavigation();
   const { members, group, addExpense } = useGroupStore();
+  const { theme } = useTheme();
   
   const [description, setDescription] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
@@ -139,22 +141,24 @@ export function AddExpenseScreen() {
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.surface.a0 }]}>
       <View style={styles.section}>
-        <Text style={styles.label}>Description</Text>
+        <Text style={[styles.label, { color: theme.colors.text }]}>Description</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceTonal.a0, borderColor: theme.colors.border, color: theme.colors.text }]}
           placeholder="e.g., Dinner, Taxi, Hotel"
+          placeholderTextColor={theme.colors.textSecondary}
           value={description}
           onChangeText={setDescription}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Total Amount ({group?.currency})</Text>
+        <Text style={[styles.label, { color: theme.colors.text }]}>Total Amount ({group?.currency})</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.colors.surfaceTonal.a0, borderColor: theme.colors.border, color: theme.colors.text }]}
           placeholder="0.00"
+          placeholderTextColor={theme.colors.textSecondary}
           value={totalAmount}
           onChangeText={setTotalAmount}
           keyboardType="decimal-pad"
@@ -162,16 +166,17 @@ export function AddExpenseScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Who paid?</Text>
-        <Text style={styles.hint}>
+        <Text style={[styles.label, { color: theme.colors.text }]}>Who paid?</Text>
+        <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
           Total: {formatCurrency(totalPaid)} / {formatCurrency(parseFloat(totalAmount) || 0)}
         </Text>
         {members.map(member => (
           <View key={member.id} style={styles.payerRow}>
-            <Text style={styles.memberName}>{member.name}</Text>
+            <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
             <TextInput
-              style={styles.amountInput}
+              style={[styles.amountInput, { backgroundColor: theme.colors.surfaceTonal.a0, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder="0.00"
+              placeholderTextColor={theme.colors.textSecondary}
               value={payers[member.id] || ''}
               onChangeText={(v) => handlePayerChange(member.id, v)}
               keyboardType="decimal-pad"
@@ -181,21 +186,21 @@ export function AddExpenseScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Split type</Text>
+        <Text style={[styles.label, { color: theme.colors.text }]}>Split type</Text>
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={[styles.typeButton, splitType === 'equal' && styles.typeButtonActive]}
+            style={[styles.typeButton, { backgroundColor: theme.colors.surfaceTonal.a10 }, splitType === 'equal' && { backgroundColor: theme.colors.primary.a0 }]}
             onPress={() => setSplitType('equal')}
           >
-            <Text style={[styles.typeButtonText, splitType === 'equal' && styles.typeButtonTextActive]}>
+            <Text style={[styles.typeButtonText, { color: theme.colors.text }, splitType === 'equal' && { color: theme.colors.light }]}>
               Equal
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.typeButton, splitType === 'custom' && styles.typeButtonActive]}
+            style={[styles.typeButton, { backgroundColor: theme.colors.surfaceTonal.a10 }, splitType === 'custom' && { backgroundColor: theme.colors.primary.a0 }]}
             onPress={() => setSplitType('custom')}
           >
-            <Text style={[styles.typeButtonText, splitType === 'custom' && styles.typeButtonTextActive]}>
+            <Text style={[styles.typeButtonText, { color: theme.colors.text }, splitType === 'custom' && { color: theme.colors.light }]}>
               Custom
             </Text>
           </TouchableOpacity>
@@ -204,19 +209,19 @@ export function AddExpenseScreen() {
 
       {splitType === 'equal' && (
         <View style={styles.section}>
-          <Text style={styles.label}>Split between ({includedMembers.size} people)</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>Split between ({includedMembers.size} people)</Text>
           {members.map(member => (
             <TouchableOpacity
               key={member.id}
               style={styles.checkboxRow}
               onPress={() => toggleMemberInSplit(member.id)}
             >
-              <View style={[styles.checkbox, includedMembers.has(member.id) && styles.checkboxChecked]}>
-                {includedMembers.has(member.id) && <Text style={styles.checkmark}>✓</Text>}
+              <View style={[styles.checkbox, { borderColor: theme.colors.border }, includedMembers.has(member.id) && { backgroundColor: theme.colors.primary.a0, borderColor: theme.colors.primary.a0 }]}>
+                {includedMembers.has(member.id) && <Text style={[styles.checkmark, { color: theme.colors.light }]}>✓</Text>}
               </View>
-              <Text>{member.name}</Text>
+              <Text style={{ color: theme.colors.text }}>{member.name}</Text>
               {includedMembers.has(member.id) && totalAmount && (
-                <Text style={styles.splitAmount}>
+                <Text style={[styles.splitAmount, { color: theme.colors.textSecondary }]}>
                   ({formatCurrency(parseFloat(totalAmount) / includedMembers.size)})
                 </Text>
               )}
@@ -227,13 +232,14 @@ export function AddExpenseScreen() {
 
       {splitType === 'custom' && (
         <View style={styles.section}>
-          <Text style={styles.label}>Custom amounts</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>Custom amounts</Text>
           {members.map(member => (
             <View key={member.id} style={styles.payerRow}>
-              <Text style={styles.memberName}>{member.name}</Text>
+              <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
               <TextInput
-                style={styles.amountInput}
+                style={[styles.amountInput, { backgroundColor: theme.colors.surfaceTonal.a0, borderColor: theme.colors.border, color: theme.colors.text }]}
                 placeholder="0.00"
+                placeholderTextColor={theme.colors.textSecondary}
                 value={customSplits[member.id] || ''}
                 onChangeText={(v) => handleCustomSplitChange(member.id, v)}
                 keyboardType="decimal-pad"
@@ -245,17 +251,17 @@ export function AddExpenseScreen() {
 
       <View style={styles.buttonRow}>
         <TouchableOpacity
-          style={[styles.button, styles.secondaryButton]}
+          style={[styles.button, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.secondaryButtonText}>Cancel</Text>
+          <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, styles.primaryButton]}
+          style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
           onPress={handleSubmit}
           disabled={loading}
         >
-          <Text style={styles.primaryButtonText}>
+          <Text style={[styles.primaryButtonText, { color: theme.colors.light }]}>
             {loading ? 'Adding...' : 'Add Expense'}
           </Text>
         </TouchableOpacity>
@@ -267,7 +273,6 @@ export function AddExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     padding: 16,
   },
   section: {
@@ -280,13 +285,10 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 14,
-    color: '#64748b',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -302,9 +304,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   amountInput: {
-    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -321,18 +321,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: '#e2e8f0',
     alignItems: 'center',
-  },
-  typeButtonActive: {
-    backgroundColor: '#6366f1',
   },
   typeButtonText: {
     fontWeight: '500',
-    color: '#1e293b',
-  },
-  typeButtonTextActive: {
-    color: '#fff',
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -344,21 +336,14 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
     borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: '#6366f1',
-    borderColor: '#6366f1',
-  },
   checkmark: {
-    color: '#fff',
     fontWeight: '700',
   },
   splitAmount: {
-    color: '#64748b',
     marginLeft: 'auto',
   },
   button: {
@@ -367,19 +352,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  primaryButton: {
-    backgroundColor: '#6366f1',
-  },
   primaryButtonText: {
-    color: '#fff',
     fontWeight: '600',
     fontSize: 16,
   },
-  secondaryButton: {
-    backgroundColor: '#e2e8f0',
-  },
   secondaryButtonText: {
-    color: '#1e293b',
     fontWeight: '500',
     fontSize: 16,
   },

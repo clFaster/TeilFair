@@ -4,13 +4,15 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGroupStore } from '../store/groupStore';
+import { ThemeSettings } from '../components/ThemeSettings';
+import { useTheme } from '../theme/ThemeProvider';
 import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -20,6 +22,7 @@ const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY'];
 export function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
+  const { theme } = useTheme();
   
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
@@ -79,33 +82,48 @@ export function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: theme.colors.surface.a0 }]}
+      contentContainerStyle={styles.contentContainer}
+    >
       <View style={styles.header}>
-        <Text style={styles.logo}>TeilFair</Text>
-        <Text style={styles.subtitle}>Split expenses fairly</Text>
+        <Text style={[styles.logo, { color: theme.colors.primary.a0 }]}>TeilFair</Text>
+        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+          Split expenses fairly
+        </Text>
       </View>
 
       <View style={styles.buttonRow}>
         <TouchableOpacity
-          style={[styles.button, styles.primaryButton]}
+          style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
           onPress={() => { setShowCreate(true); setShowJoin(false); }}
         >
           <Text style={styles.primaryButtonText}>Create Group</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, styles.secondaryButton]}
+          style={[styles.button, { backgroundColor: theme.colors.surface.a20 }]}
           onPress={() => { setShowJoin(true); setShowCreate(false); }}
         >
-          <Text style={styles.secondaryButtonText}>Join Group</Text>
+          <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
+            Join Group
+          </Text>
         </TouchableOpacity>
       </View>
 
       {showCreate && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Create New Group</Text>
+        <View style={[styles.card, { backgroundColor: theme.colors.surfaceTonal.a0 }]}>
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Create New Group</Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              { 
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surface.a0,
+                color: theme.colors.text,
+              }
+            ]}
             placeholder="Group name"
+            placeholderTextColor={theme.colors.textSecondary}
             value={groupName}
             onChangeText={setGroupName}
           />
@@ -115,13 +133,17 @@ export function HomeScreen() {
                 key={c}
                 style={[
                   styles.currencyButton,
-                  currency === c && styles.currencyButtonActive,
+                  { 
+                    backgroundColor: currency === c 
+                      ? theme.colors.primary.a0 
+                      : theme.colors.surface.a20 
+                  },
                 ]}
                 onPress={() => setCurrency(c)}
               >
                 <Text style={[
                   styles.currencyButtonText,
-                  currency === c && styles.currencyButtonTextActive,
+                  { color: currency === c ? theme.colors.light : theme.colors.text },
                 ]}>
                   {c}
                 </Text>
@@ -130,7 +152,7 @@ export function HomeScreen() {
           </View>
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
+              style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
               onPress={handleCreateGroup}
               disabled={loading}
             >
@@ -139,28 +161,38 @@ export function HomeScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, styles.secondaryButton]}
+              style={[styles.button, { backgroundColor: theme.colors.surface.a20 }]}
               onPress={() => setShowCreate(false)}
             >
-              <Text style={styles.secondaryButtonText}>Cancel</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
       {showJoin && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Join Existing Group</Text>
+        <View style={[styles.card, { backgroundColor: theme.colors.surfaceTonal.a0 }]}>
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Join Existing Group</Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              { 
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surface.a0,
+                color: theme.colors.text,
+              }
+            ]}
             placeholder="Paste group link here"
+            placeholderTextColor={theme.colors.textSecondary}
             value={joinLink}
             onChangeText={setJoinLink}
             autoCapitalize="none"
           />
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
+              style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
               onPress={handleJoinGroup}
               disabled={loading}
             >
@@ -169,59 +201,80 @@ export function HomeScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, styles.secondaryButton]}
+              style={[styles.button, { backgroundColor: theme.colors.surface.a20 }]}
               onPress={() => setShowJoin(false)}
             >
-              <Text style={styles.secondaryButtonText}>Cancel</Text>
+              <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
       {recentGroups.length > 0 && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Recent Groups</Text>
-          <FlatList
-            data={recentGroups}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.recentItem}>
-                <View style={styles.recentInfo}>
-                  <Text style={styles.recentName}>{item.name}</Text>
-                  <View style={[
-                    styles.badge,
-                    item.permission === 'write' ? styles.badgeWrite : styles.badgeRead,
+        <View style={[styles.card, { backgroundColor: theme.colors.surfaceTonal.a0 }]}>
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Recent Groups</Text>
+          {recentGroups.map((item) => (
+            <View 
+              key={item.id}
+              style={[styles.recentItem, { borderBottomColor: theme.colors.border }]}
+            >
+              <View style={styles.recentInfo}>
+                <Text style={[styles.recentName, { color: theme.colors.text }]}>
+                  {item.name}
+                </Text>
+                <View style={[
+                  styles.badge,
+                  { 
+                    backgroundColor: item.permission === 'write' 
+                      ? theme.colors.success.a20 
+                      : theme.colors.info.a20 
+                  },
+                ]}>
+                  <Text style={[
+                    styles.badgeText,
+                    { 
+                      color: item.permission === 'write' 
+                        ? theme.colors.success.a0 
+                        : theme.colors.info.a0 
+                    }
                   ]}>
-                    <Text style={styles.badgeText}>{item.permission}</Text>
-                  </View>
-                </View>
-                <View style={styles.recentButtons}>
-                  <TouchableOpacity
-                    style={[styles.smallButton, styles.primaryButton]}
-                    onPress={() => handleOpenRecent(item.id, item.token)}
-                  >
-                    <Text style={styles.primaryButtonText}>Open</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.smallButton, styles.secondaryButton]}
-                    onPress={() => removeFromRecent(item.id)}
-                  >
-                    <Text style={styles.secondaryButtonText}>Remove</Text>
-                  </TouchableOpacity>
+                    {item.permission}
+                  </Text>
                 </View>
               </View>
-            )}
-          />
+              <View style={styles.recentButtons}>
+                <TouchableOpacity
+                  style={[styles.smallButton, { backgroundColor: theme.colors.primary.a0 }]}
+                  onPress={() => handleOpenRecent(item.id, item.token)}
+                >
+                  <Text style={styles.primaryButtonText}>Open</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.smallButton, { backgroundColor: theme.colors.surface.a20 }]}
+                  onPress={() => removeFromRecent(item.id)}
+                >
+                  <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
+                    Remove
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
         </View>
       )}
-    </View>
+
+      <ThemeSettings />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+  },
+  contentContainer: {
     padding: 16,
   },
   header: {
@@ -232,11 +285,9 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#6366f1',
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
     marginTop: 4,
   },
   buttonRow: {
@@ -256,22 +307,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 6,
   },
-  primaryButton: {
-    backgroundColor: '#6366f1',
-  },
   primaryButtonText: {
     color: '#fff',
     fontWeight: '600',
   },
-  secondaryButton: {
-    backgroundColor: '#e2e8f0',
-  },
   secondaryButtonText: {
-    color: '#1e293b',
     fontWeight: '500',
   },
   card: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
@@ -288,7 +331,6 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -304,30 +346,22 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
-    backgroundColor: '#e2e8f0',
-  },
-  currencyButtonActive: {
-    backgroundColor: '#6366f1',
   },
   currencyButtonText: {
-    color: '#1e293b',
     fontWeight: '500',
-  },
-  currencyButtonTextActive: {
-    color: '#fff',
   },
   recentItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   recentInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   recentName: {
     fontSize: 16,
@@ -341,12 +375,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
-  },
-  badgeRead: {
-    backgroundColor: '#dbeafe',
-  },
-  badgeWrite: {
-    backgroundColor: '#dcfce7',
   },
   badgeText: {
     fontSize: 12,

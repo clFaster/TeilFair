@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useGroupStore } from '../store/groupStore';
+import { ThemeSettings } from '../components/ThemeSettings';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -222,6 +223,10 @@ export function HomePage() {
             <li className="mb-1">Split costs equally or with custom amounts</li>
             <li>See who owes whom and settle up easily</li>
           </ol>
+        </div>
+
+        <div className="card">
+          <ThemeSettings />
         </div>
       </div>
     </div>

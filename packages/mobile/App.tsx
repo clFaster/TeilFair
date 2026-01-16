@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { GroupScreen } from './src/screens/GroupScreen';
@@ -16,14 +17,16 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function App() {
+function AppContent() {
+  const { theme, isDark } = useTheme();
+  
   return (
-    <SafeAreaProvider>
+    <>
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
             headerStyle: {
-              backgroundColor: '#6366f1',
+              backgroundColor: theme.colors.primary.a0,
             },
             headerTintColor: '#fff',
             headerTitleStyle: {
@@ -51,7 +54,17 @@ export default function App() {
           />
         </Stack.Navigator>
       </NavigationContainer>
-      <StatusBar style="auto" />
-    </SafeAreaProvider>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <AppContent />
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
