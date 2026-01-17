@@ -1,6 +1,6 @@
 # TeilFair
 
-A fair expense splitting application similar to Splitwise. Split bills between multiple people with custom ratios, track who paid what, and see who owes whom.
+An open-source expense splitting application that helps groups fairly divide shared costs. It supports custom split ratios, tracks individual payments, and provides a clear overview of outstanding balances so everyone knows who owes whom.
 
 ## Features
 
