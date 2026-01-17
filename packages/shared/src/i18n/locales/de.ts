@@ -72,7 +72,7 @@ const de = {
     createButton: 'Gruppe erstellen',
     creating: 'Erstelle...',
     joinFormTitle: 'Existierender Gruppe beitreten',
-    linkLabel: 'Gruppelink',
+    linkLabel: 'Gruppenlink',
     linkPlaceholder: 'Geteilten Link hier einfügen...',
     linkHint: 'Frage deinen Freund nach dem Link, den er erhalten hat.',
     joinButton: 'Gruppe beitreten',
