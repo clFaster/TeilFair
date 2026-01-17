@@ -5,17 +5,23 @@ import { ThemeProvider } from './theme/ThemeProvider';
 import { HomePage } from './pages/HomePage';
 import { GroupPage } from './pages/GroupPage';
 
+function AppContent() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/g/:groupId" element={<GroupPage />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/g/:groupId" element={<GroupPage />} />
-        </Routes>
-        <Analytics />
-        <SpeedInsights />
+        <AppContent />
       </BrowserRouter>
+      <Analytics />
+      <SpeedInsights />
     </ThemeProvider>
   );
 }
