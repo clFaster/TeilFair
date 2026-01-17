@@ -280,18 +280,18 @@ Records how an expense should be split among members (who owes what).
 
 ### Data Relationships
 
-```
-Group
-  ├── read_token (unique)
-  ├── write_token (unique)
-  │
-  ├─→ Members (1:many)
-  │    └─→ ExpensePayers (1:many)
-  │    └─→ ExpenseSplits (1:many)
-  │
-  └─→ Expenses (1:many)
-       ├─→ ExpensePayers (1:many)
-       └─→ ExpenseSplits (1:many)
+```mermaid
+erDiagram
+    GROUP ||--o{ MEMBER : contains
+    GROUP ||--o{ EXPENSE : contains
+    GROUP {
+        string read_token PK
+        string write_token PK
+    }
+    MEMBER ||--o{ EXPENSE_PAYER : participates_as
+    MEMBER ||--o{ EXPENSE_SPLIT : participates_as
+    EXPENSE ||--o{ EXPENSE_PAYER : has
+    EXPENSE ||--o{ EXPENSE_SPLIT : has
 ```
 
 ### Access Control via Row Level Security (RLS)
