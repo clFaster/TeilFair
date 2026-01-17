@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { HomePage } from './pages/HomePage';
 import { GroupPage } from './pages/GroupPage';
@@ -13,6 +14,7 @@ function App() {
           <Route path="/g/:groupId" element={<GroupPage />} />
         </Routes>
         <Analytics />
+        <SpeedInsights />
       </BrowserRouter>
     </ThemeProvider>
   );
