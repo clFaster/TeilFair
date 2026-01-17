@@ -3,17 +3,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash, faClock, faUser } from '@fortawesome/free-solid-svg-icons';
 import type { Expense } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
-import { EditExpenseModal } from './EditExpenseModal';
 
 interface ExpensesListProps {
   canEdit: boolean;
   onEditExpense?: (expense: Expense) => void;
-  useExternalEdit?: boolean;
 }
 
-export function ExpensesList({ canEdit, onEditExpense, useExternalEdit = false }: ExpensesListProps) {
+export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
   const { expenses, members, group, deleteExpense } = useGroupStore();
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const getMemberName = (memberId: string) => {
@@ -63,10 +60,8 @@ export function ExpensesList({ canEdit, onEditExpense, useExternalEdit = false }
   };
 
   const handleEditClick = (expense: Expense) => {
-    if (useExternalEdit && onEditExpense) {
+    if (onEditExpense) {
       onEditExpense(expense);
-    } else {
-      setEditingExpense(expense);
     }
   };
 
@@ -171,13 +166,6 @@ export function ExpensesList({ canEdit, onEditExpense, useExternalEdit = false }
           );
         })}
       </div>
-      
-      {editingExpense && !useExternalEdit && (
-        <EditExpenseModal
-          expense={editingExpense}
-          onClose={() => setEditingExpense(null)}
-        />
-      )}
     </>
   );
 }

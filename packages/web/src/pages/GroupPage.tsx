@@ -10,6 +10,7 @@ import { MembersList } from '../components/MembersList';
 import { ExpensesList } from '../components/ExpensesList';
 import { BalancesSummary } from '../components/BalancesSummary';
 import { AddExpenseModal } from '../components/AddExpenseModal';
+import { EditExpenseModal } from '../components/EditExpenseModal';
 import { AddExpenseForm } from '../components/AddExpenseForm';
 import { EditExpenseForm } from '../components/EditExpenseForm';
 import { ShareModal } from '../components/ShareModal';
@@ -348,11 +349,10 @@ export function GroupPage() {
                 )}
                 <ExpensesList 
                   canEdit={canWrite} 
-                  onEditExpense={isWideScreen ? (expense) => {
+                  onEditExpense={(expense) => {
                     setShowAddExpense(false); // Clear add state
                     setEditingExpense(expense);
-                  } : undefined}
-                  useExternalEdit={isWideScreen}
+                  }}
                 />
               </div>
             )}
@@ -386,6 +386,13 @@ export function GroupPage() {
       {/* Modals */}
       {showAddExpense && !isWideScreen && (
         <AddExpenseModal onClose={() => setShowAddExpense(false)} />
+      )}
+
+      {editingExpense && !isWideScreen && (
+        <EditExpenseModal 
+          expense={editingExpense}
+          onClose={() => setEditingExpense(null)} 
+        />
       )}
 
       {showShare && (

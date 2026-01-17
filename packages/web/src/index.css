@@ -550,6 +550,9 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .tab:hover {
@@ -561,6 +564,35 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--color-card-bg);
   color: var(--color-primary);
   box-shadow: var(--shadow-sm);
+}
+
+/* Responsive tabs for small screens */
+@media (max-width: 480px) {
+  .tabs {
+    gap: 2px;
+    padding: 3px;
+  }
+  
+  .tab {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+  
+  .tab svg {
+    margin-right: 4px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .tab {
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+  
+  .tab svg {
+    margin-right: 3px !important;
+    font-size: 11px;
+  }
 }
 
 /* ============================================
@@ -616,6 +648,7 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 100%;
     max-height: 90vh;
     max-height: 90dvh;
+    min-height: 400px;
     border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
     border-bottom: none;
   }
@@ -623,6 +656,54 @@ h1, h2, h3, h4, h5, h6 {
   .modal-overlay {
     padding: 0;
     align-items: flex-end;
+  }
+  
+  .modal-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .modal-header h2 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .modal-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    min-height: 200px;
+  }
+  
+  .modal-footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .input-row {
+    gap: var(--spacing-sm);
+  }
+  
+  .input-row .input-group {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  /* Ensure date input gets more space than time */
+  .input-row .input-group:first-child {
+    flex: 2;
+  }
+  
+  .input-row .input-group:last-child {
+    flex: 1;
+  }
+}
+
+/* Extra small screens - stack date/time vertically if needed */
+@media (max-width: 360px) {
+  .input-row {
+    flex-direction: column;
+  }
+  
+  .input-row .input-group {
+    flex: 1;
+    width: 100%;
   }
 }
 
@@ -1364,6 +1445,7 @@ h1, h2, h3, h4, h5, h6 {
 .expense-form {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .expense-form-header {
@@ -1392,6 +1474,10 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border);
+}
+
+.modal-expense .expense-form {
+  min-height: 300px;
 }
 
 .modal-expense .expense-form-footer {
