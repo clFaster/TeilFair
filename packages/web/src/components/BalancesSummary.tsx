@@ -1,12 +1,14 @@
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faCheckCircle, faBalanceScale } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 
 export function BalancesSummary() {
+  const { t } = useTranslation();
   const { memberBalances, settlements, members, group } = useGroupStore();
 
   const getMemberName = (memberId: string) => {
-    return members.find(m => m.id === memberId)?.name || 'Unknown';
+    return members.find(m => m.id === memberId)?.name || t('common.unknown');
   };
 
   const formatCurrency = (amount: number) => {
@@ -23,9 +25,9 @@ export function BalancesSummary() {
   };
 
   const getBalanceLabel = (balance: number) => {
-    if (balance > 0.01) return 'gets back';
-    if (balance < -0.01) return 'owes';
-    return 'settled';
+    if (balance > 0.01) return t('balance.getsBack');
+    if (balance < -0.01) return t('balance.owes');
+    return t('balance.settled');
   };
 
   if (memberBalances.length === 0) {
@@ -45,8 +47,8 @@ export function BalancesSummary() {
         }}>
           <FontAwesomeIcon icon={faBalanceScale} />
         </div>
-        <p>No balances yet</p>
-        <p className="text-sm">Add expenses to see who owes whom</p>
+        <p>{t('balance.emptyTitle')}</p>
+        <p className="text-sm">{t('balance.emptyDescription')}</p>
       </div>
     );
   }
@@ -63,7 +65,7 @@ export function BalancesSummary() {
         fontSize: 'var(--font-size-md)',
         letterSpacing: '-0.01em'
       }}>
-        Individual Balances
+        {t('balance.individualBalances')}
       </h3>
       
       <div style={{ marginBottom: '24px' }}>
@@ -110,10 +112,10 @@ export function BalancesSummary() {
             fontSize: 'var(--font-size-md)',
             letterSpacing: '-0.01em'
           }}>
-            Suggested Settlements
+            {t('balance.suggestedSettlements')}
           </h3>
           <p className="text-sm text-muted mb-3">
-            These payments will settle all debts with minimum transactions
+            {t('balance.settlementsDescription')}
           </p>
           {settlements.map((settlement, index) => (
             <div key={index} className="settlement-card">
@@ -150,10 +152,10 @@ export function BalancesSummary() {
             }} 
           />
           <p style={{ fontWeight: 700, fontSize: 'var(--font-size-lg)', color: 'var(--color-success)' }}>
-            All settled up!
+            {t('balance.allSettledUp')}
           </p>
           <p className="text-sm" style={{ color: 'var(--color-success)', opacity: 0.9 }}>
-            No payments needed
+            {t('balance.noPaymentsNeeded')}
           </p>
         </div>
       )}

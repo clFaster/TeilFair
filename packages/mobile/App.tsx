@@ -3,7 +3,9 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import './src/i18n'; // Initialize i18n before rendering
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { GroupScreen } from './src/screens/GroupScreen';
@@ -21,6 +23,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function AppContent() {
   const { theme, isDark } = useTheme();
+  const { t } = useTranslation();
   
   return (
     <>
@@ -50,7 +53,7 @@ function AppContent() {
             name="AddExpense" 
             component={AddExpenseScreen}
             options={{ 
-              title: 'Add Expense',
+              title: t('expense.addExpense'),
               presentation: 'modal',
             }}
           />
@@ -58,7 +61,7 @@ function AppContent() {
             name="EditExpense" 
             component={EditExpenseScreen}
             options={{ 
-              title: 'Edit Expense',
+              title: t('expense.editExpense'),
               presentation: 'modal',
             }}
           />

@@ -1302,7 +1302,11 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
   overflow: hidden;
   padding: var(--spacing-xxl) var(--spacing-xl);
+  margin-left: calc(-1 * var(--spacing-lg));
+  margin-right: calc(-1 * var(--spacing-lg));
+  margin-bottom: var(--spacing-lg);
   text-align: center;
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
 }
 
 .hero-card::before {
@@ -1799,8 +1803,84 @@ select:focus:not(:focus-visible) {
 }
 
 /* ============================================
-   SAFE AREA - iOS notch support
-   ============================================ */
+    LANGUAGE SWITCHER - Dropdown selector
+    ============================================ */
+.language-switcher {
+  position: relative;
+}
+
+.language-switcher-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.language-switcher-button:hover {
+  color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.language-switcher-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--spacing-sm);
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 160px;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.language-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.language-option:hover {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.language-option.active {
+  background: rgba(10, 125, 108, 0.08);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.language-option::before {
+  content: '✓ ';
+  margin-right: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.language-option.active::before {
+  opacity: 1;
+}
+
+/* ============================================
+    SAFE AREA - iOS notch support
+    ============================================ */
 @supports (padding: env(safe-area-inset-top)) {
   .header {
     padding-top: max(var(--spacing-md), env(safe-area-inset-top));

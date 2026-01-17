@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faChevronUp, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { ShareType, Expense } from '@teilfair/shared';
@@ -19,6 +20,7 @@ export function EditExpenseForm({
   showHeader = false,
   showCancelButton = true,
 }: EditExpenseFormProps) {
+  const { t } = useTranslation();
   const { members, group, updateExpense } = useGroupStore();
   
   const expenseDate = new Date(expense.date);
@@ -194,7 +196,7 @@ export function EditExpenseForm({
     setLoading(true);
     try {
       await updateExpense(expense.id, {
-        description: description.trim() || 'Expense',
+        description: description.trim() || t('expense.defaultDescription'),
         totalAmount: amount,
         date: newExpenseDate,
         payers: payerEntries,
@@ -228,7 +230,7 @@ export function EditExpenseForm({
     <form onSubmit={handleSubmit} className="expense-form">
       {showHeader && (
         <div className="expense-form-header">
-          <h2>Edit Expense</h2>
+          <h2>{t('expense.editExpense')}</h2>
           {onCancel && (
             <button type="button" className="btn btn-icon btn-ghost" onClick={onCancel}>&times;</button>
           )}
@@ -238,12 +240,12 @@ export function EditExpenseForm({
       <div className="expense-form-body">
         {/* Description */}
         <div className="input-group">
-          <label htmlFor="edit-description">Description</label>
+          <label htmlFor="edit-description">{t('expense.descriptionLabel')}</label>
           <input
             id="edit-description"
             type="text"
             className="input"
-            placeholder="e.g., Dinner, Taxi, Hotel"
+            placeholder={t('expense.descriptionPlaceholder')}
             value={description}
             onChange={e => setDescription(e.target.value)}
           />
@@ -251,14 +253,14 @@ export function EditExpenseForm({
         
         {/* Amount */}
         <div className="input-group">
-          <label htmlFor="edit-amount">Amount ({group?.currency})</label>
+          <label htmlFor="edit-amount">{t('expense.amountLabel', { currency: group?.currency })}</label>
           <input
             id="edit-amount"
             type="number"
             step="0.01"
             min="0.01"
             className="input"
-            placeholder="0.00"
+            placeholder={t('expense.amountPlaceholder')}
             value={totalAmount}
             onChange={e => setTotalAmount(e.target.value)}
             required
@@ -269,7 +271,7 @@ export function EditExpenseForm({
         {/* Date & Time */}
         <div className="input-row">
           <div className="input-group" style={{ flex: 2 }}>
-            <label htmlFor="edit-date">Date</label>
+            <label htmlFor="edit-date">{t('expense.dateLabel')}</label>
             <input
               id="edit-date"
               type="date"
@@ -279,7 +281,7 @@ export function EditExpenseForm({
             />
           </div>
           <div className="input-group" style={{ flex: 1 }}>
-            <label htmlFor="edit-time">Time</label>
+            <label htmlFor="edit-time">{t('expense.timeLabel')}</label>
             <input
               id="edit-time"
               type="time"
@@ -292,7 +294,7 @@ export function EditExpenseForm({
         
         {/* Payer Section */}
         <div className="input-group">
-          <label>Who paid?</label>
+          <label>{t('expense.whoPaidLabel')}</label>
           
           {!showMultiplePayers ? (
             <>
@@ -301,7 +303,7 @@ export function EditExpenseForm({
                 value={singlePayer}
                 onChange={e => setSinglePayer(e.target.value)}
               >
-                <option value="">Select payer...</option>
+                <option value="">{t('expense.selectPayer')}</option>
                 {members.map(member => (
                   <option key={member.id} value={member.id}>
                     {member.name}
@@ -314,7 +316,7 @@ export function EditExpenseForm({
                 onClick={() => setShowMultiplePayers(true)}
               >
                 <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
-                <span>Multiple payers</span>
+                <span>{t('expense.multiplePayers')}</span>
               </button>
             </>
           ) : (
@@ -326,7 +328,7 @@ export function EditExpenseForm({
                 marginBottom: '12px'
               }}>
                 <div className="text-sm">
-                  <span className="text-muted">Total entered: </span>
+                  <span className="text-muted">{t('expense.totalEntered')} </span>
                   <span className={totalPaidMultiple === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
                     {formatCurrency(totalPaidMultiple)}
                   </span>
@@ -341,7 +343,7 @@ export function EditExpenseForm({
                     step="0.01"
                     min="0"
                     className="input"
-                    placeholder="0.00"
+                    placeholder={t('expense.amountPlaceholder')}
                     value={multiplePayers[member.id] || ''}
                     onChange={e => handlePayerChange(member.id, e.target.value)}
                     style={{ width: '120px' }}
@@ -357,7 +359,7 @@ export function EditExpenseForm({
                 }}
               >
                 <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
-                <span>Single payer</span>
+                <span>{t('expense.singlePayer')}</span>
               </button>
             </div>
           )}
@@ -366,7 +368,7 @@ export function EditExpenseForm({
         {/* Split Section */}
         <div className="input-group">
           <label>
-            Split between 
+            {t('expense.splitBetweenLabel')} 
             <span style={{ 
               marginLeft: '8px', 
               padding: '2px 8px', 
@@ -408,7 +410,7 @@ export function EditExpenseForm({
                 onClick={() => setShowCustomSplit(true)}
               >
                 <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
-                <span>Custom split amounts</span>
+                <span>{t('expense.customSplitAmounts')}</span>
               </button>
             </>
           ) : (
@@ -421,7 +423,7 @@ export function EditExpenseForm({
                     step="0.01"
                     min="0"
                     className="input"
-                    placeholder="0.00"
+                    placeholder={t('expense.amountPlaceholder')}
                     value={customSplits[member.id] || ''}
                     onChange={e => handleCustomSplitChange(member.id, e.target.value)}
                     style={{ width: '120px' }}
@@ -437,7 +439,7 @@ export function EditExpenseForm({
                 }}
               >
                 <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
-                <span>Equal split</span>
+                <span>{t('expense.equalSplit')}</span>
               </button>
             </div>
           )}
@@ -458,7 +460,7 @@ export function EditExpenseForm({
       <div className="expense-form-footer">
         {showCancelButton && onCancel && (
           <button type="button" className="btn btn-secondary" onClick={onCancel}>
-            Cancel
+            {t('common.cancel')}
           </button>
         )}
         <button 
@@ -470,10 +472,10 @@ export function EditExpenseForm({
           {loading ? (
             <>
               <FontAwesomeIcon icon={faSpinner} spin />
-              <span>Saving...</span>
+              <span>{t('expense.saving')}</span>
             </>
           ) : (
-            'Save Changes'
+            t('expense.saveChanges')
           )}
         </button>
       </div>

@@ -14,6 +14,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Clipboard from 'expo-clipboard';
+import { useTranslation } from 'react-i18next';
 import { createGroupUrls } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
@@ -25,6 +26,7 @@ type GroupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, '
 type Tab = 'expenses' | 'balances' | 'members';
 
 export function GroupScreen() {
+  const { t } = useTranslation();
   const route = useRoute<GroupScreenRouteProp>();
   const navigation = useNavigation<GroupScreenNavigationProp>();
   const { groupId, token } = route.params;
@@ -61,7 +63,7 @@ export function GroupScreen() {
       await addMember(newMemberName.trim());
       setNewMemberName('');
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add member');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.failedToAddMember'));
     }
   };
 
@@ -72,27 +74,27 @@ export function GroupScreen() {
     );
     
     if (isUsed) {
-      Alert.alert('Error', 'Cannot delete a member who is part of an expense');
+      Alert.alert(t('common.error'), t('member.cannotDelete'));
       return;
     }
     
     Alert.alert(
-      'Delete Member',
-      `Are you sure you want to delete ${memberName}?`,
+      t('member.deleteTitle'),
+      t('member.confirmDeleteNamed', { name: memberName }),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteMember(memberId) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteMember(memberId) },
       ]
     );
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
     Alert.alert(
-      'Delete Expense',
-      'Are you sure you want to delete this expense?',
+      t('expense.confirmDeleteTitle'),
+      t('expense.confirmDelete'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteExpense(expenseId) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteExpense(expenseId) },
       ]
     );
   };
@@ -106,15 +108,15 @@ export function GroupScreen() {
     // If user has write permission, ask which link to share
     if (canWrite) {
       Alert.alert(
-        'Share Group',
-        'Which link would you like to share?',
+        t('share.sharePromptTitle'),
+        t('share.sharePromptDescription'),
         [
           {
-            text: 'View Only',
+            text: t('share.shareViewOnly'),
             onPress: async () => {
               try {
                 await Share.share({
-                  message: `Join my TeilFair group "${group.name}" (view only):\n${urls.readUrl}`,
+                  message: t('share.shareMessageViewOnly', { groupName: group.name, url: urls.readUrl }),
                 });
               } catch (err) {
                 // User cancelled
@@ -122,11 +124,11 @@ export function GroupScreen() {
             },
           },
           {
-            text: 'Edit Access',
+            text: t('share.shareEditAccess'),
             onPress: async () => {
               try {
                 await Share.share({
-                  message: `Join my TeilFair group "${group.name}" (can edit):\n${urls.writeUrl}`,
+                  message: t('share.shareMessageEditAccess', { groupName: group.name, url: urls.writeUrl }),
                 });
               } catch (err) {
                 // User cancelled
@@ -134,7 +136,7 @@ export function GroupScreen() {
             },
           },
           {
-            text: 'Cancel',
+            text: t('common.cancel'),
             style: 'cancel',
           },
         ]
@@ -143,7 +145,7 @@ export function GroupScreen() {
       // User only has read access, share the read link
       try {
         await Share.share({
-          message: `Join my TeilFair group "${group.name}":\n${urls.readUrl}`,
+          message: t('share.shareMessageDefault', { groupName: group.name, url: urls.readUrl }),
         });
       } catch (err) {
         // User cancelled
@@ -169,7 +171,7 @@ export function GroupScreen() {
   if (loading && !group) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
-        <Text style={{ color: theme.colors.text }}>Loading...</Text>
+        <Text style={{ color: theme.colors.text }}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -182,7 +184,7 @@ export function GroupScreen() {
           style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.primaryButtonText}>Go Back</Text>
+          <Text style={styles.primaryButtonText}>{t('common.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -191,7 +193,7 @@ export function GroupScreen() {
   if (!group) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
-        <Text style={{ color: theme.colors.text }}>Group not found</Text>
+        <Text style={{ color: theme.colors.text }}>{t('error.groupNotFound')}</Text>
       </View>
     );
   }
@@ -211,7 +213,7 @@ export function GroupScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={[styles.backButtonText, { color: theme.colors.primary.a0 }]}>← Back</Text>
+          <Text style={[styles.backButtonText, { color: theme.colors.primary.a0 }]}>← {t('common.back')}</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.groupName, { color: theme.colors.text }]} numberOfLines={1}>
@@ -231,14 +233,14 @@ export function GroupScreen() {
               styles.badgeText,
               { color: canWrite ? theme.colors.success.a0 : theme.colors.info.a0 }
             ]}>
-              {canWrite ? 'edit' : 'view'}
+              {canWrite ? t('common.editPermission') : t('common.viewPermission')}
             </Text>
           </View>
           <TouchableOpacity 
             style={[styles.shareButton, { backgroundColor: theme.colors.primary.a0 }]} 
             onPress={handleShare}
           >
-            <Text style={styles.shareButtonText}>Share</Text>
+            <Text style={styles.shareButtonText}>{t('common.share')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -256,7 +258,7 @@ export function GroupScreen() {
             styles.tabText, 
             { color: activeTab === 'expenses' ? theme.colors.primary.a0 : theme.colors.textSecondary }
           ]}>
-            Expenses
+            {t('group.tabExpenses')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -270,7 +272,7 @@ export function GroupScreen() {
             styles.tabText, 
             { color: activeTab === 'balances' ? theme.colors.primary.a0 : theme.colors.textSecondary }
           ]}>
-            Balances
+            {t('group.tabBalances')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -284,7 +286,7 @@ export function GroupScreen() {
             styles.tabText, 
             { color: activeTab === 'members' ? theme.colors.primary.a0 : theme.colors.textSecondary }
           ]}>
-            Members ({members.length})
+            {t('group.tabMembersCount', { count: members.length })}
           </Text>
         </TouchableOpacity>
       </View>
@@ -306,23 +308,23 @@ export function GroupScreen() {
                 onPress={() => navigation.navigate('AddExpense')}
                 disabled={members.length < 2}
               >
-                <Text style={styles.primaryButtonText}>+ Add Expense</Text>
+                <Text style={styles.primaryButtonText}>+ {t('expense.addExpense')}</Text>
               </TouchableOpacity>
             )}
             
             {members.length < 2 && (
               <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
-                Add at least 2 members to start adding expenses
+                {t('member.addMemberHint')}
               </Text>
             )}
             
             {expenses.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                  No expenses yet
+                  {t('expense.emptyTitle')}
                 </Text>
                 <Text style={[styles.emptyHint, { color: theme.colors.textSecondary }]}>
-                  {canWrite ? 'Add your first expense to get started' : 'No expenses have been added yet'}
+                  {canWrite ? t('expense.emptyDescriptionWithWrite') : t('expense.emptyDescriptionReadOnly')}
                 </Text>
               </View>
             ) : (
@@ -338,7 +340,7 @@ export function GroupScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.expenseDetails, { color: theme.colors.textSecondary }]}>
-                    Paid by: {expense.payers.map(p => getMemberName(p.memberId)).join(', ')}
+                    {t('expense.paidBy', { names: expense.payers.map(p => getMemberName(p.memberId)).join(', ') })}
                   </Text>
                   {canWrite && (
                     <View style={styles.expenseButtons}>
@@ -346,13 +348,13 @@ export function GroupScreen() {
                         style={[styles.editButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
                         onPress={() => navigation.navigate('EditExpense', { expenseId: expense.id })}
                       >
-                        <Text style={[styles.editButtonText, { color: theme.colors.text }]}>Edit</Text>
+                        <Text style={[styles.editButtonText, { color: theme.colors.text }]}>{t('common.edit')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.deleteButton, { backgroundColor: theme.colors.danger.a20 }]}
                         onPress={() => handleDeleteExpense(expense.id)}
                       >
-                        <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>Delete</Text>
+                        <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>{t('common.delete')}</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -367,11 +369,11 @@ export function GroupScreen() {
           <View>
             {memberBalances.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No balances yet</Text>
+                <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>{t('balance.emptyTitle')}</Text>
               </View>
             ) : (
               <>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Individual Balances</Text>
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{t('balance.individualBalances')}</Text>
                 {memberBalances.map((balance) => (
                   <View key={balance.memberId} style={[styles.balanceRow, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
                     <Text style={{ color: theme.colors.text, fontWeight: '500' }}>{getMemberName(balance.memberId)}</Text>
@@ -389,7 +391,7 @@ export function GroupScreen() {
                 {settlements.length > 0 && (
                   <>
                     <Text style={[styles.sectionTitle, { marginTop: 24, color: theme.colors.text }]}>
-                      Suggested Settlements
+                      {t('balance.suggestedSettlements')}
                     </Text>
                     {settlements.map((settlement, i) => (
                       <View key={i} style={[styles.settlementCard, { backgroundColor: theme.colors.settlement.bg, borderColor: theme.colors.settlement.border }]}>
@@ -421,7 +423,7 @@ export function GroupScreen() {
               <View style={styles.addMemberRow}>
                 <TextInput
                   style={[styles.input, { flex: 1, backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-                  placeholder="New member name"
+                  placeholder={t('member.newMemberPlaceholderMobile')}
                   placeholderTextColor={theme.colors.textSecondary}
                   value={newMemberName}
                   onChangeText={setNewMemberName}
@@ -432,16 +434,16 @@ export function GroupScreen() {
                   style={[styles.addMemberButton, { backgroundColor: theme.colors.primary.a0 }]}
                   onPress={handleAddMember}
                 >
-                  <Text style={styles.primaryButtonText}>Add</Text>
+                  <Text style={styles.primaryButtonText}>{t('member.addMember')}</Text>
                 </TouchableOpacity>
               </View>
             )}
             
             {members.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No members yet</Text>
+                <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>{t('member.emptyTitle')}</Text>
                 <Text style={[styles.emptyHint, { color: theme.colors.textSecondary }]}>
-                  Add members to start splitting expenses
+                  {t('member.emptyDescriptionWithWrite')}
                 </Text>
               </View>
             ) : (
@@ -453,7 +455,7 @@ export function GroupScreen() {
                       style={[styles.deleteButton, { backgroundColor: theme.colors.danger.a20 }]}
                       onPress={() => handleDeleteMember(member.id, member.name)}
                     >
-                      <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>Delete</Text>
+                      <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>{t('common.delete')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>

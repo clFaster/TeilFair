@@ -10,10 +10,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -21,6 +23,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY'];
 
 export function HomeScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
   const { theme, mode, setThemePreference } = useTheme();
@@ -34,7 +37,7 @@ export function HomeScreen() {
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
-      Alert.alert('Error', 'Please enter a group name');
+      Alert.alert(t('common.error'), t('validation.enterGroupName'));
       return;
     }
     
@@ -45,7 +48,7 @@ export function HomeScreen() {
         token: group.writeToken 
       });
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to create group');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.failedToCreate'));
     }
   };
 
@@ -56,7 +59,7 @@ export function HomeScreen() {
       const token = url.searchParams.get('t');
       
       if (!pathMatch || !token) {
-        Alert.alert('Error', 'Invalid group link');
+        Alert.alert(t('common.error'), t('error.invalidLink'));
         return;
       }
       
@@ -66,10 +69,10 @@ export function HomeScreen() {
       if (success) {
         navigation.navigate('Group', { groupId, token });
       } else {
-        Alert.alert('Error', 'Could not access group. Invalid link or token.');
+        Alert.alert(t('common.error'), t('error.failedToJoin'));
       }
     } catch {
-      Alert.alert('Error', 'Invalid link format');
+      Alert.alert(t('common.error'), t('error.invalidLinkFormat'));
     }
   };
 
@@ -79,7 +82,7 @@ export function HomeScreen() {
       navigation.navigate('Group', { groupId, token });
     } else {
       removeFromRecent(groupId);
-      Alert.alert('Error', 'This group is no longer accessible');
+      Alert.alert(t('common.error'), t('error.groupNoLongerAccessible'));
     }
   };
 
@@ -90,6 +93,13 @@ export function HomeScreen() {
   const getThemeIcon = () => {
     return mode === 'dark' ? '🌙' : '☀️';
   };
+
+  const howItWorksSteps = [
+    t('home.howItWorksStep1'),
+    t('home.howItWorksStep2'),
+    t('home.howItWorksStep3'),
+    t('home.howItWorksStep4'),
+  ];
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -105,7 +115,7 @@ export function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <LogoIcon size={32} />
-            <Text style={[styles.logo, { color: theme.colors.primary.a0 }]}>TeilFair</Text>
+            <Text style={[styles.logo, { color: theme.colors.primary.a0 }]}>{t('common.appName')}</Text>
           </View>
           <TouchableOpacity 
             style={[styles.themeButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
@@ -113,32 +123,34 @@ export function HomeScreen() {
           >
             <Text style={styles.themeIcon}>{getThemeIcon()}</Text>
           </TouchableOpacity>
-        </View>
-        
-        <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-          Split expenses fairly
-        </Text>
+         </View>
+         
+         <LanguageSwitcher />
+         
+         <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+           {t('common.tagline')}
+         </Text>
 
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
             onPress={() => { setShowCreate(true); setShowJoin(false); }}
           >
-            <Text style={styles.primaryButtonText}>Create Group</Text>
+            <Text style={styles.primaryButtonText}>{t('home.createGroup')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.buttonOutline, { borderColor: theme.colors.border }]}
             onPress={() => { setShowJoin(true); setShowCreate(false); }}
           >
             <Text style={[styles.outlineButtonText, { color: theme.colors.text }]}>
-              Join Group
+              {t('home.joinGroup')}
             </Text>
           </TouchableOpacity>
         </View>
 
         {showCreate && (
           <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Create New Group</Text>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.createFormTitle')}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -148,12 +160,12 @@ export function HomeScreen() {
                   color: theme.colors.text,
                 }
               ]}
-              placeholder="Group name"
+              placeholder={t('home.groupNameLabel')}
               placeholderTextColor={theme.colors.textSecondary}
               value={groupName}
               onChangeText={setGroupName}
             />
-            <Text style={[styles.label, { color: theme.colors.text }]}>Currency</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>{t('home.currencyLabel')}</Text>
             <View style={styles.currencyRow}>
               {CURRENCIES.map((c) => (
                 <TouchableOpacity
@@ -187,7 +199,7 @@ export function HomeScreen() {
                 disabled={loading}
               >
                 <Text style={styles.primaryButtonText}>
-                  {loading ? 'Creating...' : 'Create'}
+                  {loading ? t('home.creating') : t('home.createButton')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -195,7 +207,7 @@ export function HomeScreen() {
                 onPress={() => setShowCreate(false)}
               >
                 <Text style={[styles.outlineButtonText, { color: theme.colors.text }]}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -204,7 +216,7 @@ export function HomeScreen() {
 
         {showJoin && (
           <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Join Existing Group</Text>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.joinFormTitle')}</Text>
             <TextInput
               style={[
                 styles.input,
@@ -214,7 +226,7 @@ export function HomeScreen() {
                   color: theme.colors.text,
                 }
               ]}
-              placeholder="Paste group link here"
+              placeholder={t('home.linkPlaceholder')}
               placeholderTextColor={theme.colors.textSecondary}
               value={joinLink}
               onChangeText={setJoinLink}
@@ -227,7 +239,7 @@ export function HomeScreen() {
                 disabled={loading}
               >
                 <Text style={styles.primaryButtonText}>
-                  {loading ? 'Joining...' : 'Join'}
+                  {loading ? t('home.joining') : t('home.joinButton')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -235,7 +247,7 @@ export function HomeScreen() {
                 onPress={() => setShowJoin(false)}
               >
                 <Text style={[styles.outlineButtonText, { color: theme.colors.text }]}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -244,7 +256,7 @@ export function HomeScreen() {
 
         {recentGroups.length > 0 && (
           <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Recent Groups</Text>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.recentGroupsTitleMobile')}</Text>
             {recentGroups.map((item) => (
               <View 
                 key={item.id}
@@ -273,7 +285,7 @@ export function HomeScreen() {
                           : theme.colors.info.a0 
                       }
                     ]}>
-                      {item.permission === 'write' ? 'edit' : 'view'}
+                      {item.permission === 'write' ? t('common.editPermission') : t('common.viewPermission')}
                     </Text>
                   </View>
                 </View>
@@ -282,14 +294,14 @@ export function HomeScreen() {
                     style={[styles.smallButton, { backgroundColor: theme.colors.primary.a0 }]}
                     onPress={() => handleOpenRecent(item.id, item.token)}
                   >
-                    <Text style={styles.primaryButtonText}>Open</Text>
+                    <Text style={styles.primaryButtonText}>{t('common.open')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.smallButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
                     onPress={() => removeFromRecent(item.id)}
                   >
                     <Text style={{ color: theme.colors.text, fontWeight: '500' }}>
-                      Remove
+                      {t('common.remove')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -300,13 +312,8 @@ export function HomeScreen() {
 
         {/* How it works */}
         <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>How it works</Text>
-          {[
-            'Create a group and share the link with friends',
-            'Add expenses as they happen',
-            'Split costs equally or with custom amounts',
-            'See who owes whom and settle up',
-          ].map((step, index) => (
+          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.howItWorksTitle')}</Text>
+          {howItWorksSteps.map((step, index) => (
             <View key={index} style={styles.stepRow}>
               <View style={[styles.stepNumber, { backgroundColor: theme.colors.primary.a0 }]}>
                 <Text style={styles.stepNumberText}>{index + 1}</Text>

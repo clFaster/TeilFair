@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy, faCheck, faLink, faEye, faEdit, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
@@ -9,6 +10,7 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ onClose }: ShareModalProps) {
+  const { t } = useTranslation();
   const { group, permission } = useGroupStore();
   const [copied, setCopied] = useState<'read' | 'write' | null>(null);
 
@@ -43,25 +45,25 @@ export function ShareModal({ onClose }: ShareModalProps) {
         <div className="modal-header">
           <h2>
             <FontAwesomeIcon icon={faLink} style={{ marginRight: '10px', opacity: 0.7 }} />
-            Share Group
+            {t('share.title')}
           </h2>
           <button className="btn-close" onClick={onClose}>&times;</button>
         </div>
         
         <div className="modal-body">
           <p className="text-muted text-sm mb-4">
-            Share these links to invite others to "{group.name}". Anyone with the link can access it.
+            {t('share.description', { groupName: group.name })}
           </p>
           
           {/* View-only Link */}
           <div className="share-link-section share-link-read">
             <div className="flex items-center gap-2 mb-2">
               <FontAwesomeIcon icon={faEye} className="share-link-icon" />
-              <label className="share-link-label">View-only Link</label>
-              <span className="badge badge-read">view only</span>
+              <label className="share-link-label">{t('share.viewOnlyLinkLabel')}</label>
+              <span className="badge badge-read">{t('share.viewOnlyBadge')}</span>
             </div>
             <p className="text-sm mb-3 share-link-description">
-              Recipients can view expenses and balances but cannot make changes.
+              {t('share.viewOnlyDescription')}
             </p>
             <div className="copy-group">
               <input
@@ -78,12 +80,12 @@ export function ShareModal({ onClose }: ShareModalProps) {
                 {copied === 'read' ? (
                   <>
                     <FontAwesomeIcon icon={faCheck} />
-                    <span>Copied!</span>
+                    <span>{t('common.copied')}</span>
                   </>
                 ) : (
                   <>
                     <FontAwesomeIcon icon={faCopy} />
-                    <span>Copy</span>
+                    <span>{t('common.copy')}</span>
                   </>
                 )}
               </button>
@@ -95,11 +97,11 @@ export function ShareModal({ onClose }: ShareModalProps) {
             <div className="share-link-section share-link-write">
               <div className="flex items-center gap-2 mb-2">
                 <FontAwesomeIcon icon={faEdit} className="share-link-icon" />
-                <label className="share-link-label">Full Access Link</label>
-                <span className="badge badge-write">full access</span>
+                <label className="share-link-label">{t('share.fullAccessLinkLabel')}</label>
+                <span className="badge badge-write">{t('share.fullAccessBadge')}</span>
               </div>
               <p className="text-sm mb-3 share-link-description">
-                Recipients can add members, create expenses, and edit the group.
+                {t('share.fullAccessDescription')}
               </p>
               <div className="copy-group">
                 <input
@@ -116,12 +118,12 @@ export function ShareModal({ onClose }: ShareModalProps) {
                   {copied === 'write' ? (
                     <>
                       <FontAwesomeIcon icon={faCheck} />
-                      <span>Copied!</span>
+                      <span>{t('common.copied')}</span>
                     </>
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faCopy} />
-                      <span>Copy</span>
+                      <span>{t('common.copy')}</span>
                     </>
                   )}
                 </button>
@@ -140,14 +142,14 @@ export function ShareModal({ onClose }: ShareModalProps) {
           }}>
             <FontAwesomeIcon icon={faShieldAlt} style={{ color: 'var(--color-text-muted)', marginTop: '2px' }} />
             <div className="text-sm text-muted">
-              <strong style={{ color: 'var(--color-text-secondary)' }}>Security note:</strong> These links never expire. Only share with people you trust.
-              {canShareWrite && ' The full access link gives permission to modify the group.'}
+              <strong style={{ color: 'var(--color-text-secondary)' }}>{t('share.securityNoteTitle')}</strong> {t('share.securityNoteDescription')}
+              {canShareWrite && ' ' + t('share.securityWriteWarning')}
             </div>
           </div>
         </div>
         
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>Close</button>
+          <button className="btn btn-secondary" onClick={onClose}>{t('common.close')}</button>
         </div>
       </div>
     </div>

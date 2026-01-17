@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus, faChevronDown, faChevronUp, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { ShareType } from '@teilfair/shared';
@@ -17,6 +18,7 @@ export function AddExpenseForm({
   showHeader = false,
   showCancelButton = true,
 }: AddExpenseFormProps) {
+  const { t } = useTranslation();
   const { members, group, addExpense, addMember } = useGroupStore();
   
   const [description, setDescription] = useState('');
@@ -197,7 +199,7 @@ export function AddExpenseForm({
     setLoading(true);
     try {
       await addExpense({
-        description: description.trim() || 'Expense',
+        description: description.trim() || t('expense.defaultDescription'),
         totalAmount: amount,
         date: new Date(`${date}T${time}`),
         payers: payerEntries,
@@ -232,7 +234,7 @@ export function AddExpenseForm({
     <form onSubmit={handleSubmit} className="expense-form">
       {showHeader && (
         <div className="expense-form-header">
-          <h2>Add Expense</h2>
+          <h2>{t('expense.addExpense')}</h2>
           {onCancel && (
             <button type="button" className="btn btn-icon btn-ghost" onClick={onCancel}>&times;</button>
           )}
@@ -242,12 +244,12 @@ export function AddExpenseForm({
       <div className="expense-form-body">
         {/* Description */}
         <div className="input-group">
-          <label htmlFor="description">Description</label>
+          <label htmlFor="description">{t('expense.descriptionLabel')}</label>
           <input
             id="description"
             type="text"
             className="input"
-            placeholder="e.g., Dinner, Taxi, Hotel"
+            placeholder={t('expense.descriptionPlaceholder')}
             value={description}
             onChange={e => setDescription(e.target.value)}
           />
@@ -255,14 +257,14 @@ export function AddExpenseForm({
         
         {/* Amount */}
         <div className="input-group">
-          <label htmlFor="amount">Amount ({group?.currency})</label>
+          <label htmlFor="amount">{t('expense.amountLabel', { currency: group?.currency })}</label>
           <input
             id="amount"
             type="number"
             step="0.01"
             min="0.01"
             className="input"
-            placeholder="0.00"
+            placeholder={t('expense.amountPlaceholder')}
             value={totalAmount}
             onChange={e => setTotalAmount(e.target.value)}
             required
@@ -273,7 +275,7 @@ export function AddExpenseForm({
         {/* Date & Time */}
         <div className="input-row">
           <div className="input-group" style={{ flex: 2 }}>
-            <label htmlFor="date">Date</label>
+            <label htmlFor="date">{t('expense.dateLabel')}</label>
             <input
               id="date"
               type="date"
@@ -283,7 +285,7 @@ export function AddExpenseForm({
             />
           </div>
           <div className="input-group" style={{ flex: 1 }}>
-            <label htmlFor="time">Time</label>
+            <label htmlFor="time">{t('expense.timeLabel')}</label>
             <input
               id="time"
               type="time"
@@ -297,15 +299,15 @@ export function AddExpenseForm({
         {/* Quick Add Member */}
         {members.length === 0 && (
           <div className="input-group">
-            <label>Add Members First</label>
+            <label>{t('member.addMembersFirst')}</label>
             <p className="text-secondary text-sm mb-2">
-              You need at least one member to create an expense
+              {t('member.addMembersFirstDescription')}
             </p>
             <div className="input-row">
               <input
                 type="text"
                 className="input"
-                placeholder="Enter member name..."
+                placeholder={t('member.memberNamePlaceholder')}
                 value={newMemberName}
                 onChange={e => setNewMemberName(e.target.value)}
                 onKeyDown={e => {
@@ -330,7 +332,7 @@ export function AddExpenseForm({
         {/* Payer Section */}
         {members.length > 0 && (
           <div className="input-group">
-            <label>Who paid?</label>
+            <label>{t('expense.whoPaidLabel')}</label>
             
             {!showMultiplePayers ? (
               <>
@@ -339,7 +341,7 @@ export function AddExpenseForm({
                   value={singlePayer}
                   onChange={e => setSinglePayer(e.target.value)}
                 >
-                  <option value="">Select payer...</option>
+                  <option value="">{t('expense.selectPayer')}</option>
                   {members.map(member => (
                     <option key={member.id} value={member.id}>
                       {member.name}
@@ -352,7 +354,7 @@ export function AddExpenseForm({
                   onClick={() => setShowMultiplePayers(true)}
                 >
                   <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
-                  <span>Multiple payers</span>
+                  <span>{t('expense.multiplePayers')}</span>
                 </button>
               </>
             ) : (
@@ -364,7 +366,7 @@ export function AddExpenseForm({
                   marginBottom: '12px'
                 }}>
                   <div className="text-sm">
-                    <span className="text-muted">Total entered: </span>
+                    <span className="text-muted">{t('expense.totalEntered')} </span>
                     <span className={totalPaidMultiple === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
                       {formatCurrency(totalPaidMultiple)}
                     </span>
@@ -379,7 +381,7 @@ export function AddExpenseForm({
                       step="0.01"
                       min="0"
                       className="input"
-                      placeholder="0.00"
+                      placeholder={t('expense.amountPlaceholder')}
                       value={multiplePayers[member.id] || ''}
                       onChange={e => handlePayerChange(member.id, e.target.value)}
                       style={{ width: '120px' }}
@@ -395,7 +397,7 @@ export function AddExpenseForm({
                   }}
                 >
                   <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
-                  <span>Single payer</span>
+                  <span>{t('expense.singlePayer')}</span>
                 </button>
               </div>
             )}
@@ -406,7 +408,7 @@ export function AddExpenseForm({
         {members.length > 0 && (
           <div className="input-group">
             <label>
-              Split between 
+              {t('expense.splitBetweenLabel')} 
               <span style={{ 
                 marginLeft: '8px', 
                 padding: '2px 8px', 
@@ -448,7 +450,7 @@ export function AddExpenseForm({
                   onClick={() => setShowCustomSplit(true)}
                 >
                   <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
-                  <span>Custom split amounts</span>
+                  <span>{t('expense.customSplitAmounts')}</span>
                 </button>
               </>
             ) : (
@@ -461,7 +463,7 @@ export function AddExpenseForm({
                       step="0.01"
                       min="0"
                       className="input"
-                      placeholder="0.00"
+                      placeholder={t('expense.amountPlaceholder')}
                       value={customSplits[member.id] || ''}
                       onChange={e => handleCustomSplitChange(member.id, e.target.value)}
                       style={{ width: '120px' }}
@@ -477,7 +479,7 @@ export function AddExpenseForm({
                   }}
                 >
                   <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
-                  <span>Equal split</span>
+                  <span>{t('expense.equalSplit')}</span>
                 </button>
               </div>
             )}
@@ -487,12 +489,12 @@ export function AddExpenseForm({
         {/* Quick Add Member (when there are already members) */}
         {members.length > 0 && (
           <div className="input-group">
-            <label>Add new member</label>
+            <label>{t('member.addMemberLabel')}</label>
             <div className="input-row">
               <input
                 type="text"
                 className="input"
-                placeholder="Enter name..."
+                placeholder={t('member.newMemberPlaceholder')}
                 value={newMemberName}
                 onChange={e => setNewMemberName(e.target.value)}
                 onKeyDown={e => {
@@ -530,7 +532,7 @@ export function AddExpenseForm({
       <div className="expense-form-footer">
         {showCancelButton && onCancel && (
           <button type="button" className="btn btn-secondary" onClick={onCancel}>
-            Cancel
+            {t('common.cancel')}
           </button>
         )}
         <button 
@@ -542,10 +544,10 @@ export function AddExpenseForm({
           {loading ? (
             <>
               <FontAwesomeIcon icon={faSpinner} spin />
-              <span>Adding...</span>
+              <span>{t('expense.adding')}</span>
             </>
           ) : (
-            'Add Expense'
+            t('expense.addExpense')
           )}
         </button>
       </div>

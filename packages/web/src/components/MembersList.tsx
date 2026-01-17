@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus, faEdit, faTrash, faCheck, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
@@ -8,6 +9,7 @@ interface MembersListProps {
 }
 
 export function MembersList({ canEdit }: MembersListProps) {
+  const { t } = useTranslation();
   const { members, addMember, updateMember, deleteMember, expenses, memberBalances } = useGroupStore();
   
   const [newMemberName, setNewMemberName] = useState('');
@@ -47,11 +49,11 @@ export function MembersList({ canEdit }: MembersListProps) {
     );
     
     if (isUsed) {
-      alert('Cannot delete a member who is part of an expense. Remove them from all expenses first.');
+      alert(t('member.cannotDelete'));
       return;
     }
     
-    if (!confirm('Are you sure you want to delete this member?')) return;
+    if (!confirm(t('member.confirmDelete'))) return;
     
     setLoading(true);
     try {
@@ -91,7 +93,7 @@ export function MembersList({ canEdit }: MembersListProps) {
             <input
               type="text"
               className="input"
-              placeholder="Enter member name..."
+              placeholder={t('member.memberNamePlaceholder')}
               value={newMemberName}
               onChange={(e) => setNewMemberName(e.target.value)}
               disabled={loading}
@@ -103,7 +105,7 @@ export function MembersList({ canEdit }: MembersListProps) {
               style={{ flexShrink: 0 }}
             >
               <FontAwesomeIcon icon={faUserPlus} style={{ marginRight: '6px' }} />
-              Add
+              {t('member.addMember')}
             </button>
           </div>
         </form>
@@ -126,8 +128,8 @@ export function MembersList({ canEdit }: MembersListProps) {
           }}>
             <FontAwesomeIcon icon={faUser} />
           </div>
-          <p>No members yet</p>
-          {canEdit && <p className="text-sm">Add members to start splitting expenses</p>}
+          <p>{t('member.emptyTitle')}</p>
+          {canEdit && <p className="text-sm">{t('member.emptyDescriptionWithWrite')}</p>}
         </div>
       ) : (
         <div>
@@ -208,7 +210,7 @@ export function MembersList({ canEdit }: MembersListProps) {
                           className={`text-sm ${balance > 0 ? 'balance-positive' : 'balance-negative'}`}
                           style={{ marginTop: '2px' }}
                         >
-                          {balance > 0 ? 'Gets back' : 'Owes'} {Math.abs(balance).toFixed(2)}
+                          {balance > 0 ? t('balance.getsBack') : t('balance.owes')} {Math.abs(balance).toFixed(2)}
                         </div>
                       )}
                     </div>
@@ -218,14 +220,14 @@ export function MembersList({ canEdit }: MembersListProps) {
                         <button
                           className="btn btn-sm btn-ghost"
                           onClick={() => startEditing(member.id, member.name)}
-                          title="Edit name"
+                          title={t('member.editNameTitle')}
                         >
                           <FontAwesomeIcon icon={faEdit} />
                         </button>
                         <button
                           className="btn btn-sm btn-ghost"
                           onClick={() => handleDeleteMember(member.id)}
-                          title="Delete member"
+                          title={t('member.deleteTitle')}
                           style={{ color: 'var(--color-danger)' }}
                         >
                           <FontAwesomeIcon icon={faTrash} />

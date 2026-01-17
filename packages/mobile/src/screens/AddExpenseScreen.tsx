@@ -13,11 +13,13 @@ import {
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 
 export function AddExpenseScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const { members, group, addExpense, addMember } = useGroupStore();
   const { theme, isDark } = useTheme();
@@ -66,7 +68,7 @@ export function AddExpenseScreen() {
         setSinglePayer(newMember.id);
       }
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add member');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.failedToAddMember'));
     } finally {
       setIsAddingMember(false);
     }
@@ -139,12 +141,12 @@ export function AddExpenseScreen() {
   const handleSubmit = async () => {
     const amount = parseFloat(totalAmount);
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Error', 'Please enter a valid amount');
+      Alert.alert(t('common.error'), t('validation.enterValidAmount'));
       return;
     }
     
     if (includedMembers.size < 1) {
-      Alert.alert('Error', 'Please select at least one person to split with');
+      Alert.alert(t('common.error'), t('validation.selectAtLeastOnePerson'));
       return;
     }
     
@@ -156,18 +158,18 @@ export function AddExpenseScreen() {
         .filter(p => !isNaN(p.amount) && p.amount > 0);
       
       if (payerEntries.length === 0) {
-        Alert.alert('Error', 'Please enter payment amounts');
+        Alert.alert(t('common.error'), t('validation.enterPaymentAmounts'));
         return;
       }
       
       const totalPaid = payerEntries.reduce((sum, p) => sum + p.amount, 0);
       if (Math.abs(totalPaid - amount) > 0.01) {
-        Alert.alert('Error', `Paid amounts (${totalPaid.toFixed(2)}) don't match total (${amount.toFixed(2)})`);
+        Alert.alert(t('common.error'), t('validation.paidAmountsMismatch', { paid: totalPaid.toFixed(2), total: amount.toFixed(2) }));
         return;
       }
     } else {
       if (!singlePayer) {
-        Alert.alert('Error', 'Please select who paid');
+        Alert.alert(t('common.error'), t('validation.selectWhoPaid'));
         return;
       }
       payerEntries = [{ memberId: singlePayer, amount }];
@@ -181,13 +183,13 @@ export function AddExpenseScreen() {
         .filter(s => !isNaN(s.amount) && s.amount > 0);
       
       if (customEntries.length < 1) {
-        Alert.alert('Error', 'Please enter split amounts');
+        Alert.alert(t('common.error'), t('validation.enterSplitAmountsShort'));
         return;
       }
       
       const totalSplit = customEntries.reduce((sum, s) => sum + s.amount, 0);
       if (Math.abs(totalSplit - amount) > 0.01) {
-        Alert.alert('Error', `Split amounts (${totalSplit.toFixed(2)}) don't match total (${amount.toFixed(2)})`);
+        Alert.alert(t('common.error'), t('validation.splitAmountsMismatch', { split: totalSplit.toFixed(2), total: amount.toFixed(2) }));
         return;
       }
       
@@ -207,7 +209,7 @@ export function AddExpenseScreen() {
     setLoading(true);
     try {
       await addExpense({
-        description: description.trim() || 'Expense',
+        description: description.trim() || t('expense.defaultDescription'),
         totalAmount: amount,
         date: expenseDate,
         payers: payerEntries,
@@ -215,7 +217,7 @@ export function AddExpenseScreen() {
       });
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add expense');
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.failedToAddExpense'));
     } finally {
       setLoading(false);
     }
@@ -250,10 +252,10 @@ export function AddExpenseScreen() {
       >
         {/* Description */}
         <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>Description</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('expense.descriptionLabel')}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-            placeholder="e.g., Dinner, Taxi, Hotel"
+            placeholder={t('expense.descriptionPlaceholder')}
             placeholderTextColor={theme.colors.textSecondary}
             value={description}
             onChangeText={setDescription}
@@ -262,10 +264,10 @@ export function AddExpenseScreen() {
 
         {/* Amount */}
         <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>Amount ({group?.currency})</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('expense.amountLabel', { currency: group?.currency })}</Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-            placeholder="0.00"
+            placeholder={t('expense.amountPlaceholder')}
             placeholderTextColor={theme.colors.textSecondary}
             value={totalAmount}
             onChangeText={setTotalAmount}
@@ -275,7 +277,7 @@ export function AddExpenseScreen() {
 
         {/* Date and Time with Native Pickers */}
         <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>Date & Time</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('expense.dateTimeLabel')}</Text>
           <View style={styles.dateTimeRow}>
             <TouchableOpacity
               style={[styles.dateTimeButton, { flex: 2, backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
@@ -314,16 +316,16 @@ export function AddExpenseScreen() {
 
         {/* Add Member */}
         <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>Members</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{t('member.membersLabel')}</Text>
           {members.length === 0 && (
             <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
-              Add at least one member to create an expense
+              {t('member.addMemberHintSingle')}
             </Text>
           )}
           <View style={styles.addMemberRow}>
             <TextInput
               style={[styles.input, { flex: 1, backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-              placeholder="Add new member..."
+              placeholder={t('member.addNewMemberPlaceholder')}
               placeholderTextColor={theme.colors.textSecondary}
               value={newMemberName}
               onChangeText={setNewMemberName}
@@ -336,7 +338,7 @@ export function AddExpenseScreen() {
               disabled={isAddingMember || !newMemberName.trim()}
             >
               <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-                {isAddingMember ? '...' : 'Add'}
+                {isAddingMember ? '...' : t('member.addMember')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -345,7 +347,7 @@ export function AddExpenseScreen() {
         {/* Payer */}
         {members.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Who paid?</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>{t('expense.whoPaidLabel')}</Text>
             
             {!showMultiplePayers ? (
               <>
@@ -380,21 +382,21 @@ export function AddExpenseScreen() {
                   onPress={() => setShowMultiplePayers(true)}
                 >
                   <Text style={[styles.advancedText, { color: theme.colors.textSecondary }]}>
-                    + Multiple payers
+                    {t('expense.useMultiplePayers')}
                   </Text>
                 </TouchableOpacity>
               </>
             ) : (
               <>
                 <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
-                  Total: {formatCurrency(totalPaidMultiple)} / {formatCurrency(parseFloat(totalAmount) || 0)}
+                  {t('expense.totalEntered')} {formatCurrency(totalPaidMultiple)} / {formatCurrency(parseFloat(totalAmount) || 0)}
                 </Text>
                 {members.map(member => (
                   <View key={member.id} style={styles.payerRow}>
                     <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
                     <TextInput
                       style={[styles.amountInput, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-                      placeholder="0.00"
+                      placeholder={t('expense.amountPlaceholder')}
                       placeholderTextColor={theme.colors.textSecondary}
                       value={multiplePayers[member.id] || ''}
                       onChangeText={(v) => handlePayerChange(member.id, v)}
@@ -410,7 +412,7 @@ export function AddExpenseScreen() {
                   }}
                 >
                   <Text style={[styles.advancedText, { color: theme.colors.primary.a0 }]}>
-                    - Use single payer
+                    {t('expense.useSinglePayer')}
                   </Text>
                 </TouchableOpacity>
               </>
@@ -422,7 +424,7 @@ export function AddExpenseScreen() {
         {members.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.label, { color: theme.colors.text }]}>
-              Split between ({includedMembers.size} {includedMembers.size === 1 ? 'person' : 'people'})
+              {t('expense.splitBetweenCount', { count: includedMembers.size, unit: includedMembers.size === 1 ? t('expense.person') : t('expense.people') })}
             </Text>
             
             {!showCustomSplit ? (
@@ -464,7 +466,7 @@ export function AddExpenseScreen() {
                   onPress={() => setShowCustomSplit(true)}
                 >
                   <Text style={[styles.advancedText, { color: theme.colors.textSecondary }]}>
-                    + Custom split amounts
+                    {t('expense.useCustomSplit')}
                   </Text>
                 </TouchableOpacity>
               </>
@@ -475,7 +477,7 @@ export function AddExpenseScreen() {
                     <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
                     <TextInput
                       style={[styles.amountInput, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-                      placeholder="0.00"
+                      placeholder={t('expense.amountPlaceholder')}
                       placeholderTextColor={theme.colors.textSecondary}
                       value={customSplits[member.id] || ''}
                       onChangeText={(v) => handleCustomSplitChange(member.id, v)}
@@ -491,7 +493,7 @@ export function AddExpenseScreen() {
                   }}
                 >
                   <Text style={[styles.advancedText, { color: theme.colors.primary.a0 }]}>
-                    - Use equal split
+                    {t('expense.useEqualSplit')}
                   </Text>
                 </TouchableOpacity>
               </>
@@ -513,7 +515,7 @@ export function AddExpenseScreen() {
           style={[styles.footerButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
           onPress={() => navigation.goBack()}
         >
-          <Text style={{ color: theme.colors.text, fontWeight: '600', fontSize: 16 }}>Cancel</Text>
+          <Text style={{ color: theme.colors.text, fontWeight: '600', fontSize: 16 }}>{t('common.cancel')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
@@ -525,7 +527,7 @@ export function AddExpenseScreen() {
           disabled={loading || members.length < 1}
         >
           <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-            {loading ? 'Adding...' : 'Add Expense'}
+            {loading ? t('expense.adding') : t('expense.addExpense')}
           </Text>
         </TouchableOpacity>
       </View>

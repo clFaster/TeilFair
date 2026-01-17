@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash, faClock, faUser } from '@fortawesome/free-solid-svg-icons';
 import type { Expense } from '@teilfair/shared';
@@ -10,11 +11,12 @@ interface ExpensesListProps {
 }
 
 export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
+  const { t } = useTranslation();
   const { expenses, members, group, deleteExpense } = useGroupStore();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const getMemberName = (memberId: string) => {
-    return members.find(m => m.id === memberId)?.name || 'Unknown';
+    return members.find(m => m.id === memberId)?.name || t('common.unknown');
   };
 
   const formatDate = (date: Date) => {
@@ -23,9 +25,9 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
     const diff = now.getTime() - d.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
+    if (days === 0) return t('common.today');
+    if (days === 1) return t('common.yesterday');
+    if (days < 7) return t('common.daysAgo', { count: days });
     
     return d.toLocaleDateString(undefined, {
       year: 'numeric',
@@ -50,7 +52,7 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
   };
 
   const handleDelete = async (expenseId: string) => {
-    if (!confirm('Are you sure you want to delete this expense?')) return;
+    if (!confirm(t('expense.confirmDelete'))) return;
     setDeletingId(expenseId);
     try {
       await deleteExpense(expenseId);
@@ -82,8 +84,8 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
         }}>
           <FontAwesomeIcon icon={faClock} />
         </div>
-        <p>No expenses yet</p>
-        <p className="text-sm">Add an expense to start tracking</p>
+        <p>{t('expense.emptyTitle')}</p>
+        <p className="text-sm">{t('expense.emptyDescription')}</p>
       </div>
     );
   }
@@ -102,8 +104,8 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
             : expense.payers.map(p => getMemberName(p.memberId)).join(' & ');
           
           const splitInfo = expense.splits.length === members.length
-            ? 'Split equally'
-            : `Split between ${expense.splits.length} people`;
+            ? t('expense.splitEqually')
+            : t('expense.splitBetween', { count: expense.splits.length });
 
           const isDeleting = deletingId === expense.id;
 
@@ -118,10 +120,10 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
             >
               <div className="expense-header">
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="expense-description">{expense.description || 'Expense'}</div>
+                  <div className="expense-description">{expense.description || t('expense.defaultDescription')}</div>
                   <div className="expense-date">
                     <FontAwesomeIcon icon={faClock} style={{ marginRight: '4px', opacity: 0.6 }} />
-                    {formatDate(expense.date)} at {formatTime(expense.date)}
+                    {formatDate(expense.date)} {t('common.at')} {formatTime(expense.date)}
                   </div>
                 </div>
                 <div className="expense-amount">{formatCurrency(expense.totalAmount)}</div>
@@ -130,7 +132,7 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
               <div className="expense-details">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <FontAwesomeIcon icon={faUser} style={{ opacity: 0.5, fontSize: '12px' }} />
-                  <span>Paid by {payerNames}</span>
+                  <span>{t('expense.paidBy', { names: payerNames })}</span>
                   {expense.payers.length > 1 && (
                     <span className="text-muted" style={{ fontSize: '12px' }}>
                       ({expense.payers.map(p => `${getMemberName(p.memberId)}: ${formatCurrency(p.amount)}`).join(', ')})
@@ -149,7 +151,7 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
                     style={{ minWidth: '80px' }}
                   >
                     <FontAwesomeIcon icon={faEdit} style={{ marginRight: '4px' }} />
-                    Edit
+                    {t('common.edit')}
                   </button>
                   <button 
                     className="btn btn-sm btn-danger"
@@ -158,7 +160,7 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
                     style={{ minWidth: '80px' }}
                   >
                     <FontAwesomeIcon icon={faTrash} style={{ marginRight: '4px' }} />
-                    {isDeleting ? 'Deleting...' : 'Delete'}
+                    {isDeleting ? t('expense.deleting') : t('common.delete')}
                   </button>
                 </div>
               )}

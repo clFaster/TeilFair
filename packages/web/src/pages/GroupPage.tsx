@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faSun, faMoon, faShare, faPlus, faReceipt, faUsers, faChartPie, 
@@ -15,6 +16,7 @@ import { AddExpenseForm } from '../components/AddExpenseForm';
 import { EditExpenseForm } from '../components/EditExpenseForm';
 import { ShareModal } from '../components/ShareModal';
 import { LogoIcon } from '../components/LogoIcon';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useTheme } from '../theme/ThemeProvider';
 import type { Expense } from '@teilfair/shared';
 
@@ -48,6 +50,7 @@ function useScreenSize() {
 }
 
 export function GroupPage() {
+  const { t } = useTranslation();
   const { groupId } = useParams<{ groupId: string }>();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('t');
@@ -87,11 +90,11 @@ export function GroupPage() {
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
           <div className="card text-center" style={{ maxWidth: '400px' }}>
             <FontAwesomeIcon icon={faExclamationTriangle} style={{ fontSize: '48px', color: 'var(--color-warning)', marginBottom: '16px' }} />
-            <h2 style={{ marginBottom: '8px' }}>Invalid Link</h2>
-            <p className="text-secondary mb-4">This group link is invalid or incomplete.</p>
+            <h2 style={{ marginBottom: '8px' }}>{t('group.invalidLinkTitle')}</h2>
+            <p className="text-secondary mb-4">{t('group.invalidLinkDescription')}</p>
             <Link to="/" className="btn btn-primary">
               <FontAwesomeIcon icon={faHome} style={{ marginRight: '8px' }} />
-              Go Home
+              {t('common.goHome')}
             </Link>
           </div>
         </div>
@@ -105,7 +108,7 @@ export function GroupPage() {
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
           <div className="card text-center" style={{ maxWidth: '400px' }}>
             <FontAwesomeIcon icon={faSpinner} spin style={{ fontSize: '48px', color: 'var(--color-primary)', marginBottom: '16px' }} />
-            <p className="text-secondary">Loading group...</p>
+            <p className="text-secondary">{t('group.loadingGroup')}</p>
           </div>
         </div>
       </div>
@@ -118,11 +121,11 @@ export function GroupPage() {
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
           <div className="card text-center" style={{ maxWidth: '400px' }}>
             <FontAwesomeIcon icon={faExclamationTriangle} style={{ fontSize: '48px', color: 'var(--color-danger)', marginBottom: '16px' }} />
-            <h2 style={{ marginBottom: '8px' }}>Error</h2>
+            <h2 style={{ marginBottom: '8px' }}>{t('common.error')}</h2>
             <p className="text-danger mb-4">{error}</p>
             <Link to="/" className="btn btn-primary">
               <FontAwesomeIcon icon={faHome} style={{ marginRight: '8px' }} />
-              Go Home
+              {t('common.goHome')}
             </Link>
           </div>
         </div>
@@ -136,11 +139,11 @@ export function GroupPage() {
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
           <div className="card text-center" style={{ maxWidth: '400px' }}>
             <FontAwesomeIcon icon={faExclamationTriangle} style={{ fontSize: '48px', color: 'var(--color-text-muted)', marginBottom: '16px' }} />
-            <h2 style={{ marginBottom: '8px' }}>Group Not Found</h2>
-            <p className="text-secondary mb-4">This group doesn't exist or you don't have access.</p>
+            <h2 style={{ marginBottom: '8px' }}>{t('group.groupNotFoundTitle')}</h2>
+            <p className="text-secondary mb-4">{t('group.groupNotFoundDescription')}</p>
             <Link to="/" className="btn btn-primary">
               <FontAwesomeIcon icon={faHome} style={{ marginRight: '8px' }} />
-              Go Home
+              {t('common.goHome')}
             </Link>
           </div>
         </div>
@@ -168,7 +171,7 @@ export function GroupPage() {
           <div className="side-panel-header">
             <h3>
               <FontAwesomeIcon icon={faEdit} style={{ marginRight: '8px', opacity: 0.7 }} />
-              Edit Expense
+              {t('expense.editExpense')}
             </h3>
             <button className="btn btn-sm btn-ghost" onClick={() => setEditingExpense(null)}>
               &times;
@@ -189,7 +192,7 @@ export function GroupPage() {
       return (
         <div className="side-panel-card">
           <div className="side-panel-header">
-            <h3>Add Expense</h3>
+            <h3>{t('expense.addExpense')}</h3>
             <button className="btn btn-sm btn-ghost" onClick={() => setShowAddExpense(false)}>
               &times;
             </button>
@@ -205,7 +208,7 @@ export function GroupPage() {
     
     return (
       <div className="side-panel-card">
-        <h3 className="side-panel-title">Summary</h3>
+        <h3 className="side-panel-title">{t('group.summary')}</h3>
         
         {/* Quick Stats */}
         <div style={{ 
@@ -218,13 +221,13 @@ export function GroupPage() {
           borderRadius: 'var(--radius-lg)'
         }}>
           <div>
-            <div className="text-muted text-sm">Total Expenses</div>
+            <div className="text-muted text-sm">{t('group.totalExpenses')}</div>
             <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-primary)' }}>
               {formatCurrency(totalExpenses)}
             </div>
           </div>
           <div>
-            <div className="text-muted text-sm">Members</div>
+            <div className="text-muted text-sm">{t('group.tabMembers')}</div>
             <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
               {members.length}
             </div>
@@ -241,23 +244,24 @@ export function GroupPage() {
       <header className="header">
         <div className="header-content header-content-wide">
           <div className="flex items-center gap-3">
-            <Link to="/" className="btn btn-sm btn-ghost" title="Back to home">
+            <Link to="/" className="btn btn-sm btn-ghost" title={t('accessibility.backToHome')}>
               <FontAwesomeIcon icon={faArrowLeft} />
             </Link>
             <Link to="/" className="logo">
               <LogoIcon size={24} />
-              <span>TeilFair</span>
+              <span>{t('common.appName')}</span>
             </Link>
           </div>
           <div className="flex items-center gap-2">
             <span className={`badge ${canWrite ? 'badge-write' : 'badge-read'}`}>
-              {canWrite ? 'full access' : 'view only'}
+              {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
             </span>
             <button className="btn btn-sm btn-primary" onClick={() => setShowShare(true)}>
               <FontAwesomeIcon icon={faShare} />
-              <span className={screenSize === 'mobile' ? 'sr-only' : ''}>Share</span>
+              <span className={screenSize === 'mobile' ? 'sr-only' : ''}>{t('common.share')}</span>
             </button>
-            <button className="theme-toggle" onClick={cycleTheme} title={`Theme: ${mode}`}>
+            <LanguageSwitcher />
+            <button className="theme-toggle" onClick={cycleTheme} title={t('accessibility.themeToggle', { mode })}>
               <FontAwesomeIcon icon={mode === 'dark' ? faMoon : faSun} style={{ fontSize: '16px' }} />
             </button>
           </div>
@@ -272,11 +276,11 @@ export function GroupPage() {
               <div>
                 <h1 className="card-title">{group.name}</h1>
                 <div className="text-secondary text-sm" style={{ marginTop: '4px' }}>
-                  {expenses.length} expense{expenses.length !== 1 ? 's' : ''} &middot; {members.length} member{members.length !== 1 ? 's' : ''}
+                  {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })} &middot; {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-muted text-sm">Total</div>
+                <div className="text-muted text-sm">{t('common.total')}</div>
                 <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '-0.02em' }}>
                   {formatCurrency(totalExpenses)}
                 </div>
@@ -290,7 +294,7 @@ export function GroupPage() {
                 onClick={() => setActiveTab('expenses')}
               >
                 <FontAwesomeIcon icon={faReceipt} style={{ marginRight: '6px', opacity: 0.8 }} />
-                Expenses
+                {t('group.tabExpenses')}
               </button>
               {!isWideScreen && (
                 <button 
@@ -298,7 +302,7 @@ export function GroupPage() {
                   onClick={() => setActiveTab('balances')}
                 >
                   <FontAwesomeIcon icon={faChartPie} style={{ marginRight: '6px', opacity: 0.8 }} />
-                  Balances
+                  {t('group.tabBalances')}
                 </button>
               )}
               <button 
@@ -306,7 +310,7 @@ export function GroupPage() {
                 onClick={() => setActiveTab('members')}
               >
                 <FontAwesomeIcon icon={faUsers} style={{ marginRight: '6px', opacity: 0.8 }} />
-                Members
+                {t('group.tabMembers')}
               </button>
             </div>
 
@@ -324,7 +328,7 @@ export function GroupPage() {
                     style={{ padding: '14px 24px' }}
                   >
                     <FontAwesomeIcon icon={faPlus} />
-                    <span>Add Expense</span>
+                    <span>{t('expense.addExpense')}</span>
                   </button>
                 )}
                 {members.length < 1 && (
@@ -337,13 +341,13 @@ export function GroupPage() {
                   }}>
                     <p className="text-secondary">
                       <FontAwesomeIcon icon={faUsers} style={{ marginRight: '8px', opacity: 0.6 }} />
-                      Add members first to start tracking expenses
+                      {t('member.addMembersToTrack')}
                     </p>
                     <button 
                       className="btn btn-sm btn-secondary mt-2"
                       onClick={() => setActiveTab('members')}
                     >
-                      Go to Members
+                      {t('member.goToMembers')}
                     </button>
                   </div>
                 )}
@@ -380,7 +384,7 @@ export function GroupPage() {
       </div>
       
       <footer className="footer">
-        <span style={{ opacity: 0.7 }}>TeilFair</span> &middot; Split expenses fairly
+        <span style={{ opacity: 0.7 }}>{t('common.appName')}</span> &middot; {t('common.tagline')}
       </footer>
 
       {/* Modals */}

@@ -1,106 +1,27 @@
-// Re-export the API functions from web package since they're mostly the same
-// The only difference is the supabase client initialization
-
 import type {
   Group,
   Member,
   Expense,
   CreateExpenseInput,
   TokenPermission,
+  GroupRow,
+  MemberRow,
+  ExpenseRow,
+  ExpensePayerRow,
+  ExpenseSplitRow,
 } from '@teilfair/shared';
-import { generateToken, generateUUID } from '@teilfair/shared';
+import {
+  generateToken,
+  generateUUID,
+  groupFromRow,
+  memberFromRow,
+  expenseFromRow,
+} from '@teilfair/shared';
 import { supabase, createGroupClient } from './supabase';
 
-// Database row types (snake_case)
-interface GroupRow {
-  id: string;
-  name: string;
-  currency: string;
-  read_token: string;
-  write_token: string;
-  created_at: string;
-}
-
-interface MemberRow {
-  id: string;
-  group_id: string;
-  name: string;
-  created_at: string;
-}
-
-interface ExpenseRow {
-  id: string;
-  group_id: string;
-  description: string;
-  total_amount: number;
-  expense_date: string;
-  created_at: string;
-}
-
-interface ExpensePayerRow {
-  id: string;
-  expense_id: string;
-  member_id: string;
-  amount: number;
-}
-
-interface ExpenseSplitRow {
-  id: string;
-  expense_id: string;
-  member_id: string;
-  share: number;
-  share_type: 'ratio' | 'fixed' | 'percentage';
-}
-
-// Converters
-function groupFromRow(row: GroupRow): Group {
-  return {
-    id: row.id,
-    name: row.name,
-    currency: row.currency,
-    readToken: row.read_token,
-    writeToken: row.write_token,
-    createdAt: new Date(row.created_at),
-  };
-}
-
-function memberFromRow(row: MemberRow): Member {
-  return {
-    id: row.id,
-    groupId: row.group_id,
-    name: row.name,
-    createdAt: new Date(row.created_at),
-  };
-}
-
-function expenseFromRow(
-  row: ExpenseRow,
-  payers: ExpensePayerRow[],
-  splits: ExpenseSplitRow[]
-): Expense {
-  return {
-    id: row.id,
-    groupId: row.group_id,
-    description: row.description,
-    totalAmount: Number(row.total_amount),
-    date: new Date(row.expense_date),
-    createdAt: new Date(row.created_at),
-    payers: payers.map((p) => ({
-      id: p.id,
-      expenseId: p.expense_id,
-      memberId: p.member_id,
-      amount: Number(p.amount),
-    })),
-    splits: splits.map((s) => ({
-      id: s.id,
-      expenseId: s.expense_id,
-      memberId: s.member_id,
-      share: Number(s.share),
-      shareType: s.share_type,
-    })),
-  };
-}
-
+/**
+ * Create a new group
+ */
 export async function createGroup(name: string, currency: string = 'EUR'): Promise<Group> {
   const readToken = generateToken();
   const writeToken = generateToken();
@@ -117,9 +38,12 @@ export async function createGroup(name: string, currency: string = 'EUR'): Promi
     .single();
 
   if (error) throw error;
-  return groupFromRow(data);
+  return groupFromRow(data as GroupRow);
 }
 
+/**
+ * Get a group by ID with token
+ */
 export async function getGroup(groupId: string, token: string): Promise<Group | null> {
   const client = createGroupClient(token);
   
@@ -133,9 +57,12 @@ export async function getGroup(groupId: string, token: string): Promise<Group | 
     if (error.code === 'PGRST116') return null;
     throw error;
   }
-  return groupFromRow(data);
+  return groupFromRow(data as GroupRow);
 }
 
+/**
+ * Determine the permission level of a token for a group
+ */
 export async function getTokenPermission(
   groupId: string,
   token: string
@@ -155,6 +82,9 @@ export async function getTokenPermission(
   return null;
 }
 
+/**
+ * Update group details
+ */
 export async function updateGroup(
   groupId: string,
   token: string,
@@ -170,9 +100,12 @@ export async function updateGroup(
     .single();
 
   if (error) throw error;
-  return groupFromRow(data);
+  return groupFromRow(data as GroupRow);
 }
 
+/**
+ * Get all members of a group
+ */
 export async function getMembers(groupId: string, token: string): Promise<Member[]> {
   const client = createGroupClient(token);
   
@@ -183,9 +116,12 @@ export async function getMembers(groupId: string, token: string): Promise<Member
     .order('created_at');
 
   if (error) throw error;
-  return data.map(memberFromRow);
+  return (data as MemberRow[]).map(memberFromRow);
 }
 
+/**
+ * Add a member to a group
+ */
 export async function addMember(
   groupId: string,
   token: string,
@@ -200,9 +136,12 @@ export async function addMember(
     .single();
 
   if (error) throw error;
-  return memberFromRow(data);
+  return memberFromRow(data as MemberRow);
 }
 
+/**
+ * Update a member
+ */
 export async function updateMember(
   memberId: string,
   token: string,
@@ -218,9 +157,12 @@ export async function updateMember(
     .single();
 
   if (error) throw error;
-  return memberFromRow(data);
+  return memberFromRow(data as MemberRow);
 }
 
+/**
+ * Delete a member
+ */
 export async function deleteMember(memberId: string, token: string): Promise<void> {
   const client = createGroupClient(token);
   
@@ -232,6 +174,9 @@ export async function deleteMember(memberId: string, token: string): Promise<voi
   if (error) throw error;
 }
 
+/**
+ * Get all expenses for a group
+ */
 export async function getExpenses(groupId: string, token: string): Promise<Expense[]> {
   const client = createGroupClient(token);
   
@@ -257,19 +202,19 @@ export async function getExpenses(groupId: string, token: string): Promise<Expen
   const payersByExpense = new Map<string, ExpensePayerRow[]>();
   const splitsByExpense = new Map<string, ExpenseSplitRow[]>();
 
-  for (const payer of payersResult.data) {
+  for (const payer of payersResult.data as ExpensePayerRow[]) {
     const list = payersByExpense.get(payer.expense_id) || [];
     list.push(payer);
     payersByExpense.set(payer.expense_id, list);
   }
 
-  for (const split of splitsResult.data) {
+  for (const split of splitsResult.data as ExpenseSplitRow[]) {
     const list = splitsByExpense.get(split.expense_id) || [];
     list.push(split);
     splitsByExpense.set(split.expense_id, list);
   }
 
-  return expenses.map((e) =>
+  return (expenses as ExpenseRow[]).map((e) =>
     expenseFromRow(
       e,
       payersByExpense.get(e.id) || [],
@@ -278,6 +223,9 @@ export async function getExpenses(groupId: string, token: string): Promise<Expen
   );
 }
 
+/**
+ * Create a new expense
+ */
 export async function createExpense(
   groupId: string,
   token: string,
@@ -327,9 +275,16 @@ export async function createExpense(
 
   if (splitsError) throw splitsError;
 
-  return expenseFromRow(expense, payers, splits);
+  return expenseFromRow(
+    expense as ExpenseRow,
+    payers as ExpensePayerRow[],
+    splits as ExpenseSplitRow[]
+  );
 }
 
+/**
+ * Delete an expense
+ */
 export async function deleteExpense(expenseId: string, token: string): Promise<void> {
   const client = createGroupClient(token);
   
@@ -341,6 +296,9 @@ export async function deleteExpense(expenseId: string, token: string): Promise<v
   if (error) throw error;
 }
 
+/**
+ * Update an expense
+ */
 export async function updateExpense(
   expenseId: string,
   token: string,
@@ -393,5 +351,9 @@ export async function updateExpense(
 
   if (splitsError) throw splitsError;
 
-  return expenseFromRow(expense, payers, splits);
+  return expenseFromRow(
+    expense as ExpenseRow,
+    payers as ExpensePayerRow[],
+    splits as ExpenseSplitRow[]
+  );
 }

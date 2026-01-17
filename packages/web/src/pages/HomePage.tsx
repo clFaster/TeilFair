@@ -1,12 +1,23 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSun, faMoon, faUsers, faPlus, faLink, faArrowRight, faReceipt, faCalculator, faHandshake } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 export function HomePage() {
+  const { t, i18n } = useTranslation();
+  
+  // DEBUG: Log translation info
+  console.log('Current language:', i18n.language);
+  console.log('Available resources:', Object.keys(i18n.store?.data || {}));
+  console.log('Test translation home.heroTitle:', t('home.heroTitle'));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  console.log('German heroTitle from store:', (i18n.store?.data as any)?.de?.translation?.home?.heroTitle);
+  
   const navigate = useNavigate();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
   const { mode, setThemePreference } = useTheme();
@@ -26,7 +37,7 @@ export function HomePage() {
       const group = await createGroup(groupName.trim(), currency);
       navigate(`/g/${group.id}?t=${group.writeToken}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create group');
+      setError(err instanceof Error ? err.message : t('error.failedToCreate'));
     }
   };
 
@@ -40,7 +51,7 @@ export function HomePage() {
       const token = url.searchParams.get('t');
       
       if (!pathMatch || !token) {
-        setError('Invalid group link');
+        setError(t('error.invalidLink'));
         return;
       }
       
@@ -50,10 +61,10 @@ export function HomePage() {
       if (success) {
         navigate(`/g/${groupId}?t=${token}`);
       } else {
-        setError('Could not access group. Invalid link or token.');
+        setError(t('error.failedToJoin'));
       }
     } catch {
-      setError('Invalid link format');
+      setError(t('error.invalidLinkFormat'));
     }
   };
 
@@ -63,7 +74,7 @@ export function HomePage() {
       navigate(`/g/${groupId}?t=${token}`);
     } else {
       removeFromRecent(groupId);
-      setError('This group is no longer accessible');
+      setError(t('error.groupNoLongerAccessible'));
     }
   };
 
@@ -82,25 +93,28 @@ export function HomePage() {
   return (
     <div className="app app-home">
       <header className="header">
-        <div className="header-content">
-          <Link to="/" className="logo">
-            <LogoIcon size={32} />
-            <span>TeilFair</span>
-          </Link>
-          <button className="theme-toggle" onClick={cycleTheme} title={`Theme: ${mode}`}>
-            <FontAwesomeIcon icon={mode === 'dark' ? faMoon : faSun} style={{ fontSize: '18px' }} />
-          </button>
-        </div>
-      </header>
+         <div className="header-content">
+           <Link to="/" className="logo">
+             <LogoIcon size={32} />
+             <span>{t('common.appName')}</span>
+           </Link>
+           <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
+             <LanguageSwitcher />
+             <button className="theme-toggle" onClick={cycleTheme} title={t('accessibility.themeToggle', { mode })}>
+               <FontAwesomeIcon icon={mode === 'dark' ? faMoon : faSun} style={{ fontSize: '18px' }} />
+             </button>
+           </div>
+         </div>
+       </header>
       
       <main className="container">
         {/* Hero Section */}
         <div className="hero-card animate-in">
-          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 2.75rem)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.03em' }}>
-            Split expenses,<br />stay fair
+          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 2.75rem)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.03em', whiteSpace: 'pre-line' }}>
+            {t('home.heroTitle')}
           </h1>
           <p style={{ fontSize: '1.125rem', opacity: 0.9, marginBottom: '28px', maxWidth: '380px', margin: '0 auto 28px', lineHeight: 1.6 }}>
-            Track shared expenses with friends. No sign-up needed, just create and share.
+            {t('home.heroSubtitle')}
           </p>
           
           <div className="flex gap-3 justify-center flex-wrap">
@@ -109,14 +123,14 @@ export function HomePage() {
               onClick={() => { setShowCreate(true); setShowJoin(false); setError(''); }}
             >
               <FontAwesomeIcon icon={faPlus} />
-              <span>Create Group</span>
+              <span>{t('home.createGroup')}</span>
             </button>
             <button 
               className="btn hero-btn-secondary"
               onClick={() => { setShowJoin(true); setShowCreate(false); setError(''); }}
             >
               <FontAwesomeIcon icon={faLink} />
-              <span>Join Group</span>
+              <span>{t('home.joinGroup')}</span>
             </button>
           </div>
         </div>
@@ -124,15 +138,15 @@ export function HomePage() {
         {/* Create Group Form */}
         {showCreate && (
           <div className="card animate-in">
-            <h2 className="card-title mb-4">Create New Group</h2>
+            <h2 className="card-title mb-4">{t('home.createFormTitle')}</h2>
             <form onSubmit={handleCreateGroup}>
               <div className="input-group">
-                <label htmlFor="groupName">Group Name</label>
+                <label htmlFor="groupName">{t('home.groupNameLabel')}</label>
                 <input
                   id="groupName"
                   type="text"
                   className="input"
-                  placeholder="e.g., Trip to Paris, Roommates, Dinner Club"
+                  placeholder={t('home.groupNamePlaceholder')}
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
                   autoFocus
@@ -140,25 +154,25 @@ export function HomePage() {
               </div>
               
               <div className="input-group">
-                <label htmlFor="currency">Currency</label>
+                <label htmlFor="currency">{t('home.currencyLabel')}</label>
                 <select 
                   id="currency"
                   className="select"
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                 >
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="GBP">GBP - British Pound</option>
-                  <option value="CHF">CHF - Swiss Franc</option>
-                  <option value="JPY">JPY - Japanese Yen</option>
-                  <option value="CAD">CAD - Canadian Dollar</option>
-                  <option value="AUD">AUD - Australian Dollar</option>
-                  <option value="SEK">SEK - Swedish Krona</option>
-                  <option value="NOK">NOK - Norwegian Krone</option>
-                  <option value="DKK">DKK - Danish Krone</option>
-                  <option value="PLN">PLN - Polish Zloty</option>
-                  <option value="CZK">CZK - Czech Koruna</option>
+                  <option value="EUR">{t('currency.EUR')}</option>
+                  <option value="USD">{t('currency.USD')}</option>
+                  <option value="GBP">{t('currency.GBP')}</option>
+                  <option value="CHF">{t('currency.CHF')}</option>
+                  <option value="JPY">{t('currency.JPY')}</option>
+                  <option value="CAD">{t('currency.CAD')}</option>
+                  <option value="AUD">{t('currency.AUD')}</option>
+                  <option value="SEK">{t('currency.SEK')}</option>
+                  <option value="NOK">{t('currency.NOK')}</option>
+                  <option value="DKK">{t('currency.DKK')}</option>
+                  <option value="PLN">{t('currency.PLN')}</option>
+                  <option value="CZK">{t('currency.CZK')}</option>
                 </select>
               </div>
               
@@ -166,7 +180,7 @@ export function HomePage() {
               
               <div className="flex gap-3">
                 <button type="submit" className="btn btn-primary btn-lg" disabled={loading || !groupName.trim()}>
-                  {loading ? 'Creating...' : 'Create Group'}
+                  {loading ? t('home.creating') : t('home.createButton')}
                   {!loading && <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '4px' }} />}
                 </button>
                 <button 
@@ -174,7 +188,7 @@ export function HomePage() {
                   className="btn btn-secondary btn-lg"
                   onClick={closeModals}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
@@ -184,21 +198,21 @@ export function HomePage() {
         {/* Join Group Form */}
         {showJoin && (
           <div className="card animate-in">
-            <h2 className="card-title mb-4">Join Existing Group</h2>
+            <h2 className="card-title mb-4">{t('home.joinFormTitle')}</h2>
             <form onSubmit={handleJoinGroup}>
               <div className="input-group">
-                <label htmlFor="joinLink">Group Link</label>
+                <label htmlFor="joinLink">{t('home.linkLabel')}</label>
                 <input
                   id="joinLink"
                   type="text"
                   className="input"
-                  placeholder="Paste the shared group link here..."
+                  placeholder={t('home.linkPlaceholder')}
                   value={joinLink}
                   onChange={(e) => setJoinLink(e.target.value)}
                   autoFocus
                 />
                 <p className="text-sm text-muted mt-2">
-                  Ask your friend for the group link they received when creating the group.
+                  {t('home.linkHint')}
                 </p>
               </div>
               
@@ -206,7 +220,7 @@ export function HomePage() {
               
               <div className="flex gap-3">
                 <button type="submit" className="btn btn-primary btn-lg" disabled={loading || !joinLink.trim()}>
-                  {loading ? 'Joining...' : 'Join Group'}
+                  {loading ? t('home.joining') : t('home.joinButton')}
                   {!loading && <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '4px' }} />}
                 </button>
                 <button 
@@ -214,7 +228,7 @@ export function HomePage() {
                   className="btn btn-secondary btn-lg"
                   onClick={closeModals}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
@@ -226,7 +240,7 @@ export function HomePage() {
           <div className="card animate-in animate-delay-1">
             <h2 className="card-title mb-3">
               <FontAwesomeIcon icon={faUsers} style={{ marginRight: '10px', opacity: 0.7 }} />
-              Your Groups
+              {t('home.recentGroupsTitle')}
             </h2>
             <div>
               {recentGroups.map((group) => (
@@ -234,7 +248,7 @@ export function HomePage() {
                   <div className="recent-group-info">
                     <span className="name">{group.name}</span>
                     <span className={`badge ${group.permission === 'write' ? 'badge-write' : 'badge-read'}`}>
-                      {group.permission === 'write' ? 'full access' : 'view only'}
+                      {group.permission === 'write' ? t('common.fullAccess') : t('common.viewOnly')}
                     </span>
                   </div>
                   <div className="recent-group-actions">
@@ -243,13 +257,13 @@ export function HomePage() {
                       onClick={() => handleOpenRecent(group.id, group.token)}
                       disabled={loading}
                     >
-                      Open
+                      {t('common.open')}
                       <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '6px', fontSize: '10px' }} />
                     </button>
                     <button
                       className="btn btn-sm btn-ghost"
                       onClick={() => removeFromRecent(group.id)}
-                      title="Remove from list"
+                      title={t('common.remove')}
                     >
                       &times;
                     </button>
@@ -263,15 +277,15 @@ export function HomePage() {
         {/* How it Works - Feature Cards */}
         {!showCreate && !showJoin && (
           <div className="card animate-in animate-delay-2">
-            <h2 className="card-title mb-4">How it works</h2>
+            <h2 className="card-title mb-4">{t('home.howItWorksTitle')}</h2>
             <div className="feature-grid">
               <div className="feature-card">
                 <div className="feature-icon">
                   <FontAwesomeIcon icon={faUsers} />
                 </div>
                 <div className="feature-content">
-                  <h4>Create & Share</h4>
-                  <p>Start a group and invite friends with a simple link. No accounts needed.</p>
+                  <h4>{t('home.step1Title')}</h4>
+                  <p>{t('home.step1Description')}</p>
                 </div>
               </div>
               
@@ -280,8 +294,8 @@ export function HomePage() {
                   <FontAwesomeIcon icon={faReceipt} />
                 </div>
                 <div className="feature-content">
-                  <h4>Log Expenses</h4>
-                  <p>Add expenses as they happen. Support for multiple payers and custom splits.</p>
+                  <h4>{t('home.step2Title')}</h4>
+                  <p>{t('home.step2Description')}</p>
                 </div>
               </div>
               
@@ -290,8 +304,8 @@ export function HomePage() {
                   <FontAwesomeIcon icon={faCalculator} />
                 </div>
                 <div className="feature-content">
-                  <h4>See Balances</h4>
-                  <p>Instantly see who owes whom with automatic calculations.</p>
+                  <h4>{t('home.step3Title')}</h4>
+                  <p>{t('home.step3Description')}</p>
                 </div>
               </div>
               
@@ -300,8 +314,8 @@ export function HomePage() {
                   <FontAwesomeIcon icon={faHandshake} />
                 </div>
                 <div className="feature-content">
-                  <h4>Settle Up</h4>
-                  <p>Get optimized payment suggestions to minimize transactions.</p>
+                  <h4>{t('home.step4Title')}</h4>
+                  <p>{t('home.step4Description')}</p>
                 </div>
               </div>
             </div>
@@ -316,7 +330,7 @@ export function HomePage() {
       </main>
       
       <footer className="footer">
-        <span style={{ opacity: 0.7 }}>TeilFair</span> &middot; Split expenses fairly
+        <span style={{ opacity: 0.7 }}>{t('common.appName')}</span> &middot; {t('common.tagline')}
       </footer>
     </div>
   );
