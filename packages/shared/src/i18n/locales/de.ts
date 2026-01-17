@@ -71,7 +71,7 @@ const de = {
     currencyLabel: 'Währung',
     createButton: 'Gruppe erstellen',
     creating: 'Erstelle...',
-    joinFormTitle: 'Existierende Gruppe beitreten',
+    joinFormTitle: 'Existierender Gruppe beitreten',
     linkLabel: 'Gruppelink',
     linkPlaceholder: 'Geteilten Link hier einfügen...',
     linkHint: 'Frage deinen Freund nach dem Link, den er erhalten hat.',
