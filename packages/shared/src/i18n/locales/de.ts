@@ -157,7 +157,7 @@ const de = {
 
   // Member
   member: {
-    addMember: 'Hinzugefügt',
+    addMember: 'Hinzugefügen',
     addMemberLabel: 'Neues Mitglied hinzufügen',
     addMembersFirst: 'Mitglieder hinzufügen',
     addMembersFirstDescription: 'Du benötigst mindestens ein Mitglied, um eine Ausgabe zu erstellen',
