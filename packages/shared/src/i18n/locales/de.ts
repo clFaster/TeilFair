@@ -67,7 +67,7 @@ const de = {
     joinGroup: 'Gruppe beitreten',
     createFormTitle: 'Neue Gruppe erstellen',
     groupNameLabel: 'Gruppenname',
-    groupNamePlaceholder: 'z.B. Reise nach Paris, Mitbewohner, Dinner-Club',
+    groupNamePlaceholder: 'z.B. Reise nach Paris, Wanderung, Mittagessen',
     currencyLabel: 'Währung',
     createButton: 'Gruppe erstellen',
     creating: 'Erstelle...',
