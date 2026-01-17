@@ -73,7 +73,7 @@ const de = {
     creating: 'Erstelle...',
     joinFormTitle: 'Existierende Gruppe beitreten',
     linkLabel: 'Gruppelink',
-    linkPlaceholder: 'Gepoolten Link hier einfügen...',
+    linkPlaceholder: 'Geteilten Link hier einfügen...',
     linkHint: 'Frage deinen Freund nach dem Link, den er erhalten hat.',
     joinButton: 'Gruppe beitreten',
     joining: 'Beitreten...',
