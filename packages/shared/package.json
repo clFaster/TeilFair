@@ -1,6 +1,7 @@
 {
   "name": "@teilfair/shared",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.4.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

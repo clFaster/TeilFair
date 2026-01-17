@@ -1,6 +1,7 @@
 {
   "name": "@teilfair/mobile",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.4.1",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",

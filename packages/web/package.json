@@ -1,6 +1,7 @@
 {
   "name": "@teilfair/web",
   "private": true,
+  "packageManager": "pnpm@10.4.1",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
