@@ -8,15 +8,12 @@ interface MembersListProps {
   canEdit: boolean;
 }
 
-export function MembersList({ canEdit }: MembersListProps) {
+export function MembersListForm({ canEdit }: MembersListProps) {
   const { t } = useTranslation();
-  const { members, addMember, updateMember, deleteMember, expenses, memberBalances } = useGroupStore();
-  
+  const { addMember } = useGroupStore();
   const [newMemberName, setNewMemberName] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
   const [loading, setLoading] = useState(false);
-
+ 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMemberName.trim() || loading) return;
@@ -29,6 +26,43 @@ export function MembersList({ canEdit }: MembersListProps) {
       setLoading(false);
     }
   };
+
+  if (!canEdit) {
+    return null;
+  }
+
+  return (
+    <form onSubmit={handleAddMember} style={{ marginBottom: '24px' }}>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          className="input"
+          placeholder={t('member.memberNamePlaceholder')}
+          value={newMemberName}
+          onChange={(e) => setNewMemberName(e.target.value)}
+          disabled={loading}
+        />
+        <button 
+          type="submit" 
+          className="btn btn-primary" 
+          disabled={loading || !newMemberName.trim()}
+          style={{ flexShrink: 0 }}
+        >
+          <FontAwesomeIcon icon={faUserPlus} style={{ marginRight: '6px' }} />
+          {t('member.addMember')}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function MembersList({ canEdit }: MembersListProps) {
+  const { t } = useTranslation();
+  const { members, updateMember, deleteMember, expenses, memberBalances } = useGroupStore();
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleUpdateMember = async (memberId: string) => {
     if (!editingName.trim() || loading) return;
@@ -86,31 +120,6 @@ export function MembersList({ canEdit }: MembersListProps) {
 
   return (
     <div>
-      {/* Add Member Form */}
-      {canEdit && (
-        <form onSubmit={handleAddMember} style={{ marginBottom: '24px' }}>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className="input"
-              placeholder={t('member.memberNamePlaceholder')}
-              value={newMemberName}
-              onChange={(e) => setNewMemberName(e.target.value)}
-              disabled={loading}
-            />
-            <button 
-              type="submit" 
-              className="btn btn-primary" 
-              disabled={loading || !newMemberName.trim()}
-              style={{ flexShrink: 0 }}
-            >
-              <FontAwesomeIcon icon={faUserPlus} style={{ marginRight: '6px' }} />
-              {t('member.addMember')}
-            </button>
-          </div>
-        </form>
-      )}
-
       {/* Members List */}
       {members.length === 0 ? (
         <div className="empty-state">

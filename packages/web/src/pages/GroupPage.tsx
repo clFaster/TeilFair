@@ -7,7 +7,7 @@ import {
   faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
-import { MembersList } from '../components/MembersList';
+import { MembersList, MembersListForm } from '../components/MembersList';
 import { ExpensesList } from '../components/ExpensesList';
 import { BalancesSummary } from '../components/BalancesSummary';
 import { AddExpenseModal } from '../components/AddExpenseModal';
@@ -240,7 +240,7 @@ export function GroupPage() {
   };
 
   return (
-    <div className="app">
+    <div className="app app-group">
       <header className="header">
         <div className="header-content header-content-wide">
           <div className="flex items-center gap-3">
@@ -268,8 +268,8 @@ export function GroupPage() {
         </div>
       </header>
 
-      <div className={isWideScreen ? 'wide-layout' : 'container'}>
-        <div className={isWideScreen ? 'main-content' : ''}>
+      <div className={isWideScreen ? 'wide-layout group-layout' : 'container group-layout'}>
+        <div className="main-content">
           <div className="card">
             {/* Group Header */}
             <div className="card-header">
@@ -316,60 +316,77 @@ export function GroupPage() {
 
             {/* Tab Content */}
             {activeTab === 'expenses' && (
-              <div className="animate-in">
-                {canWrite && (
-                  <button 
-                    className="btn btn-primary btn-block mb-3"
-                    onClick={() => {
-                      setEditingExpense(null); // Clear any editing state
-                      setShowAddExpense(true);
-                    }}
-                    disabled={members.length < 1}
-                    style={{ padding: '14px 24px' }}
-                  >
-                    <FontAwesomeIcon icon={faPlus} />
-                    <span>{t('expense.addExpense')}</span>
-                  </button>
-                )}
-                {members.length < 1 && (
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '20px', 
-                    background: 'var(--color-surface)', 
-                    borderRadius: 'var(--radius-lg)',
-                    marginBottom: '16px'
-                  }}>
-                    <p className="text-secondary">
-                      <FontAwesomeIcon icon={faUsers} style={{ marginRight: '8px', opacity: 0.6 }} />
-                      {t('member.addMembersToTrack')}
-                    </p>
+              <div className="tab-panel">
+                <div className="tab-panel-actions">
+                  {canWrite && (
                     <button 
-                      className="btn btn-sm btn-secondary mt-2"
-                      onClick={() => setActiveTab('members')}
+                      className="btn btn-primary btn-block mb-3"
+                      onClick={() => {
+                        setEditingExpense(null); // Clear any editing state
+                        setShowAddExpense(true);
+                      }}
+                      disabled={members.length < 1}
+                      style={{ padding: '14px 24px' }}
                     >
-                      {t('member.goToMembers')}
+                      <FontAwesomeIcon icon={faPlus} />
+                      <span>{t('expense.addExpense')}</span>
                     </button>
+                  )}
+                  {members.length < 1 && (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '20px', 
+                      background: 'var(--color-surface)', 
+                      borderRadius: 'var(--radius-lg)',
+                      marginBottom: '16px'
+                    }}>
+                      <p className="text-secondary">
+                        <FontAwesomeIcon icon={faUsers} style={{ marginRight: '8px', opacity: 0.6 }} />
+                        {t('member.addMembersToTrack')}
+                      </p>
+                      <button 
+                        className="btn btn-sm btn-secondary mt-2"
+                        onClick={() => setActiveTab('members')}
+                      >
+                        {t('member.goToMembers')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="tab-content-scroll">
+                  <div className="animate-in">
+                    <ExpensesList 
+                      canEdit={canWrite} 
+                      onEditExpense={(expense) => {
+                        setShowAddExpense(false); // Clear add state
+                        setEditingExpense(expense);
+                      }}
+                    />
                   </div>
-                )}
-                <ExpensesList 
-                  canEdit={canWrite} 
-                  onEditExpense={(expense) => {
-                    setShowAddExpense(false); // Clear add state
-                    setEditingExpense(expense);
-                  }}
-                />
+                </div>
               </div>
             )}
 
             {activeTab === 'balances' && !isWideScreen && (
-              <div className="animate-in">
-                <BalancesSummary />
+              <div className="tab-panel">
+                <div className="tab-content-scroll">
+                  <div className="animate-in">
+                    <BalancesSummary />
+                  </div>
+                </div>
               </div>
             )}
 
             {activeTab === 'members' && (
-              <div className="animate-in">
-                <MembersList canEdit={canWrite} />
+              <div className="tab-panel">
+                <div className="tab-panel-actions">
+                  <MembersListForm canEdit={canWrite} />
+                </div>
+                <div className="tab-content-scroll">
+                  <div className="animate-in">
+                    <MembersList canEdit={canWrite} />
+                  </div>
+                </div>
               </div>
             )}
           </div>
