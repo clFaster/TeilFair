@@ -162,6 +162,18 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 var(--spacing-lg);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 @media (max-width: 480px) {
   .header-content {
     padding: 0 var(--spacing-md);
@@ -925,10 +937,42 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 2px;
 }
 
+.expense-main {
+  flex: 1;
+  min-width: 0;
+}
+
 .expense-details {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.7;
+}
+
+.expense-payer-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expense-payer-details {
+  font-size: 12px;
+}
+
+.expense-details-split {
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+.expense-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.expense-action-button {
+  min-width: 80px;
 }
 
 /* ============================================

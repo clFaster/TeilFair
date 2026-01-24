@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash, faClock, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faClock } from '@fortawesome/free-solid-svg-icons';
 import type { Expense } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
+import { ExpenseCard } from './ExpenseCard';
 
 interface ExpensesListProps {
   canEdit: boolean;
   onEditExpense?: (expense: Expense) => void;
 }
 
-export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
+export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListProps>) {
   const { t } = useTranslation();
   const { expenses, members, group, deleteExpense } = useGroupStore();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -109,62 +110,28 @@ export function ExpensesList({ canEdit, onEditExpense }: ExpensesListProps) {
 
           const isDeleting = deletingId === expense.id;
 
+          const payerDetails = expense.payers.length > 1
+            ? expense.payers.map(p => `${getMemberName(p.memberId)}: ${formatCurrency(p.amount)}`).join(', ')
+            : undefined;
+
           return (
-            <div 
-              key={expense.id} 
-              className="expense-card"
-              style={{ 
-                animationDelay: `${index * 0.05}s`,
-                opacity: isDeleting ? 0.5 : 1
-              }}
-            >
-              <div className="expense-header">
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="expense-description">{expense.description || t('expense.defaultDescription')}</div>
-                  <div className="expense-date">
-                    <FontAwesomeIcon icon={faClock} style={{ marginRight: '4px', opacity: 0.6 }} />
-                    {formatDate(expense.date)} {t('common.at')} {formatTime(expense.date)}
-                  </div>
-                </div>
-                <div className="expense-amount">{formatCurrency(expense.totalAmount)}</div>
-              </div>
-              
-              <div className="expense-details">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <FontAwesomeIcon icon={faUser} style={{ opacity: 0.5, fontSize: '12px' }} />
-                  <span>{t('expense.paidBy', { names: payerNames })}</span>
-                  {expense.payers.length > 1 && (
-                    <span className="text-muted" style={{ fontSize: '12px' }}>
-                      ({expense.payers.map(p => `${getMemberName(p.memberId)}: ${formatCurrency(p.amount)}`).join(', ')})
-                    </span>
-                  )}
-                </div>
-                <div style={{ marginTop: '2px', opacity: 0.8 }}>{splitInfo}</div>
-              </div>
-              
-              {canEdit && (
-                <div className="flex gap-2 mt-3" style={{ paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
-                  <button 
-                    className="btn btn-sm btn-secondary"
-                    onClick={() => handleEditClick(expense)}
-                    disabled={isDeleting}
-                    style={{ minWidth: '80px' }}
-                  >
-                    <FontAwesomeIcon icon={faEdit} style={{ marginRight: '4px' }} />
-                    {t('common.edit')}
-                  </button>
-                  <button 
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(expense.id)}
-                    disabled={isDeleting}
-                    style={{ minWidth: '80px' }}
-                  >
-                    <FontAwesomeIcon icon={faTrash} style={{ marginRight: '4px' }} />
-                    {isDeleting ? t('expense.deleting') : t('common.delete')}
-                  </button>
-                </div>
-              )}
-            </div>
+            <ExpenseCard
+              key={expense.id}
+              animationDelay={index * 0.05}
+              formattedAmount={formatCurrency(expense.totalAmount)}
+              dateTimeLabel={`${formatDate(expense.date)} ${t('common.at')} ${formatTime(expense.date)}`}
+              description={expense.description || t('expense.defaultDescription')}
+              paidByText={t('expense.paidBy', { names: payerNames })}
+              payerDetails={payerDetails}
+              splitInfo={splitInfo}
+              editLabel={t('common.edit')}
+              deleteLabel={t('common.delete')}
+              deletingLabel={t('expense.deleting')}
+              canEdit={canEdit}
+              isDeleting={isDeleting}
+              onEdit={() => handleEditClick(expense)}
+              onDelete={() => handleDelete(expense.id)}
+            />
           );
         })}
       </div>

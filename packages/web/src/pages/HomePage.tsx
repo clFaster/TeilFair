@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faUsers, faPlus, faLink, faArrowRight, faReceipt, faCalculator, faHandshake } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faPlus, faLink, faArrowRight, faReceipt, faCalculator, faHandshake } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { AppHeader } from '../components/AppHeader';
+import { AppFooter } from '../components/AppFooter';
+import { ThemeToggleButton } from '../components/ThemeToggleButton';
 
 export function HomePage() {
   const { t, i18n } = useTranslation();
@@ -92,20 +95,24 @@ export function HomePage() {
 
   return (
     <div className="app app-home">
-      <header className="header">
-         <div className="header-content">
-           <Link to="/" className="logo">
-             <LogoIcon size={32} />
-             <span>{t('common.appName')}</span>
-           </Link>
-           <div style={{ display: 'flex', gap: 'var(--spacing-sm)', alignItems: 'center' }}>
-             <LanguageSwitcher />
-             <button className="theme-toggle" onClick={cycleTheme} title={t('accessibility.themeToggle', { mode })}>
-               <FontAwesomeIcon icon={mode === 'dark' ? faMoon : faSun} style={{ fontSize: '18px' }} />
-             </button>
-           </div>
-         </div>
-       </header>
+      <AppHeader
+        left={(
+          <Link to="/" className="logo">
+            <LogoIcon size={32} />
+            <span>{t('common.appName')}</span>
+          </Link>
+        )}
+        right={(
+          <>
+            <LanguageSwitcher />
+            <ThemeToggleButton
+              mode={mode}
+              onToggle={cycleTheme}
+              title={t('accessibility.themeToggle', { mode })}
+            />
+          </>
+        )}
+      />
       
       <main className="container">
         {/* Hero Section */}
@@ -329,9 +336,7 @@ export function HomePage() {
         )}
       </main>
       
-      <footer className="footer">
-        <span style={{ opacity: 0.7 }}>{t('common.appName')}</span> &middot; {t('common.tagline')}
-      </footer>
+      <AppFooter />
     </div>
   );
 }

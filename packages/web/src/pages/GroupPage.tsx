@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faSun, faMoon, faShare, faPlus, faReceipt, faUsers, faChartPie, 
+import {
+  faShare, faPlus, faReceipt, faUsers, faChartPie,
   faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
@@ -17,6 +17,9 @@ import { EditExpenseForm } from '../components/EditExpenseForm';
 import { ShareModal } from '../components/ShareModal';
 import { LogoIcon } from '../components/LogoIcon';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { AppHeader } from '../components/AppHeader';
+import { AppFooter } from '../components/AppFooter';
+import { ThemeToggleButton } from '../components/ThemeToggleButton';
 import { useTheme } from '../theme/ThemeProvider';
 import type { Expense } from '@teilfair/shared';
 
@@ -247,9 +250,10 @@ export function GroupPage() {
 
   return (
     <div className="app app-group">
-      <header className="header">
-        <div className="header-content header-content-wide">
-          <div className="flex items-center gap-3">
+      <AppHeader
+        wide
+        left={(
+          <>
             <Link to="/" className="btn btn-sm btn-ghost" title={t('accessibility.backToHome')}>
               <FontAwesomeIcon icon={faArrowLeft} />
             </Link>
@@ -257,8 +261,10 @@ export function GroupPage() {
               <LogoIcon size={24} />
               <span>{t('common.appName')}</span>
             </Link>
-          </div>
-          <div className="flex items-center gap-2">
+          </>
+        )}
+        right={(
+          <>
             <span className={`badge ${canWrite ? 'badge-write' : 'badge-read'}`}>
               {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
             </span>
@@ -267,12 +273,15 @@ export function GroupPage() {
               <span className={screenSize === 'mobile' ? 'sr-only' : ''}>{t('common.share')}</span>
             </button>
             <LanguageSwitcher />
-            <button className="theme-toggle" onClick={cycleTheme} title={t('accessibility.themeToggle', { mode })}>
-              <FontAwesomeIcon icon={mode === 'dark' ? faMoon : faSun} style={{ fontSize: '16px' }} />
-            </button>
-          </div>
-        </div>
-      </header>
+            <ThemeToggleButton
+              mode={mode}
+              onToggle={cycleTheme}
+              title={t('accessibility.themeToggle', { mode })}
+              size={16}
+            />
+          </>
+        )}
+      />
 
       <div className={isWideScreen ? 'wide-layout group-layout' : 'container group-layout'}>
         <div className="main-content">
@@ -406,9 +415,7 @@ export function GroupPage() {
         )}
       </div>
       
-      <footer className="footer">
-        <span style={{ opacity: 0.7 }}>{t('common.appName')}</span> &middot; {t('common.tagline')}
-      </footer>
+      <AppFooter />
 
       {/* Modals */}
       {showAddExpense && !isWideScreen && (
