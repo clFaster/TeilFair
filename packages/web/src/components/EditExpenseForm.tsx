@@ -222,6 +222,11 @@ export function EditExpenseForm({
     0
   );
 
+  const totalCustomSplit = Object.values(customSplits).reduce(
+    (sum, amt) => sum + (parseFloat(amt) || 0),
+    0
+  );
+
   const splitAmount = includedMembers.size > 0 && totalAmount 
     ? parseFloat(totalAmount) / includedMembers.size 
     : 0;
@@ -417,6 +422,20 @@ export function EditExpenseForm({
             </>
           ) : (
             <div className="advanced-content">
+              <div style={{ 
+                padding: '12px 16px', 
+                background: 'var(--color-surface)', 
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '12px'
+              }}>
+                <div className="text-sm">
+                  <span className="text-muted">{t('expense.totalEntered')} </span>
+                  <span className={totalCustomSplit === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
+                    {formatCurrency(totalCustomSplit)}
+                  </span>
+                  <span className="text-muted"> / {formatCurrency(parseFloat(totalAmount) || 0)}</span>
+                </div>
+              </div>
               {members.map(member => (
                 <div key={member.id} className="flex gap-3 items-center mb-2">
                   <span style={{ minWidth: '100px', fontWeight: 500 }}>{member.name}</span>

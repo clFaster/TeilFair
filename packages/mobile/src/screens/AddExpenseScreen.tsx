@@ -235,6 +235,11 @@ export function AddExpenseScreen() {
     0
   );
 
+  const totalCustomSplit = Object.values(customSplits).reduce(
+    (sum, amt) => sum + (parseFloat(amt) || 0),
+    0
+  );
+
   const splitAmount = includedMembers.size > 0 && totalAmount 
     ? parseFloat(totalAmount) / includedMembers.size 
     : 0;
@@ -472,6 +477,9 @@ export function AddExpenseScreen() {
               </>
             ) : (
               <>
+                <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
+                  {t('expense.totalEntered')} {formatCurrency(totalCustomSplit)} / {formatCurrency(parseFloat(totalAmount) || 0)}
+                </Text>
                 {members.map(member => (
                   <View key={member.id} style={styles.payerRow}>
                     <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>

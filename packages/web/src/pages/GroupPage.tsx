@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faShare, faPlus, faReceipt, faUsers, faChartPie, faCheck,
+  faShare, faPlus, faReceipt, faUsers, faChartPie,
   faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
