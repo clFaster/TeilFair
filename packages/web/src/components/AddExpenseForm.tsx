@@ -248,7 +248,7 @@ export function AddExpenseForm({
           <input
             id="description"
             type="text"
-            className="input"
+            className="input action-input"
             placeholder={t('expense.descriptionPlaceholder')}
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -263,7 +263,7 @@ export function AddExpenseForm({
             type="number"
             step="0.01"
             min="0.01"
-            className="input"
+            className="input action-input"
             placeholder={t('expense.amountPlaceholder')}
             value={totalAmount}
             onChange={e => setTotalAmount(e.target.value)}
@@ -279,7 +279,7 @@ export function AddExpenseForm({
             <input
               id="date"
               type="date"
-              className="input"
+              className="input action-input"
               value={date}
               onChange={e => setDate(e.target.value)}
             />
@@ -289,7 +289,7 @@ export function AddExpenseForm({
             <input
               id="time"
               type="time"
-              className="input"
+              className="input action-input"
               value={time}
               onChange={e => setTime(e.target.value)}
             />
@@ -304,10 +304,10 @@ export function AddExpenseForm({
               {t('member.addMembersFirstDescription')}
             </p>
             <div className="input-row">
-              <input
-                type="text"
-                className="input"
-                placeholder={t('member.memberNamePlaceholder')}
+                <input
+                  type="text"
+                  className="input action-input"
+                  placeholder={t('member.memberNamePlaceholder')}
                 value={newMemberName}
                 onChange={e => setNewMemberName(e.target.value)}
                 onKeyDown={e => {
@@ -319,10 +319,10 @@ export function AddExpenseForm({
               />
               <button
                 type="button"
-                className="btn btn-secondary"
-                onClick={handleAddNewMember}
-                disabled={isAddingMember || !newMemberName.trim()}
-              >
+                  className="btn btn-secondary action-button"
+                  onClick={handleAddNewMember}
+                  disabled={isAddingMember || !newMemberName.trim()}
+                >
                 <FontAwesomeIcon icon={isAddingMember ? faSpinner : faUserPlus} spin={isAddingMember} />
               </button>
             </div>
@@ -337,7 +337,7 @@ export function AddExpenseForm({
             {!showMultiplePayers ? (
               <>
                 <select
-                  className="select mb-2"
+                  className="select mb-2 action-input"
                   value={singlePayer}
                   onChange={e => setSinglePayer(e.target.value)}
                 >
@@ -380,7 +380,7 @@ export function AddExpenseForm({
                       type="number"
                       step="0.01"
                       min="0"
-                      className="input"
+                    className="input action-input"
                       placeholder={t('expense.amountPlaceholder')}
                       value={multiplePayers[member.id] || ''}
                       onChange={e => handlePayerChange(member.id, e.target.value)}
@@ -462,7 +462,7 @@ export function AddExpenseForm({
                       type="number"
                       step="0.01"
                       min="0"
-                      className="input"
+                    className="input action-input"
                       placeholder={t('expense.amountPlaceholder')}
                       value={customSplits[member.id] || ''}
                       onChange={e => handleCustomSplitChange(member.id, e.target.value)}
@@ -493,7 +493,7 @@ export function AddExpenseForm({
             <div className="input-row">
               <input
                 type="text"
-                className="input"
+                className="input action-input"
                 placeholder={t('member.newMemberPlaceholder')}
                 value={newMemberName}
                 onChange={e => setNewMemberName(e.target.value)}
@@ -506,7 +506,7 @@ export function AddExpenseForm({
               />
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary action-button"
                 onClick={handleAddNewMember}
                 disabled={isAddingMember || !newMemberName.trim()}
                 style={{ flexShrink: 0 }}
