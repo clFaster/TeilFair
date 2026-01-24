@@ -289,13 +289,6 @@ export function GroupPage() {
         )}
         right={(
           <>
-            <span className={`badge ${canWrite ? 'badge-write' : 'badge-read'}`}>
-              {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
-            </span>
-            <button className="btn btn-sm btn-primary" onClick={() => setShowShare(true)}>
-              <FontAwesomeIcon icon={faShare} />
-              <span className={screenSize === 'mobile' ? 'sr-only' : ''}>{t('common.share')}</span>
-            </button>
             <LanguageSwitcher />
             <ThemeToggleButton
               mode={mode}
@@ -313,9 +306,25 @@ export function GroupPage() {
             {/* Group Header */}
             <div className="card-header">
               <div>
-                <h1 className="card-title">{group.name}</h1>
-                <div className="text-secondary text-sm" style={{ marginTop: '4px' }}>
-                  {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })} &middot; {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
+                <div className="group-title-row">
+                  <h1 className="card-title">{group.name}</h1>
+                  <button
+                    className="btn btn-sm btn-ghost group-share-button"
+                    onClick={() => setShowShare(true)}
+                    title={t('common.share')}
+                    aria-label={t('common.share')}
+                  >
+                    <FontAwesomeIcon icon={faShare} />
+                    <span className="sr-only">{t('common.share')}</span>
+                  </button>
+                </div>
+                <div className="group-meta-row">
+                  <span className="text-secondary text-sm">
+                    {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })} &middot; {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
+                  </span>
+                  <span className="badge group-access-badge">
+                    {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
+                  </span>
                 </div>
               </div>
               <div className="text-right">
