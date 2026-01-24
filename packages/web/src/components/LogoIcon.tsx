@@ -8,7 +8,7 @@ interface LogoIconProps {
   className?: string;
 }
 
-export function LogoIcon({ size = 32, className }: LogoIconProps) {
+export function LogoIcon({ size = 32, className }: Readonly<LogoIconProps>) {
   return (
     <img
       src="/teilfair-logo.svg"

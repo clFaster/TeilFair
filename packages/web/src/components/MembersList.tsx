@@ -8,7 +8,7 @@ interface MembersListProps {
   canEdit: boolean;
 }
 
-export function MembersListForm({ canEdit }: MembersListProps) {
+export function MembersListForm({ canEdit }: Readonly<MembersListProps>) {
   const { t } = useTranslation();
   const { addMember } = useGroupStore();
   const [newMemberName, setNewMemberName] = useState('');
@@ -56,7 +56,7 @@ export function MembersListForm({ canEdit }: MembersListProps) {
   );
 }
 
-export function MembersList({ canEdit }: MembersListProps) {
+export function MembersList({ canEdit }: Readonly<MembersListProps>) {
   const { t } = useTranslation();
   const { members, updateMember, deleteMember, expenses, memberBalances } = useGroupStore();
   

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faPlus, faLink, faArrowRight, faReceipt, faCalculator, faHandshake } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
@@ -10,6 +10,9 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
 import { ThemeToggleButton } from '../components/ThemeToggleButton';
+import { HomeHero } from '../components/HomeHero';
+import { HomeRecentGroups } from '../components/HomeRecentGroups';
+import { HomeHowItWorks } from '../components/HomeHowItWorks';
 
 export function HomePage() {
   const { t, i18n } = useTranslation();
@@ -115,32 +118,18 @@ export function HomePage() {
       />
       
       <main className="container">
-        {/* Hero Section */}
-        <div className="hero-card animate-in">
-          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 2.75rem)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.03em', whiteSpace: 'pre-line' }}>
-            {t('home.heroTitle')}
-          </h1>
-          <p style={{ fontSize: '1.125rem', opacity: 0.9, marginBottom: '28px', maxWidth: '380px', margin: '0 auto 28px', lineHeight: 1.6 }}>
-            {t('home.heroSubtitle')}
-          </p>
-          
-          <div className="flex gap-3 justify-center flex-wrap">
-            <button 
-              className="btn hero-btn-primary"
-              onClick={() => { setShowCreate(true); setShowJoin(false); setError(''); }}
-            >
-              <FontAwesomeIcon icon={faPlus} />
-              <span>{t('home.createGroup')}</span>
-            </button>
-            <button 
-              className="btn hero-btn-secondary"
-              onClick={() => { setShowJoin(true); setShowCreate(false); setError(''); }}
-            >
-              <FontAwesomeIcon icon={faLink} />
-              <span>{t('home.joinGroup')}</span>
-            </button>
-          </div>
-        </div>
+        <HomeHero
+          onCreate={() => {
+            setShowCreate(true);
+            setShowJoin(false);
+            setError('');
+          }}
+          onJoin={() => {
+            setShowJoin(true);
+            setShowCreate(false);
+            setError('');
+          }}
+        />
 
         {/* Create Group Form */}
         {showCreate && (
@@ -243,91 +232,17 @@ export function HomePage() {
         )}
 
         {/* Recent Groups */}
-        {recentGroups.length > 0 && !showCreate && !showJoin && (
-          <div className="card animate-in animate-delay-1">
-            <h2 className="card-title mb-3">
-              <FontAwesomeIcon icon={faUsers} style={{ marginRight: '10px', opacity: 0.7 }} />
-              {t('home.recentGroupsTitle')}
-            </h2>
-            <div>
-              {recentGroups.map((group) => (
-                <div key={group.id} className="recent-group-card">
-                  <div className="recent-group-info">
-                    <span className="name">{group.name}</span>
-                    <span className={`badge ${group.permission === 'write' ? 'badge-write' : 'badge-read'}`}>
-                      {group.permission === 'write' ? t('common.fullAccess') : t('common.viewOnly')}
-                    </span>
-                  </div>
-                  <div className="recent-group-actions">
-                    <button
-                      className="btn btn-sm btn-primary"
-                      onClick={() => handleOpenRecent(group.id, group.token)}
-                      disabled={loading}
-                    >
-                      {t('common.open')}
-                      <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '6px', fontSize: '10px' }} />
-                    </button>
-                    <button
-                      className="btn btn-sm btn-ghost"
-                      onClick={() => removeFromRecent(group.id)}
-                      title={t('common.remove')}
-                    >
-                      &times;
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {!showCreate && !showJoin && (
+          <HomeRecentGroups
+            groups={recentGroups}
+            loading={loading}
+            onOpen={handleOpenRecent}
+            onRemove={removeFromRecent}
+          />
         )}
 
         {/* How it Works - Feature Cards */}
-        {!showCreate && !showJoin && (
-          <div className="card animate-in animate-delay-2">
-            <h2 className="card-title mb-4">{t('home.howItWorksTitle')}</h2>
-            <div className="feature-grid">
-              <div className="feature-card">
-                <div className="feature-icon">
-                  <FontAwesomeIcon icon={faUsers} />
-                </div>
-                <div className="feature-content">
-                  <h4>{t('home.step1Title')}</h4>
-                  <p>{t('home.step1Description')}</p>
-                </div>
-              </div>
-              
-              <div className="feature-card">
-                <div className="feature-icon">
-                  <FontAwesomeIcon icon={faReceipt} />
-                </div>
-                <div className="feature-content">
-                  <h4>{t('home.step2Title')}</h4>
-                  <p>{t('home.step2Description')}</p>
-                </div>
-              </div>
-              
-              <div className="feature-card">
-                <div className="feature-icon">
-                  <FontAwesomeIcon icon={faCalculator} />
-                </div>
-                <div className="feature-content">
-                  <h4>{t('home.step3Title')}</h4>
-                  <p>{t('home.step3Description')}</p>
-                </div>
-              </div>
-              
-              <div className="feature-card">
-                <div className="feature-icon">
-                  <FontAwesomeIcon icon={faHandshake} />
-                </div>
-                <div className="feature-content">
-                  <h4>{t('home.step4Title')}</h4>
-                  <p>{t('home.step4Description')}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {!showCreate && !showJoin && <HomeHowItWorks />}
 
         {error && !showCreate && !showJoin && (
           <div className="card animate-in" style={{ background: 'var(--clr-danger-a20)', borderColor: 'var(--clr-danger-a10)' }}>

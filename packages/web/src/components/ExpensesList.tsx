@@ -97,8 +97,7 @@ export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListPr
   );
 
   return (
-    <>
-      <div>
+    <div>
         {sortedExpenses.map((expense, index) => {
           const payerNames = expense.payers.length === 1
             ? getMemberName(expense.payers[0].memberId)
@@ -135,6 +134,5 @@ export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListPr
           );
         })}
       </div>
-    </>
   );
 }

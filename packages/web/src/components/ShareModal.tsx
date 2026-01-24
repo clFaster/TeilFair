@@ -9,14 +9,14 @@ interface ShareModalProps {
   onClose: () => void;
 }
 
-export function ShareModal({ onClose }: ShareModalProps) {
+export function ShareModal({ onClose }: Readonly<ShareModalProps>) {
   const { t } = useTranslation();
   const { group, permission } = useGroupStore();
   const [copied, setCopied] = useState<'read' | 'write' | null>(null);
 
   if (!group) return null;
 
-  const baseUrl = window.location.origin;
+  const baseUrl = globalThis.location.origin;
   const urls = createGroupUrls(baseUrl, group.id, group.readToken, group.writeToken);
 
   const copyToClipboard = async (url: string, type: 'read' | 'write') => {
