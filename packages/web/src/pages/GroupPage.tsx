@@ -304,10 +304,10 @@ export function GroupPage() {
         <div className="main-content">
           <div className="card">
             {/* Group Header */}
-            <div className="card-header">
-              <div>
+            <div className="card-header group-header">
+              <div className="group-header-left">
                 <div className="group-title-row">
-                  <h1 className="card-title">{group.name}</h1>
+                  <h1 className="card-title group-title-compact">{group.name}</h1>
                   <button
                     className="btn btn-sm btn-ghost group-share-button"
                     onClick={() => setShowShare(true)}
@@ -319,19 +319,20 @@ export function GroupPage() {
                   </button>
                 </div>
                 <div className="group-meta-row">
-                  <span className="text-secondary text-sm">
-                    {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })} &middot; {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
+                  <span className="group-meta-item">
+                    {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })}
+                  </span>
+                  <span className="group-meta-item">
+                    {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
                   </span>
                   <span className="badge group-access-badge">
                     {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
                   </span>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-muted text-sm">{t('common.total')}</div>
-                <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '-0.02em' }}>
-                  {formatCurrency(totalExpenses)}
-                </div>
+              <div className="group-header-total">
+                <div className="group-total-label">{t('common.total')}</div>
+                <div className="group-total-value">{formatCurrency(totalExpenses)}</div>
               </div>
             </div>
             
