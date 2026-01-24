@@ -19,6 +19,7 @@ const de = {
     copied: 'Kopiert!',
     open: 'Öffnen',
     remove: 'Entfernen',
+    lastUpdated: 'Aktualisiert {{date}}',
     back: 'Zurück',
     goBack: 'Zurück',
     goHome: 'Startseite',

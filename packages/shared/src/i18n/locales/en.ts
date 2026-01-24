@@ -19,6 +19,7 @@ const en = {
     copied: 'Copied!',
     open: 'Open',
     remove: 'Remove',
+    lastUpdated: 'Updated {{date}}',
     back: 'Back',
     goBack: 'Go Back',
     goHome: 'Go Home',

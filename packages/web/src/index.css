@@ -1949,38 +1949,141 @@ h1, h2, h3, h4, h5, h6 {
    RECENT GROUPS - Improved cards
    ============================================ */
 .recent-group-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   margin-bottom: var(--spacing-sm);
   transition: all var(--transition-fast);
+  position: relative;
+}
+
+.recent-group-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--spacing-sm);
+  bottom: var(--spacing-sm);
+  width: 3px;
+  background: var(--color-primary);
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
 .recent-group-card:hover {
   border-color: var(--color-primary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
-.recent-group-info {
+.recent-group-card:hover::before {
+  opacity: 1;
+}
+
+.recent-group-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: var(--spacing-md);
 }
 
-.recent-group-info .name {
+.recent-group-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.recent-group-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.recent-group-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.recent-group-title .name {
   font-family: var(--font-display);
   font-weight: var(--font-weight-semibold);
   letter-spacing: -0.01em;
+  font-size: var(--font-size-sm);
+}
+
+.recent-group-access {
+  align-self: center;
+}
+
+
+.recent-group-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.recent-group-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .recent-group-actions {
   display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
+
+.recent-group-open {
+  order: 2;
+}
+
+.recent-group-action-group {
+  order: 1;
+}
+
+.recent-group-action-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+@media (min-width: 960px) {
+  .recent-group-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--spacing-xl);
+    align-items: center;
+  }
+
+  .recent-group-side {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .recent-group-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .recent-group-side {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+}
+
 
 /* ============================================
    ANIMATIONS - Staggered reveals
