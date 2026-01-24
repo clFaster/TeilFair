@@ -148,46 +148,21 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
             const isEditing = editingId === member.id;
 
             return (
-              <div 
-                key={member.id} 
-                style={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '16px',
-                  background: 'var(--color-surface-elevated)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-lg)',
-                  marginBottom: '8px',
-                  transition: 'all var(--transition-fast)',
-                  animationDelay: `${index * 0.05}s`
-                }}
-                className="animate-in"
+              <div
+                key={member.id}
+                style={{ animationDelay: `${index * 0.05}s` }}
+                className="animate-in member-card"
               >
                 {/* Avatar */}
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: 'var(--font-size-md)',
-                  fontFamily: 'var(--font-display)',
-                  flexShrink: 0
-                }}>
+                <div className="member-card-avatar">
                   {member.name.charAt(0).toUpperCase()}
                 </div>
 
-                {/* Member Info / Edit Form */}
-                {isEditing ? (
-                  <div className="flex gap-2 action-row" style={{ flex: 1 }}>
+                <div className="member-card-body">
+                  {isEditing ? (
                     <input
                       type="text"
-                      className="input action-input"
+                      className="input action-input member-card-input"
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
                       autoFocus
@@ -196,54 +171,61 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
                         if (e.key === 'Escape') cancelEditing();
                       }}
                     />
-                    <button 
-                      className="btn btn-sm btn-primary action-button action-icon-button"
-                      onClick={() => handleUpdateMember(member.id)}
-                      disabled={loading || !editingName.trim()}
-                    >
-                      <FontAwesomeIcon icon={faCheck} />
-                    </button>
-                    <button 
-                      className="btn btn-sm btn-secondary action-button action-icon-button"
-                      onClick={cancelEditing}
-                    >
-                      <FontAwesomeIcon icon={faTimes} />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ flex: 1 }}>
+                  ) : (
+                    <>
                       <div style={{ fontWeight: 500 }}>{member.name}</div>
                       {formattedBalance && (
-                        <div 
+                        <div
                           className={`text-sm ${balance > 0 ? 'balance-positive' : 'balance-negative'}`}
                           style={{ marginTop: '2px' }}
                         >
                           {balance > 0 ? t('balance.getsBack') : t('balance.owes')} {Math.abs(balance).toFixed(2)}
                         </div>
                       )}
-                    </div>
-                    
-                    {canEdit && (
-                      <div className="flex gap-1">
+                    </>
+                  )}
+                </div>
+
+                {canEdit && (
+                  <div className="member-card-actions">
+                    {isEditing ? (
+                      <>
                         <button
-                          className="btn btn-sm btn-ghost"
+                          className="btn btn-sm btn-ghost member-card-action"
+                          onClick={() => handleUpdateMember(member.id)}
+                          disabled={loading || !editingName.trim()}
+                          title={t('common.save')}
+                        >
+                          <FontAwesomeIcon icon={faCheck} />
+                        </button>
+                        <button
+                          className="btn btn-sm btn-ghost member-card-action"
+                          onClick={cancelEditing}
+                          title={t('common.cancel')}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="btn btn-sm btn-ghost member-card-action"
                           onClick={() => startEditing(member.id, member.name)}
                           title={t('member.editNameTitle')}
                         >
                           <FontAwesomeIcon icon={faEdit} />
                         </button>
                         <button
-                          className="btn btn-sm btn-ghost"
+                          className="btn btn-sm btn-ghost member-card-action"
                           onClick={() => handleDeleteMember(member.id)}
                           title={t('member.deleteTitle')}
                           style={{ color: 'var(--color-danger)' }}
                         >
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
-                      </div>
+                      </>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
             );
