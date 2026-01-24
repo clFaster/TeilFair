@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClock, faEdit, faTrash, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faEdit, faTrash, faUser, faEye } from '@fortawesome/free-solid-svg-icons';
 
 interface ExpenseCardProps {
   animationDelay: number;
@@ -11,10 +11,12 @@ interface ExpenseCardProps {
   editLabel: string;
   deleteLabel: string;
   deletingLabel: string;
+  viewLabel?: string;
   canEdit: boolean;
   isDeleting: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onView?: () => void;
 }
 
 export function ExpenseCard({
@@ -27,11 +29,17 @@ export function ExpenseCard({
   editLabel,
   deleteLabel,
   deletingLabel,
+  viewLabel,
   canEdit,
   isDeleting,
   onEdit,
   onDelete,
+  onView,
 }: Readonly<ExpenseCardProps>) {
+  const showViewAction = Boolean(onView && viewLabel);
+  const showEditActions = canEdit;
+  const showActionGroup = showViewAction || showEditActions;
+
   return (
     <div
       className="expense-card"
@@ -60,29 +68,44 @@ export function ExpenseCard({
 
       <div className="expense-actions">
         <div className="expense-details-split">{splitInfo}</div>
-        {canEdit && (
+        {showActionGroup && (
           <div className="expense-action-group">
-            <button
-              className="btn btn-sm btn-ghost expense-action-button"
-              onClick={onEdit}
-              disabled={isDeleting}
-              title={editLabel}
-              aria-label={editLabel}
-            >
-              <FontAwesomeIcon icon={faEdit} />
-              <span className="sr-only">{editLabel}</span>
-            </button>
-            <button
-              className="btn btn-sm btn-ghost expense-action-button"
-              onClick={onDelete}
-              disabled={isDeleting}
-              title={deleteLabel}
-              aria-label={isDeleting ? deletingLabel : deleteLabel}
-              style={{ color: 'var(--color-danger)' }}
-            >
-              <FontAwesomeIcon icon={faTrash} />
-              <span className="sr-only">{isDeleting ? deletingLabel : deleteLabel}</span>
-            </button>
+            {showViewAction && (
+              <button
+                className="btn btn-sm btn-ghost expense-action-button"
+                onClick={onView}
+                title={viewLabel}
+                aria-label={viewLabel}
+              >
+                <FontAwesomeIcon icon={faEye} />
+                <span className="sr-only">{viewLabel}</span>
+              </button>
+            )}
+            {showEditActions && (
+              <>
+                <button
+                  className="btn btn-sm btn-ghost expense-action-button"
+                  onClick={onEdit}
+                  disabled={isDeleting}
+                  title={editLabel}
+                  aria-label={editLabel}
+                >
+                  <FontAwesomeIcon icon={faEdit} />
+                  <span className="sr-only">{editLabel}</span>
+                </button>
+                <button
+                  className="btn btn-sm btn-ghost expense-action-button"
+                  onClick={onDelete}
+                  disabled={isDeleting}
+                  title={deleteLabel}
+                  aria-label={isDeleting ? deletingLabel : deleteLabel}
+                  style={{ color: 'var(--color-danger)' }}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                  <span className="sr-only">{isDeleting ? deletingLabel : deleteLabel}</span>
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

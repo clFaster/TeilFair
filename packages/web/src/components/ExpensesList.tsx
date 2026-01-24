@@ -9,9 +9,10 @@ import { ExpenseCard } from './ExpenseCard';
 interface ExpensesListProps {
   canEdit: boolean;
   onEditExpense?: (expense: Expense) => void;
+  onViewExpense?: (expense: Expense) => void;
 }
 
-export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListProps>) {
+export function ExpensesList({ canEdit, onEditExpense, onViewExpense }: Readonly<ExpensesListProps>) {
   const { t } = useTranslation();
   const { expenses, members, group, deleteExpense } = useGroupStore();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -102,12 +103,13 @@ export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListPr
           const payerNames = expense.payers.length === 1
             ? getMemberName(expense.payers[0].memberId)
             : expense.payers.map(p => getMemberName(p.memberId)).join(' & ');
-          
+
           const splitInfo = expense.splits.length === members.length
             ? t('expense.splitEqually')
             : t('expense.splitBetween', { count: expense.splits.length });
 
           const isDeleting = deletingId === expense.id;
+          const viewLabel = t('expense.viewDetails');
 
           return (
             <ExpenseCard
@@ -121,10 +123,12 @@ export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListPr
               editLabel={t('common.edit')}
               deleteLabel={t('common.delete')}
               deletingLabel={t('expense.deleting')}
+              viewLabel={!canEdit ? viewLabel : undefined}
               canEdit={canEdit}
               isDeleting={isDeleting}
               onEdit={() => handleEditClick(expense)}
               onDelete={() => handleDelete(expense.id)}
+              onView={!canEdit ? () => onViewExpense?.(expense) : undefined}
             />
           );
         })}

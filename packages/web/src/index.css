@@ -1029,6 +1029,59 @@ h1, h2, h3, h4, h5, h6 {
   gap: var(--spacing-xs);
 }
 
+.expense-detail-list {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.expense-detail-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) 1fr;
+  gap: var(--spacing-md);
+  align-items: start;
+}
+
+.expense-detail-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+}
+
+.expense-detail-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.expense-detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.expense-detail-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.expense-detail-amount {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 520px) {
+  .expense-detail-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
 .expense-action-button {
   width: 36px;
   height: 36px;

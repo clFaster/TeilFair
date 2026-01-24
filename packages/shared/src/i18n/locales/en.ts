@@ -132,6 +132,8 @@ const en = {
   expense: {
     addExpense: 'Add Expense',
     editExpense: 'Edit Expense',
+    viewExpense: 'Expense Details',
+    viewDetails: 'View details',
     adding: 'Adding...',
     saving: 'Saving...',
     deleting: 'Deleting...',

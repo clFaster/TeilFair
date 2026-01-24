@@ -117,6 +117,8 @@ const de = {
   expense: {
     addExpense: 'Ausgabe hinzufügen',
     editExpense: 'Ausgabe bearbeiten',
+    viewExpense: 'Ausgabendetails',
+    viewDetails: 'Details ansehen',
     adding: 'Hinzugefügt...',
     saving: 'Speichern...',
     deleting: 'Löschen...',

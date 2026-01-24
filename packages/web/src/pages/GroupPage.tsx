@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faShare, faPlus, faReceipt, faUsers, faChartPie,
-  faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit
+  faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit, faEye
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 import { MembersList, MembersListForm } from '../components/MembersList';
 import { ExpensesList } from '../components/ExpensesList';
+import { ExpenseDetailsContent, ExpenseDetailsModal } from '../components/ExpenseDetailsModal';
 import { BalancesSummary } from '../components/BalancesSummary';
 import { AddExpenseModal } from '../components/AddExpenseModal';
 import { EditExpenseModal } from '../components/EditExpenseModal';
@@ -74,6 +75,7 @@ export function GroupPage() {
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
   const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
@@ -188,6 +190,25 @@ export function GroupPage() {
               showHeader={false}
               showCancelButton={true}
             />
+          </div>
+        </div>
+      );
+    }
+
+    if (viewingExpense) {
+      return (
+        <div className="side-panel-card">
+          <div className="side-panel-header">
+            <h3>
+              <FontAwesomeIcon icon={faEye} style={{ marginRight: '8px', opacity: 0.7 }} />
+              {t('expense.viewExpense')}
+            </h3>
+            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setViewingExpense(null)}>
+              &times;
+            </button>
+          </div>
+          <div className="side-panel-scroll">
+            <ExpenseDetailsContent expense={viewingExpense} />
           </div>
         </div>
       );
@@ -341,6 +362,7 @@ export function GroupPage() {
                       className="btn btn-primary btn-block mb-3 action-button"
                       onClick={() => {
                         setEditingExpense(null); // Clear any editing state
+                        setViewingExpense(null);
                         setShowAddExpense(true);
                       }}
                       disabled={members.length < 1}
@@ -377,6 +399,12 @@ export function GroupPage() {
                       onEditExpense={(expense) => {
                         setShowAddExpense(false); // Clear add state
                         setEditingExpense(expense);
+                        setViewingExpense(null);
+                      }}
+                      onViewExpense={(expense) => {
+                        setShowAddExpense(false);
+                        setEditingExpense(null);
+                        setViewingExpense(expense);
                       }}
                     />
                   </div>
@@ -428,6 +456,13 @@ export function GroupPage() {
         <EditExpenseModal 
           expense={editingExpense}
           onClose={() => setEditingExpense(null)} 
+        />
+      )}
+
+      {viewingExpense && !isWideScreen && (
+        <ExpenseDetailsModal
+          expense={viewingExpense}
+          onClose={() => setViewingExpense(null)}
         />
       )}
 
