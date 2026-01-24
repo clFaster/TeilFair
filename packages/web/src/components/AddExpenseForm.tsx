@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserPlus, faChevronDown, faChevronUp, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus, faChevronDown, faChevronUp, faCheck, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 
@@ -236,7 +236,9 @@ export function AddExpenseForm({
         <div className="expense-form-header">
           <h2>{t('expense.addExpense')}</h2>
           {onCancel && (
-            <button type="button" className="btn btn-icon btn-ghost" onClick={onCancel}>&times;</button>
+            <button type="button" className="btn btn-icon btn-ghost expense-dialog-close" onClick={onCancel}>
+              &times;
+            </button>
           )}
         </div>
       )}
@@ -547,7 +549,10 @@ export function AddExpenseForm({
               <span>{t('expense.adding')}</span>
             </>
           ) : (
-            t('expense.addExpense')
+            <>
+              <FontAwesomeIcon icon={faPlus} />
+              <span>{t('expense.addExpense')}</span>
+            </>
           )}
         </button>
       </div>

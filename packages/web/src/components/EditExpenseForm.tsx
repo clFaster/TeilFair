@@ -232,7 +232,9 @@ export function EditExpenseForm({
         <div className="expense-form-header">
           <h2>{t('expense.editExpense')}</h2>
           {onCancel && (
-            <button type="button" className="btn btn-icon btn-ghost" onClick={onCancel}>&times;</button>
+            <button type="button" className="btn btn-icon btn-ghost expense-dialog-close" onClick={onCancel}>
+              &times;
+            </button>
           )}
         </div>
       )}

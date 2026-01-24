@@ -1679,6 +1679,14 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
+.expense-dialog-close {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 22px;
+}
+
 .expense-form-body {
   flex: 1;
   display: flex;

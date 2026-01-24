@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faShare, faPlus, faReceipt, faUsers, faChartPie,
+  faShare, faPlus, faReceipt, faUsers, faChartPie, faCheck,
   faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
@@ -176,7 +176,7 @@ export function GroupPage() {
               <FontAwesomeIcon icon={faEdit} style={{ marginRight: '8px', opacity: 0.7 }} />
               {t('expense.editExpense')}
             </h3>
-            <button className="btn btn-sm btn-ghost" onClick={() => setEditingExpense(null)}>
+            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setEditingExpense(null)}>
               &times;
             </button>
           </div>
@@ -197,8 +197,11 @@ export function GroupPage() {
       return (
         <div className="side-panel-card">
           <div className="side-panel-header">
-            <h3>{t('expense.addExpense')}</h3>
-            <button className="btn btn-sm btn-ghost" onClick={() => setShowAddExpense(false)}>
+            <h3>
+              <FontAwesomeIcon icon={faReceipt} style={{ marginRight: '8px', opacity: 0.7 }} />
+              {t('expense.addExpense')}
+            </h3>
+            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setShowAddExpense(false)}>
               &times;
             </button>
           </div>
