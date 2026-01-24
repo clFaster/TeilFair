@@ -33,10 +33,10 @@ export function MembersListForm({ canEdit }: Readonly<MembersListProps>) {
 
   return (
     <form onSubmit={handleAddMember} style={{ marginBottom: '24px' }}>
-      <div className="flex gap-2">
+      <div className="flex gap-2 action-row">
         <input
           type="text"
-          className="input"
+          className="input action-input"
           placeholder={t('member.memberNamePlaceholder')}
           value={newMemberName}
           onChange={(e) => setNewMemberName(e.target.value)}
@@ -44,7 +44,7 @@ export function MembersListForm({ canEdit }: Readonly<MembersListProps>) {
         />
         <button 
           type="submit" 
-          className="btn btn-primary" 
+          className="btn btn-primary action-button" 
           disabled={loading || !newMemberName.trim()}
           style={{ flexShrink: 0 }}
         >
@@ -184,10 +184,10 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
 
                 {/* Member Info / Edit Form */}
                 {isEditing ? (
-                  <div className="flex gap-2" style={{ flex: 1 }}>
+                  <div className="flex gap-2 action-row" style={{ flex: 1 }}>
                     <input
                       type="text"
-                      className="input"
+                      className="input action-input"
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
                       autoFocus
@@ -197,14 +197,14 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
                       }}
                     />
                     <button 
-                      className="btn btn-sm btn-primary"
+                      className="btn btn-sm btn-primary action-button action-icon-button"
                       onClick={() => handleUpdateMember(member.id)}
                       disabled={loading || !editingName.trim()}
                     >
                       <FontAwesomeIcon icon={faCheck} />
                     </button>
                     <button 
-                      className="btn btn-sm btn-secondary"
+                      className="btn btn-sm btn-secondary action-button action-icon-button"
                       onClick={cancelEditing}
                     >
                       <FontAwesomeIcon icon={faTimes} />

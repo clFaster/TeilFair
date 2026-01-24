@@ -67,7 +67,7 @@ export function ExpenseCard({
       {canEdit && (
         <div className="expense-actions">
           <button
-            className="btn btn-sm btn-secondary expense-action-button"
+            className="btn btn-sm btn-secondary expense-action-button action-button-sm"
             onClick={onEdit}
             disabled={isDeleting}
           >
@@ -75,7 +75,7 @@ export function ExpenseCard({
             {editLabel}
           </button>
           <button
-            className="btn btn-sm btn-danger expense-action-button"
+            className="btn btn-sm btn-danger expense-action-button action-button-sm"
             onClick={onDelete}
             disabled={isDeleting}
           >

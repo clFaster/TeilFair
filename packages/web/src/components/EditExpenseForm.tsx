@@ -459,13 +459,13 @@ export function EditExpenseForm({
       
       <div className="expense-form-footer">
         {showCancelButton && onCancel && (
-          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+          <button type="button" className="btn btn-secondary action-button-sm" onClick={onCancel}>
             {t('common.cancel')}
           </button>
         )}
         <button 
           type="submit" 
-          className="btn btn-primary" 
+          className="btn btn-primary action-button-sm" 
           disabled={loading}
           style={!showCancelButton ? { width: '100%' } : undefined}
         >

@@ -335,13 +335,12 @@ export function GroupPage() {
                 <div className="tab-panel-actions">
                   {canWrite && (
                     <button 
-                      className="btn btn-primary btn-block mb-3"
+                      className="btn btn-primary btn-block mb-3 action-button"
                       onClick={() => {
                         setEditingExpense(null); // Clear any editing state
                         setShowAddExpense(true);
                       }}
                       disabled={members.length < 1}
-                      style={{ padding: '14px 24px' }}
                     >
                       <FontAwesomeIcon icon={faPlus} />
                       <span>{t('expense.addExpense')}</span>
