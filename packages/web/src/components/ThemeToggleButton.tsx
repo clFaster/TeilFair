@@ -10,7 +10,7 @@ interface ThemeToggleButtonProps {
 
 export function ThemeToggleButton({ mode, onToggle, title, size = 18 }: Readonly<ThemeToggleButtonProps>) {
   return (
-    <button className="theme-toggle" onClick={onToggle} title={title}>
+    <button className="theme-toggle app-header-icon" onClick={onToggle} title={title}>
       <FontAwesomeIcon icon={mode === 'dark' ? faMoon : faSun} style={{ fontSize: `${size}px` }} />
     </button>
   );

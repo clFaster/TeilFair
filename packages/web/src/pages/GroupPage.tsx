@@ -278,7 +278,7 @@ export function GroupPage() {
         wide
         left={(
           <>
-            <Link to="/" className="btn btn-sm btn-ghost" title={t('accessibility.backToHome')}>
+            <Link to="/" className="btn btn-ghost app-header-icon" title={t('accessibility.backToHome')}>
               <FontAwesomeIcon icon={faArrowLeft} />
             </Link>
             <Link to="/" className="logo">

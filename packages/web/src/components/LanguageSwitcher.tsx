@@ -42,8 +42,8 @@ export function LanguageSwitcher() {
 
   return (
     <div className="language-switcher" ref={dropdownRef}>
-      <button
-        className="language-switcher-button"
+        <button
+          className="language-switcher-button app-header-icon"
         onClick={() => setIsOpen(!isOpen)}
         title={t('accessibility.languageSelector')}
         aria-label={t('accessibility.languageSelector')}

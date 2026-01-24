@@ -213,7 +213,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .logo:hover {
   color: var(--color-primary-hover);
-  transform: translateY(-1px);
 }
 
 .logo img {
@@ -449,6 +448,26 @@ h1, h2, h3, h4, h5, h6 {
   min-height: 36px;
   font-size: var(--font-size-lg);
   border-radius: var(--radius-md);
+}
+
+.app-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.app-header-icon:hover {
+  color: var(--color-primary);
+  background: var(--color-surface);
 }
 
 /* Close button - larger touch target */
@@ -1536,23 +1555,9 @@ h1, h2, h3, h4, h5, h6 {
    THEME TOGGLE - Refined
    ============================================ */
 .theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  transition: all var(--transition-fast);
+  display: inline-flex;
 }
 
-.theme-toggle:hover {
-  color: var(--color-primary);
-  background: var(--color-surface);
-}
 
 /* ============================================
    FOOTER - Minimal
@@ -2205,23 +2210,9 @@ select:focus:not(:focus-visible) {
 }
 
 .language-switcher-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  transition: all var(--transition-fast);
+  display: inline-flex;
 }
 
-.language-switcher-button:hover {
-  color: var(--color-primary);
-  background: var(--color-surface);
-}
 
 .language-switcher-dropdown {
   position: absolute;
