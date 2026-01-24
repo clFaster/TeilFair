@@ -1560,14 +1560,17 @@ h1, h2, h3, h4, h5, h6 {
 
 
 /* ============================================
-   FOOTER - Minimal
-   ============================================ */
+    FOOTER - Minimal
+    ============================================ */
 .footer {
   margin-top: auto;
-  padding: var(--spacing-lg);
+  height: 45px;
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
   text-align: center;
   font-family: var(--font-body);
   font-size: var(--font-size-xs);
+  line-height: 45px;
   color: var(--color-text-muted);
   border-top: 1px solid var(--color-border);
   background: var(--color-header-bg);
