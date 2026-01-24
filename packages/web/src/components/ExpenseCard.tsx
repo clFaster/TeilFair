@@ -7,7 +7,6 @@ interface ExpenseCardProps {
   dateTimeLabel: string;
   description: string;
   paidByText: string;
-  payerDetails?: string;
   splitInfo: string;
   editLabel: string;
   deleteLabel: string;
@@ -24,7 +23,6 @@ export function ExpenseCard({
   dateTimeLabel,
   description,
   paidByText,
-  payerDetails,
   splitInfo,
   editLabel,
   deleteLabel,
@@ -53,37 +51,41 @@ export function ExpenseCard({
         <div className="expense-amount">{formattedAmount}</div>
       </div>
 
-      <div className="expense-details">
-        <div className="expense-payer-row">
-          <FontAwesomeIcon icon={faUser} style={{ opacity: 0.5, fontSize: '12px' }} />
-          <span>{paidByText}</span>
-          {payerDetails ? (
-            <span className="text-muted expense-payer-details">({payerDetails})</span>
-          ) : null}
+        <div className="expense-details">
+          <div className="expense-payer-row">
+            <FontAwesomeIcon icon={faUser} style={{ opacity: 0.5, fontSize: '12px' }} />
+            <span>{paidByText}</span>
+          </div>
         </div>
-        <div className="expense-details-split">{splitInfo}</div>
-      </div>
 
-      {canEdit && (
-        <div className="expense-actions">
-          <button
-            className="btn btn-sm btn-secondary expense-action-button action-button-sm"
-            onClick={onEdit}
-            disabled={isDeleting}
-          >
-            <FontAwesomeIcon icon={faEdit} style={{ marginRight: '4px' }} />
-            {editLabel}
-          </button>
-          <button
-            className="btn btn-sm btn-danger expense-action-button action-button-sm"
-            onClick={onDelete}
-            disabled={isDeleting}
-          >
-            <FontAwesomeIcon icon={faTrash} style={{ marginRight: '4px' }} />
-            {isDeleting ? deletingLabel : deleteLabel}
-          </button>
-        </div>
-      )}
+      <div className="expense-actions">
+        <div className="expense-details-split">{splitInfo}</div>
+        {canEdit && (
+          <div className="expense-action-group">
+            <button
+              className="btn btn-sm btn-ghost expense-action-button"
+              onClick={onEdit}
+              disabled={isDeleting}
+              title={editLabel}
+              aria-label={editLabel}
+            >
+              <FontAwesomeIcon icon={faEdit} />
+              <span className="sr-only">{editLabel}</span>
+            </button>
+            <button
+              className="btn btn-sm btn-ghost expense-action-button"
+              onClick={onDelete}
+              disabled={isDeleting}
+              title={deleteLabel}
+              aria-label={isDeleting ? deletingLabel : deleteLabel}
+              style={{ color: 'var(--color-danger)' }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+              <span className="sr-only">{isDeleting ? deletingLabel : deleteLabel}</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -109,10 +109,6 @@ export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListPr
 
           const isDeleting = deletingId === expense.id;
 
-          const payerDetails = expense.payers.length > 1
-            ? expense.payers.map(p => `${getMemberName(p.memberId)}: ${formatCurrency(p.amount)}`).join(', ')
-            : undefined;
-
           return (
             <ExpenseCard
               key={expense.id}
@@ -121,7 +117,6 @@ export function ExpensesList({ canEdit, onEditExpense }: Readonly<ExpensesListPr
               dateTimeLabel={`${formatDate(expense.date)} ${t('common.at')} ${formatTime(expense.date)}`}
               description={expense.description || t('expense.defaultDescription')}
               paidByText={t('expense.paidBy', { names: payerNames })}
-              payerDetails={payerDetails}
               splitInfo={splitInfo}
               editLabel={t('common.edit')}
               deleteLabel={t('common.delete')}
