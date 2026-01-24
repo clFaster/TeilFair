@@ -1445,7 +1445,9 @@ h1, h2, h3, h4, h5, h6 {
   .side-panel {
     width: 380px;
     flex-shrink: 0;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     padding-top: var(--spacing-lg);
     padding-bottom: var(--spacing-lg);
     padding-right: var(--spacing-sm);
@@ -1457,6 +1459,17 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: var(--shadow-md);
     padding: var(--spacing-xl);
     border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .side-panel-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
   }
   
   .side-panel-header {

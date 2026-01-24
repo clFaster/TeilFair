@@ -177,13 +177,15 @@ export function GroupPage() {
               &times;
             </button>
           </div>
-          <EditExpenseForm 
-            expense={editingExpense}
-            onSuccess={() => setEditingExpense(null)}
-            onCancel={() => setEditingExpense(null)}
-            showHeader={false}
-            showCancelButton={true}
-          />
+          <div className="side-panel-scroll">
+            <EditExpenseForm 
+              expense={editingExpense}
+              onSuccess={() => setEditingExpense(null)}
+              onCancel={() => setEditingExpense(null)}
+              showHeader={false}
+              showCancelButton={true}
+            />
+          </div>
         </div>
       );
     }
@@ -197,11 +199,13 @@ export function GroupPage() {
               &times;
             </button>
           </div>
-          <AddExpenseForm 
-            onSuccess={() => setShowAddExpense(false)}
-            showHeader={false}
-            showCancelButton={false}
-          />
+          <div className="side-panel-scroll">
+            <AddExpenseForm 
+              onSuccess={() => setShowAddExpense(false)}
+              showHeader={false}
+              showCancelButton={false}
+            />
+          </div>
         </div>
       );
     }
@@ -234,7 +238,9 @@ export function GroupPage() {
           </div>
         </div>
 
-        <BalancesSummary />
+        <div className="side-panel-scroll">
+          <BalancesSummary />
+        </div>
       </div>
     );
   };
