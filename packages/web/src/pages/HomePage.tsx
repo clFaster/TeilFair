@@ -98,13 +98,13 @@ export function HomePage() {
 
   return (
     <div className="app app-home">
-      <AppHeader
-        left={(
-          <Link to="/" className="logo">
-            <LogoIcon size={32} />
-            <span>{t('common.appName')}</span>
-          </Link>
-        )}
+        <AppHeader
+          left={(
+              <Link to="/" className="logo">
+                <LogoIcon size={32} />
+                <span>{t('common.appName')}</span>
+              </Link>
+          )}
         right={(
           <>
             <LanguageSwitcher />

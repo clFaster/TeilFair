@@ -282,7 +282,7 @@ export function GroupPage() {
               <FontAwesomeIcon icon={faArrowLeft} />
             </Link>
             <Link to="/" className="logo">
-              <LogoIcon size={24} />
+              <LogoIcon size={32} />
               <span>{t('common.appName')}</span>
             </Link>
           </>
