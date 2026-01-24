@@ -244,7 +244,7 @@ export function EditExpenseForm({
           <input
             id="edit-description"
             type="text"
-            className="input"
+            className="input action-input"
             placeholder={t('expense.descriptionPlaceholder')}
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -259,7 +259,7 @@ export function EditExpenseForm({
             type="number"
             step="0.01"
             min="0.01"
-            className="input"
+            className="input action-input"
             placeholder={t('expense.amountPlaceholder')}
             value={totalAmount}
             onChange={e => setTotalAmount(e.target.value)}
@@ -275,7 +275,7 @@ export function EditExpenseForm({
             <input
               id="edit-date"
               type="date"
-              className="input"
+              className="input action-input"
               value={date}
               onChange={e => setDate(e.target.value)}
             />
@@ -285,7 +285,7 @@ export function EditExpenseForm({
             <input
               id="edit-time"
               type="time"
-              className="input"
+              className="input action-input"
               value={time}
               onChange={e => setTime(e.target.value)}
             />
@@ -299,7 +299,7 @@ export function EditExpenseForm({
           {!showMultiplePayers ? (
             <>
               <select
-                className="select mb-2"
+                className="select mb-2 action-input"
                 value={singlePayer}
                 onChange={e => setSinglePayer(e.target.value)}
               >
@@ -342,7 +342,7 @@ export function EditExpenseForm({
                     type="number"
                     step="0.01"
                     min="0"
-                    className="input"
+                    className="input action-input"
                     placeholder={t('expense.amountPlaceholder')}
                     value={multiplePayers[member.id] || ''}
                     onChange={e => handlePayerChange(member.id, e.target.value)}
@@ -422,7 +422,7 @@ export function EditExpenseForm({
                     type="number"
                     step="0.01"
                     min="0"
-                    className="input"
+                    className="input action-input"
                     placeholder={t('expense.amountPlaceholder')}
                     value={customSplits[member.id] || ''}
                     onChange={e => handleCustomSplitChange(member.id, e.target.value)}
