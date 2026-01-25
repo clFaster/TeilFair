@@ -294,6 +294,12 @@ const en = {
     themeToggle: 'Theme: {{mode}}',
     languageSelector: 'Select language',
   },
+
+  // Footer links
+  footer: {
+    privacy: 'Privacy',
+    imprint: 'Imprint',
+  },
 } as const;
 
 export default en;

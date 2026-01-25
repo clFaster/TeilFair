@@ -257,7 +257,13 @@ const de = {
     backToHome: 'Zurück zur Startseite',
     themeToggle: 'Theme: {{mode}}',
     languageSelector: 'Sprache wählen',
-  }
+  },
+
+  // Footer links
+  footer: {
+    privacy: 'Datenschutz',
+    imprint: 'Impressum',
+  },
 } as const;
 
 export default de;
