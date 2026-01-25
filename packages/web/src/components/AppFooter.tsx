@@ -6,13 +6,15 @@ export function AppFooter() {
 
   return (
     <footer className="footer">
-      <span style={{ opacity: 0.7 }}>{t('common.appName')}</span> &middot; {t('common.tagline')}
-      <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>&middot;</span>
-      <Link to="/privacy" style={{ opacity: 0.7, textDecoration: 'none' }}>
+      <span style={{ opacity: 0.7 }}>{t('common.appName')}</span>
+      <span className="footer-separator">&middot;</span>
+      {t('common.tagline')}
+      <span className="footer-separator">&middot;</span>
+      <Link to="/privacy" className="footer-link">
         {t('footer.privacy')}
       </Link>
-      <span style={{ margin: '0 0.5rem', opacity: 0.5 }}>&middot;</span>
-      <Link to="/imprint" style={{ opacity: 0.7, textDecoration: 'none' }}>
+      <span className="footer-separator">&middot;</span>
+      <Link to="/imprint" className="footer-link">
         {t('footer.imprint')}
       </Link>
     </footer>

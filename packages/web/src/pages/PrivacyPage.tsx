@@ -12,41 +12,36 @@ export function PrivacyPage() {
   const { mode, toggleTheme } = useTheme();
   
   return (
-    <div className="page">
+    <div className="legal-page">
       <AppHeader
-        left={
+        left={(
           <Link to="/" className="logo">
             <LogoIcon size={32} />
-            <span>{t("common.appName")}</span>
+            <span>{t('common.appName')}</span>
           </Link>
-        }
-        right={
+        )}
+        right={(
           <>
             <LanguageSwitcher />
             <ThemeToggleButton
               mode={mode}
               onToggle={toggleTheme}
-              title={t("accessibility.themeToggle", { mode })}
+              title={t('accessibility.themeToggle', { mode })}
             />
           </>
-        }
+        )}
       />
-
-      <main
-        className="container"
-        style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem" }}
-      >
+      
+      <main className="legal-content">
         <h1>Datenschutzerklärung</h1>
 
-        <section style={{ marginTop: "2rem" }}>
+        <section>
           <h2>Allgemeines zur Datenverarbeitung</h2>
           <p>
             Beim Besuch dieser Website werden keine personenbezogenen Daten
             aktiv erhoben, gespeichert oder verarbeitet.
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Hosting</h2>
           <p>
             Diese Website wird auf einem externen Server gehostet. Die dabei
@@ -56,9 +51,7 @@ export function PrivacyPage() {
             berechtigter Interessen (Art. 6 Abs. 1 lit. f DSGVO) zur
             Sicherstellung des Betriebs und der Sicherheit der Website.
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Google Fonts</h2>
           <p>
             Diese Website verwendet Google Fonts zur Darstellung von
@@ -73,18 +66,14 @@ export function PrivacyPage() {
             https://developers.google.com/fonts/faq und in der
             Datenschutzerklärung von Google: https://policies.google.com/privacy
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Cookies und Tracking</h2>
           <p>
             Diese Website verwendet keine Cookies und setzt keine Tracking-Tools
             oder Analysedienste ein. Es erfolgt keine Verfolgung des
             Nutzerverhaltens.
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Externe Links</h2>
           <p>
             Diese Website enthält Links zu externen Websites (z.B. GitHub,
@@ -93,9 +82,7 @@ export function PrivacyPage() {
             sind deren Betreiber verantwortlich. Bitte informieren Sie sich dort
             über die jeweiligen Datenschutzbestimmungen.
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Kontaktaufnahme</h2>
           <p>
             Bei Kontaktaufnahme per E-Mail werden die von Ihnen mitgeteilten
@@ -109,9 +96,7 @@ export function PrivacyPage() {
             DSGVO) und/oder auf unseren berechtigten Interessen (Art. 6 Abs. 1
             lit. f DSGVO).
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Ihre Rechte</h2>
           <p>
             Sie haben das Recht auf Auskunft, Berichtigung, Löschung,
@@ -121,18 +106,14 @@ export function PrivacyPage() {
             Recht, sich bei einer Datenschutz-Aufsichtsbehörde über die
             Verarbeitung Ihrer personenbezogenen Daten zu beschweren.
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Speicherdauer</h2>
           <p>
             Soweit personenbezogene Daten verarbeitet werden, werden diese nur
             so lange gespeichert, wie es für die Erfüllung des jeweiligen Zwecks
             erforderlich ist oder gesetzliche Aufbewahrungsfristen bestehen.
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Änderungen dieser Datenschutzerklärung</h2>
           <p>
             Diese Datenschutzerklärung kann bei Bedarf angepasst werden, um
@@ -141,7 +122,7 @@ export function PrivacyPage() {
           </p>
         </section>
 
-        <p style={{ marginTop: "3rem", fontSize: "0.9rem", opacity: 0.7 }}>
+        <p className="legal-timestamp">
           Stand: Januar 2026
         </p>
       </main>

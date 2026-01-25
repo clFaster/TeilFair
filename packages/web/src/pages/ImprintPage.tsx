@@ -12,7 +12,7 @@ export function ImprintPage() {
   const { mode, toggleTheme } = useTheme();
   
   return (
-    <div className="page">
+    <div className="legal-page">
       <AppHeader
         left={
           <Link to="/" className="logo">
@@ -32,13 +32,10 @@ export function ImprintPage() {
         }
       />
 
-      <main
-        className="container"
-        style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem" }}
-      >
+      <main className="legal-content">
         <h1>Impressum</h1>
 
-        <section style={{ marginTop: "2rem" }}>
+        <section>
           <h2>Angaben gemäß § 25 Mediengesetz</h2>
           <p>
             TeilFair
@@ -47,14 +44,10 @@ export function ImprintPage() {
             <br />
             Wien, Österreich
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Kontakt</h2>
           <p>E-Mail: legal@moritzreis.dev</p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Haftungsausschluss</h2>
           <p>
             Trotz sorgfältiger inhaltlicher Kontrolle übernehme ich keine
@@ -62,11 +55,11 @@ export function ImprintPage() {
             verlinkten Seiten sind ausschließlich deren Betreiber
             verantwortlich.
           </p>
-        </section>
 
-        <section style={{ marginTop: "2rem" }}>
           <h2>Hinweis</h2>
-          <p>Dieses Impressum gilt für diese Website: teilfair.moritzreis.dev</p>
+          <p>
+            Dieses Impressum gilt für diese Website: teilfair.moritzreis.dev
+          </p>
           <p>Bei dieser Seite handelt es sich um ein persönliches Projekt.</p>
         </section>
       </main>
