@@ -19,6 +19,7 @@ const de = {
     copied: 'Kopiert!',
     open: 'Öffnen',
     remove: 'Entfernen',
+    lastUpdated: 'Aktualisiert {{date}}',
     back: 'Zurück',
     goBack: 'Zurück',
     goHome: 'Startseite',
@@ -117,6 +118,8 @@ const de = {
   expense: {
     addExpense: 'Ausgabe hinzufügen',
     editExpense: 'Ausgabe bearbeiten',
+    viewExpense: 'Ausgabendetails',
+    viewDetails: 'Details ansehen',
     adding: 'Hinzugefügt...',
     saving: 'Speichern...',
     deleting: 'Löschen...',

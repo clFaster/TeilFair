@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faSun, faMoon, faShare, faPlus, faReceipt, faUsers, faChartPie, 
-  faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit
+import {
+  faShare, faPlus, faReceipt, faUsers, faChartPie,
+  faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit, faEye
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
-import { MembersList } from '../components/MembersList';
+import { MembersList, MembersListForm } from '../components/MembersList';
 import { ExpensesList } from '../components/ExpensesList';
+import { ExpenseDetailsContent, ExpenseDetailsModal } from '../components/ExpenseDetailsModal';
 import { BalancesSummary } from '../components/BalancesSummary';
 import { AddExpenseModal } from '../components/AddExpenseModal';
 import { EditExpenseModal } from '../components/EditExpenseModal';
@@ -17,6 +18,9 @@ import { EditExpenseForm } from '../components/EditExpenseForm';
 import { ShareModal } from '../components/ShareModal';
 import { LogoIcon } from '../components/LogoIcon';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { AppHeader } from '../components/AppHeader';
+import { AppFooter } from '../components/AppFooter';
+import { ThemeToggleButton } from '../components/ThemeToggleButton';
 import { useTheme } from '../theme/ThemeProvider';
 import type { Expense } from '@teilfair/shared';
 
@@ -71,6 +75,7 @@ export function GroupPage() {
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
   const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
@@ -173,17 +178,38 @@ export function GroupPage() {
               <FontAwesomeIcon icon={faEdit} style={{ marginRight: '8px', opacity: 0.7 }} />
               {t('expense.editExpense')}
             </h3>
-            <button className="btn btn-sm btn-ghost" onClick={() => setEditingExpense(null)}>
+            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setEditingExpense(null)}>
               &times;
             </button>
           </div>
-          <EditExpenseForm 
-            expense={editingExpense}
-            onSuccess={() => setEditingExpense(null)}
-            onCancel={() => setEditingExpense(null)}
-            showHeader={false}
-            showCancelButton={true}
-          />
+          <div className="side-panel-scroll">
+            <EditExpenseForm 
+              expense={editingExpense}
+              onSuccess={() => setEditingExpense(null)}
+              onCancel={() => setEditingExpense(null)}
+              showHeader={false}
+              showCancelButton={true}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (viewingExpense) {
+      return (
+        <div className="side-panel-card">
+          <div className="side-panel-header">
+            <h3>
+              <FontAwesomeIcon icon={faEye} style={{ marginRight: '8px', opacity: 0.7 }} />
+              {t('expense.viewExpense')}
+            </h3>
+            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setViewingExpense(null)}>
+              &times;
+            </button>
+          </div>
+          <div className="side-panel-scroll">
+            <ExpenseDetailsContent expense={viewingExpense} />
+          </div>
         </div>
       );
     }
@@ -192,16 +218,21 @@ export function GroupPage() {
       return (
         <div className="side-panel-card">
           <div className="side-panel-header">
-            <h3>{t('expense.addExpense')}</h3>
-            <button className="btn btn-sm btn-ghost" onClick={() => setShowAddExpense(false)}>
+            <h3>
+              <FontAwesomeIcon icon={faReceipt} style={{ marginRight: '8px', opacity: 0.7 }} />
+              {t('expense.addExpense')}
+            </h3>
+            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setShowAddExpense(false)}>
               &times;
             </button>
           </div>
-          <AddExpenseForm 
-            onSuccess={() => setShowAddExpense(false)}
-            showHeader={false}
-            showCancelButton={false}
-          />
+          <div className="side-panel-scroll">
+            <AddExpenseForm 
+              onSuccess={() => setShowAddExpense(false)}
+              showHeader={false}
+              showCancelButton={false}
+            />
+          </div>
         </div>
       );
     }
@@ -234,56 +265,74 @@ export function GroupPage() {
           </div>
         </div>
 
-        <BalancesSummary />
+        <div className="side-panel-scroll">
+          <BalancesSummary />
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="header-content header-content-wide">
-          <div className="flex items-center gap-3">
-            <Link to="/" className="btn btn-sm btn-ghost" title={t('accessibility.backToHome')}>
+    <div className="app app-group">
+      <AppHeader
+        wide
+        left={(
+          <>
+            <Link to="/" className="btn btn-ghost app-header-icon" title={t('accessibility.backToHome')}>
               <FontAwesomeIcon icon={faArrowLeft} />
             </Link>
             <Link to="/" className="logo">
-              <LogoIcon size={24} />
+              <LogoIcon size={32} />
               <span>{t('common.appName')}</span>
             </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className={`badge ${canWrite ? 'badge-write' : 'badge-read'}`}>
-              {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
-            </span>
-            <button className="btn btn-sm btn-primary" onClick={() => setShowShare(true)}>
-              <FontAwesomeIcon icon={faShare} />
-              <span className={screenSize === 'mobile' ? 'sr-only' : ''}>{t('common.share')}</span>
-            </button>
+          </>
+        )}
+        right={(
+          <>
             <LanguageSwitcher />
-            <button className="theme-toggle" onClick={cycleTheme} title={t('accessibility.themeToggle', { mode })}>
-              <FontAwesomeIcon icon={mode === 'dark' ? faMoon : faSun} style={{ fontSize: '16px' }} />
-            </button>
-          </div>
-        </div>
-      </header>
+            <ThemeToggleButton
+              mode={mode}
+              onToggle={cycleTheme}
+              title={t('accessibility.themeToggle', { mode })}
+              size={16}
+            />
+          </>
+        )}
+      />
 
-      <div className={isWideScreen ? 'wide-layout' : 'container'}>
-        <div className={isWideScreen ? 'main-content' : ''}>
+      <div className={isWideScreen ? 'wide-layout group-layout' : 'container group-layout'}>
+        <div className="main-content">
           <div className="card">
             {/* Group Header */}
-            <div className="card-header">
-              <div>
-                <h1 className="card-title">{group.name}</h1>
-                <div className="text-secondary text-sm" style={{ marginTop: '4px' }}>
-                  {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })} &middot; {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
+            <div className="card-header group-header">
+              <div className="group-header-left">
+                <div className="group-title-row">
+                  <h1 className="card-title group-title-compact">{group.name}</h1>
+                  <button
+                    className="btn btn-sm btn-ghost group-share-button"
+                    onClick={() => setShowShare(true)}
+                    title={t('common.share')}
+                    aria-label={t('common.share')}
+                  >
+                    <FontAwesomeIcon icon={faShare} />
+                    <span className="sr-only">{t('common.share')}</span>
+                  </button>
+                </div>
+                <div className="group-meta-row">
+                  <span className="group-meta-item">
+                    {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })}
+                  </span>
+                  <span className="group-meta-item">
+                    {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
+                  </span>
+                  <span className="badge group-access-badge">
+                    {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
+                  </span>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-muted text-sm">{t('common.total')}</div>
-                <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '-0.02em' }}>
-                  {formatCurrency(totalExpenses)}
-                </div>
+              <div className="group-header-total">
+                <div className="group-total-label">{t('common.total')}</div>
+                <div className="group-total-value">{formatCurrency(totalExpenses)}</div>
               </div>
             </div>
             
@@ -316,60 +365,83 @@ export function GroupPage() {
 
             {/* Tab Content */}
             {activeTab === 'expenses' && (
-              <div className="animate-in">
-                {canWrite && (
-                  <button 
-                    className="btn btn-primary btn-block mb-3"
-                    onClick={() => {
-                      setEditingExpense(null); // Clear any editing state
-                      setShowAddExpense(true);
-                    }}
-                    disabled={members.length < 1}
-                    style={{ padding: '14px 24px' }}
-                  >
-                    <FontAwesomeIcon icon={faPlus} />
-                    <span>{t('expense.addExpense')}</span>
-                  </button>
-                )}
-                {members.length < 1 && (
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '20px', 
-                    background: 'var(--color-surface)', 
-                    borderRadius: 'var(--radius-lg)',
-                    marginBottom: '16px'
-                  }}>
-                    <p className="text-secondary">
-                      <FontAwesomeIcon icon={faUsers} style={{ marginRight: '8px', opacity: 0.6 }} />
-                      {t('member.addMembersToTrack')}
-                    </p>
+              <div className="tab-panel">
+                <div className="tab-panel-actions">
+                  {canWrite && (
                     <button 
-                      className="btn btn-sm btn-secondary mt-2"
-                      onClick={() => setActiveTab('members')}
+                      className="btn btn-primary btn-block mb-3 action-button"
+                      onClick={() => {
+                        setEditingExpense(null); // Clear any editing state
+                        setViewingExpense(null);
+                        setShowAddExpense(true);
+                      }}
+                      disabled={members.length < 1}
                     >
-                      {t('member.goToMembers')}
+                      <FontAwesomeIcon icon={faPlus} />
+                      <span>{t('expense.addExpense')}</span>
                     </button>
+                  )}
+                  {members.length < 1 && (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '20px', 
+                      background: 'var(--color-surface)', 
+                      borderRadius: 'var(--radius-lg)',
+                      marginBottom: '16px'
+                    }}>
+                      <p className="text-secondary">
+                        <FontAwesomeIcon icon={faUsers} style={{ marginRight: '8px', opacity: 0.6 }} />
+                        {t('member.addMembersToTrack')}
+                      </p>
+                      <button 
+                        className="btn btn-sm btn-secondary mt-2"
+                        onClick={() => setActiveTab('members')}
+                      >
+                        {t('member.goToMembers')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="tab-content-scroll">
+                  <div className="animate-in">
+                    <ExpensesList 
+                      canEdit={canWrite} 
+                      onEditExpense={(expense) => {
+                        setShowAddExpense(false); // Clear add state
+                        setEditingExpense(expense);
+                        setViewingExpense(null);
+                      }}
+                      onViewExpense={(expense) => {
+                        setShowAddExpense(false);
+                        setEditingExpense(null);
+                        setViewingExpense(expense);
+                      }}
+                    />
                   </div>
-                )}
-                <ExpensesList 
-                  canEdit={canWrite} 
-                  onEditExpense={(expense) => {
-                    setShowAddExpense(false); // Clear add state
-                    setEditingExpense(expense);
-                  }}
-                />
+                </div>
               </div>
             )}
 
             {activeTab === 'balances' && !isWideScreen && (
-              <div className="animate-in">
-                <BalancesSummary />
+              <div className="tab-panel">
+                <div className="tab-content-scroll">
+                  <div className="animate-in">
+                    <BalancesSummary />
+                  </div>
+                </div>
               </div>
             )}
 
             {activeTab === 'members' && (
-              <div className="animate-in">
-                <MembersList canEdit={canWrite} />
+              <div className="tab-panel">
+                <div className="tab-panel-actions">
+                  <MembersListForm canEdit={canWrite} />
+                </div>
+                <div className="tab-content-scroll">
+                  <div className="animate-in">
+                    <MembersList canEdit={canWrite} />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -383,9 +455,7 @@ export function GroupPage() {
         )}
       </div>
       
-      <footer className="footer">
-        <span style={{ opacity: 0.7 }}>{t('common.appName')}</span> &middot; {t('common.tagline')}
-      </footer>
+      <AppFooter />
 
       {/* Modals */}
       {showAddExpense && !isWideScreen && (
@@ -396,6 +466,13 @@ export function GroupPage() {
         <EditExpenseModal 
           expense={editingExpense}
           onClose={() => setEditingExpense(null)} 
+        />
+      )}
+
+      {viewingExpense && !isWideScreen && (
+        <ExpenseDetailsModal
+          expense={viewingExpense}
+          onClose={() => setViewingExpense(null)}
         />
       )}
 

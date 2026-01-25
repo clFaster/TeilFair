@@ -222,6 +222,11 @@ export function EditExpenseForm({
     0
   );
 
+  const totalCustomSplit = Object.values(customSplits).reduce(
+    (sum, amt) => sum + (parseFloat(amt) || 0),
+    0
+  );
+
   const splitAmount = includedMembers.size > 0 && totalAmount 
     ? parseFloat(totalAmount) / includedMembers.size 
     : 0;
@@ -232,7 +237,9 @@ export function EditExpenseForm({
         <div className="expense-form-header">
           <h2>{t('expense.editExpense')}</h2>
           {onCancel && (
-            <button type="button" className="btn btn-icon btn-ghost" onClick={onCancel}>&times;</button>
+            <button type="button" className="btn btn-icon btn-ghost expense-dialog-close" onClick={onCancel}>
+              &times;
+            </button>
           )}
         </div>
       )}
@@ -244,7 +251,7 @@ export function EditExpenseForm({
           <input
             id="edit-description"
             type="text"
-            className="input"
+            className="input action-input"
             placeholder={t('expense.descriptionPlaceholder')}
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -259,7 +266,7 @@ export function EditExpenseForm({
             type="number"
             step="0.01"
             min="0.01"
-            className="input"
+            className="input action-input"
             placeholder={t('expense.amountPlaceholder')}
             value={totalAmount}
             onChange={e => setTotalAmount(e.target.value)}
@@ -275,7 +282,7 @@ export function EditExpenseForm({
             <input
               id="edit-date"
               type="date"
-              className="input"
+              className="input action-input"
               value={date}
               onChange={e => setDate(e.target.value)}
             />
@@ -285,7 +292,7 @@ export function EditExpenseForm({
             <input
               id="edit-time"
               type="time"
-              className="input"
+              className="input action-input"
               value={time}
               onChange={e => setTime(e.target.value)}
             />
@@ -299,7 +306,7 @@ export function EditExpenseForm({
           {!showMultiplePayers ? (
             <>
               <select
-                className="select mb-2"
+                className="select mb-2 action-input"
                 value={singlePayer}
                 onChange={e => setSinglePayer(e.target.value)}
               >
@@ -342,7 +349,7 @@ export function EditExpenseForm({
                     type="number"
                     step="0.01"
                     min="0"
-                    className="input"
+                    className="input action-input"
                     placeholder={t('expense.amountPlaceholder')}
                     value={multiplePayers[member.id] || ''}
                     onChange={e => handlePayerChange(member.id, e.target.value)}
@@ -415,6 +422,20 @@ export function EditExpenseForm({
             </>
           ) : (
             <div className="advanced-content">
+              <div style={{ 
+                padding: '12px 16px', 
+                background: 'var(--color-surface)', 
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '12px'
+              }}>
+                <div className="text-sm">
+                  <span className="text-muted">{t('expense.totalEntered')} </span>
+                  <span className={totalCustomSplit === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
+                    {formatCurrency(totalCustomSplit)}
+                  </span>
+                  <span className="text-muted"> / {formatCurrency(parseFloat(totalAmount) || 0)}</span>
+                </div>
+              </div>
               {members.map(member => (
                 <div key={member.id} className="flex gap-3 items-center mb-2">
                   <span style={{ minWidth: '100px', fontWeight: 500 }}>{member.name}</span>
@@ -422,7 +443,7 @@ export function EditExpenseForm({
                     type="number"
                     step="0.01"
                     min="0"
-                    className="input"
+                    className="input action-input"
                     placeholder={t('expense.amountPlaceholder')}
                     value={customSplits[member.id] || ''}
                     onChange={e => handleCustomSplitChange(member.id, e.target.value)}
@@ -459,13 +480,13 @@ export function EditExpenseForm({
       
       <div className="expense-form-footer">
         {showCancelButton && onCancel && (
-          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+          <button type="button" className="btn btn-secondary action-button-sm" onClick={onCancel}>
             {t('common.cancel')}
           </button>
         )}
         <button 
           type="submit" 
-          className="btn btn-primary" 
+          className="btn btn-primary action-button-sm" 
           disabled={loading}
           style={!showCancelButton ? { width: '100%' } : undefined}
         >

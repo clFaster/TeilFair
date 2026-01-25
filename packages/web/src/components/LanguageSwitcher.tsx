@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faEarthEurope } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect, useRef } from 'react';
 
 export function LanguageSwitcher() {
@@ -42,14 +42,14 @@ export function LanguageSwitcher() {
 
   return (
     <div className="language-switcher" ref={dropdownRef}>
-      <button
-        className="language-switcher-button"
+        <button
+          className="language-switcher-button app-header-icon"
         onClick={() => setIsOpen(!isOpen)}
         title={t('accessibility.languageSelector')}
         aria-label={t('accessibility.languageSelector')}
         aria-expanded={isOpen}
       >
-        <FontAwesomeIcon icon={faGlobe} style={{ fontSize: '18px' }} />
+        <FontAwesomeIcon icon={faEarthEurope} style={{ fontSize: '18px' }} />
       </button>
 
       {isOpen && (

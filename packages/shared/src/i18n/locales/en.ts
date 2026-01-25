@@ -19,6 +19,7 @@ const en = {
     copied: 'Copied!',
     open: 'Open',
     remove: 'Remove',
+    lastUpdated: 'Updated {{date}}',
     back: 'Back',
     goBack: 'Go Back',
     goHome: 'Go Home',
@@ -132,6 +133,8 @@ const en = {
   expense: {
     addExpense: 'Add Expense',
     editExpense: 'Edit Expense',
+    viewExpense: 'Expense Details',
+    viewDetails: 'View details',
     adding: 'Adding...',
     saving: 'Saving...',
     deleting: 'Deleting...',

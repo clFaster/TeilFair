@@ -1,5 +1,11 @@
 {
   "buildCommand": "pnpm -r --filter ./packages/** build && pnpm --filter @teilfair/web build",
   "outputDirectory": "packages/web/dist",
-  "installCommand": "corepack enable pnpm && pnpm install"
+  "installCommand": "corepack enable pnpm && pnpm install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
 }

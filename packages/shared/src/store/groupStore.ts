@@ -36,6 +36,10 @@ export interface RecentGroup {
   token: string;
   permission: TokenPermission;
   lastAccessed: number;
+  memberCount?: number;
+  expenseCount?: number;
+  totalExpenses?: number;
+  currency?: string;
 }
 
 /**
@@ -86,6 +90,33 @@ export function createGroupStoreState(
   set: (partial: Partial<GroupState> | ((state: GroupState) => Partial<GroupState>)) => void,
   get: () => GroupState
 ): GroupState {
+  const updateRecentGroupStats = (groupId: string, overrides?: {
+    members?: Member[];
+    expenses?: Expense[];
+    name?: string;
+    currency?: string;
+  }) => {
+    const state = get();
+    const members = overrides?.members ?? state.members;
+    const expenses = overrides?.expenses ?? state.expenses;
+    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
+
+    const recentGroups = state.recentGroups.map((group) =>
+      group.id === groupId
+        ? {
+            ...group,
+            name: overrides?.name ?? group.name,
+            currency: overrides?.currency ?? group.currency,
+            memberCount: members.length,
+            expenseCount: expenses.length,
+            totalExpenses,
+          }
+        : group
+    );
+
+    set({ recentGroups });
+  };
+
   return {
     group: null,
     members: [],
@@ -126,12 +157,17 @@ export function createGroupStoreState(
         
         // Add to recent groups
         const recentGroups = get().recentGroups.filter(g => g.id !== groupId);
+        const totalExpenses = expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
         recentGroups.unshift({
           id: groupId,
           name: group.name,
           token,
           permission,
           lastAccessed: Date.now(),
+          memberCount: members.length,
+          expenseCount: expenses.length,
+          totalExpenses,
+          currency: group.currency,
         });
         // Keep only last 10
         if (recentGroups.length > 10) {
@@ -174,6 +210,10 @@ export function createGroupStoreState(
           token: group.writeToken,
           permission: 'write',
           lastAccessed: Date.now(),
+          memberCount: 0,
+          expenseCount: 0,
+          totalExpenses: 0,
+          currency: group.currency,
         });
         
         set({
@@ -206,10 +246,7 @@ export function createGroupStoreState(
       set({ group: updated });
       
       // Update recent groups
-      const recentGroups = get().recentGroups.map(g => 
-        g.id === group.id ? { ...g, name: updated.name } : g
-      );
-      set({ recentGroups });
+      updateRecentGroupStats(group.id, { name: updated.name, currency: updated.currency });
     },
 
     addMember: async (name: string) => {
@@ -217,7 +254,9 @@ export function createGroupStoreState(
       if (!group || !token) throw new Error('No group loaded');
       
       const member = await api.addMember(group.id, token, name);
-      set({ members: [...get().members, member] });
+      const updatedMembers = [...get().members, member];
+      set({ members: updatedMembers });
+      updateRecentGroupStats(group.id, { members: updatedMembers });
       return member;
     },
 
@@ -232,13 +271,17 @@ export function createGroupStoreState(
     },
 
     deleteMember: async (memberId: string) => {
-      const { token, members } = get();
+      const { token, members, group } = get();
       if (!token) throw new Error('No group loaded');
       
       await api.deleteMember(memberId, token);
+      const updatedMembers = members.filter(m => m.id !== memberId);
       set({
-        members: members.filter(m => m.id !== memberId),
+        members: updatedMembers,
       });
+      if (group) {
+        updateRecentGroupStats(group.id, { members: updatedMembers });
+      }
     },
 
     addExpense: async (input) => {
@@ -254,12 +297,14 @@ export function createGroupStoreState(
         memberBalances,
         settlements,
       });
+
+      updateRecentGroupStats(group.id, { expenses: newExpenses });
       
       return expense;
     },
 
     updateExpense: async (expenseId, input) => {
-      const { token, expenses } = get();
+      const { token, expenses, group } = get();
       if (!token) throw new Error('No group loaded');
       
       const updated = await api.updateExpense(expenseId, token, input);
@@ -271,10 +316,14 @@ export function createGroupStoreState(
         memberBalances,
         settlements,
       });
+
+      if (group) {
+        updateRecentGroupStats(group.id, { expenses: newExpenses });
+      }
     },
 
     deleteExpense: async (expenseId) => {
-      const { token, expenses } = get();
+      const { token, expenses, group } = get();
       if (!token) throw new Error('No group loaded');
       
       await api.deleteExpense(expenseId, token);
@@ -286,6 +335,10 @@ export function createGroupStoreState(
         memberBalances,
         settlements,
       });
+
+      if (group) {
+        updateRecentGroupStats(group.id, { expenses: newExpenses });
+      }
     },
 
     clearGroup: () => {
