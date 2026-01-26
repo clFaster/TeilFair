@@ -213,6 +213,10 @@ export function AddExpenseForm({
     ? parseFloat(totalAmount) / includedMembers.size 
     : 0;
 
+  const splitParticipantsCount = showCustomSplit
+    ? Object.values(customSplits).filter(amt => (parseFloat(amt) || 0) > 0).length
+    : includedMembers.size;
+
   return (
     <form onSubmit={handleSubmit} className="expense-form">
       {showHeader && (
@@ -359,19 +363,19 @@ export function AddExpenseForm({
           <div className="input-group section-card">
             <div className="section-header">
               <label>
-                {t('expense.splitBetweenLabel')} 
-                <span style={{ 
-                  marginLeft: '8px', 
-                  padding: '2px 8px', 
-                  background: 'var(--color-primary)', 
-                  color: 'white', 
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: 'var(--font-size-xs)',
-                  fontWeight: 600
-                }}>
-                  {includedMembers.size}
-                </span>
-              </label>
+              {t('expense.splitBetweenLabel')} 
+              <span style={{ 
+                marginLeft: '8px', 
+                padding: '2px 8px', 
+                background: 'var(--color-primary)', 
+                color: 'white', 
+                borderRadius: 'var(--radius-full)',
+                fontSize: 'var(--font-size-xs)',
+                fontWeight: 600
+              }}>
+                {splitParticipantsCount}
+              </span>
+            </label>
               <div className="segmented-control" role="group" aria-label={t('expense.splitBetweenLabel')}>
                 <button
                   type="button"
