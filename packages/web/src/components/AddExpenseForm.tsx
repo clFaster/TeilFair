@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserPlus, faChevronDown, faChevronUp, faCheck, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faCheck, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 
@@ -19,7 +19,7 @@ export function AddExpenseForm({
   showCancelButton = true,
 }: AddExpenseFormProps) {
   const { t } = useTranslation();
-  const { members, group, addExpense, addMember } = useGroupStore();
+  const { members, group, addExpense } = useGroupStore();
   
   const [description, setDescription] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
@@ -47,10 +47,6 @@ export function AddExpenseForm({
   const [includedMembers, setIncludedMembers] = useState<Set<string>>(new Set());
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
   
-  // New member creation
-  const [newMemberName, setNewMemberName] = useState('');
-  const [isAddingMember, setIsAddingMember] = useState(false);
-  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -77,24 +73,6 @@ export function AddExpenseForm({
     setIncludedMembers(new Set(members.map(m => m.id)));
     setCustomSplits({});
     setError('');
-  };
-
-  const handleAddNewMember = async () => {
-    if (!newMemberName.trim()) return;
-    
-    setIsAddingMember(true);
-    try {
-      const newMember = await addMember(newMemberName.trim());
-      setNewMemberName('');
-      setIncludedMembers(prev => new Set([...prev, newMember.id]));
-      if (!singlePayer) {
-        setSinglePayer(newMember.id);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add member');
-    } finally {
-      setIsAddingMember(false);
-    }
   };
 
   const handlePayerChange = (memberId: string, amount: string) => {
@@ -303,39 +281,6 @@ export function AddExpenseForm({
           </div>
         </div>
 
-        {/* Quick Add Member */}
-        {members.length === 0 && (
-          <div className="input-group">
-            <label>{t('member.addMembersFirst')}</label>
-            <p className="text-secondary text-sm mb-2">
-              {t('member.addMembersFirstDescription')}
-            </p>
-            <div className="input-row">
-                <input
-                  type="text"
-                  className="input action-input"
-                  placeholder={t('member.memberNamePlaceholder')}
-                value={newMemberName}
-                onChange={e => setNewMemberName(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddNewMember();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                  className="btn btn-secondary action-button"
-                  onClick={handleAddNewMember}
-                  disabled={isAddingMember || !newMemberName.trim()}
-                >
-                <FontAwesomeIcon icon={isAddingMember ? faSpinner : faUserPlus} spin={isAddingMember} />
-              </button>
-            </div>
-          </div>
-        )}
-        
         {/* Payer Section */}
         {members.length > 0 && (
           <div className="input-group">
@@ -507,37 +452,6 @@ export function AddExpenseForm({
           </div>
         )}
 
-        {/* Quick Add Member (when there are already members) */}
-        {members.length > 0 && (
-          <div className="input-group">
-            <label>{t('member.addMemberLabel')}</label>
-            <div className="input-row">
-              <input
-                type="text"
-                className="input action-input"
-                placeholder={t('member.newMemberPlaceholder')}
-                value={newMemberName}
-                onChange={e => setNewMemberName(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddNewMember();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="btn btn-secondary action-button"
-                onClick={handleAddNewMember}
-                disabled={isAddingMember || !newMemberName.trim()}
-                style={{ flexShrink: 0 }}
-              >
-                <FontAwesomeIcon icon={isAddingMember ? faSpinner : faUserPlus} spin={isAddingMember} />
-              </button>
-            </div>
-          </div>
-        )}
-        
         {error && (
           <div style={{ 
             padding: '12px 16px', 

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faShare, faPlus, faReceipt, faUsers, faChartPie,
-  faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEdit, faEye
+  faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEye
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 import { MembersList, MembersListForm } from '../components/MembersList';
@@ -13,8 +13,6 @@ import { ExpenseDetailsContent, ExpenseDetailsModal } from '../components/Expens
 import { BalancesSummary } from '../components/BalancesSummary';
 import { AddExpenseModal } from '../components/AddExpenseModal';
 import { EditExpenseModal } from '../components/EditExpenseModal';
-import { AddExpenseForm } from '../components/AddExpenseForm';
-import { EditExpenseForm } from '../components/EditExpenseForm';
 import { ShareModal } from '../components/ShareModal';
 import { LogoIcon } from '../components/LogoIcon';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
@@ -169,32 +167,6 @@ export function GroupPage() {
 
   // Render side panel content
   const renderSidePanel = () => {
-    // Edit expense form takes priority
-    if (editingExpense) {
-      return (
-        <div className="side-panel-card">
-          <div className="side-panel-header">
-            <h3>
-              <FontAwesomeIcon icon={faEdit} style={{ marginRight: '8px', opacity: 0.7 }} />
-              {t('expense.editExpense')}
-            </h3>
-            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setEditingExpense(null)}>
-              &times;
-            </button>
-          </div>
-          <div className="side-panel-scroll">
-            <EditExpenseForm 
-              expense={editingExpense}
-              onSuccess={() => setEditingExpense(null)}
-              onCancel={() => setEditingExpense(null)}
-              showHeader={false}
-              showCancelButton={true}
-            />
-          </div>
-        </div>
-      );
-    }
-
     if (viewingExpense) {
       return (
         <div className="side-panel-card">
@@ -209,29 +181,6 @@ export function GroupPage() {
           </div>
           <div className="side-panel-scroll">
             <ExpenseDetailsContent expense={viewingExpense} />
-          </div>
-        </div>
-      );
-    }
-    
-    if (showAddExpense) {
-      return (
-        <div className="side-panel-card">
-          <div className="side-panel-header">
-            <h3>
-              <FontAwesomeIcon icon={faReceipt} style={{ marginRight: '8px', opacity: 0.7 }} />
-              {t('expense.addExpense')}
-            </h3>
-            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setShowAddExpense(false)}>
-              &times;
-            </button>
-          </div>
-          <div className="side-panel-scroll">
-            <AddExpenseForm 
-              onSuccess={() => setShowAddExpense(false)}
-              showHeader={false}
-              showCancelButton={false}
-            />
           </div>
         </div>
       );
@@ -458,11 +407,11 @@ export function GroupPage() {
       <AppFooter />
 
       {/* Modals */}
-      {showAddExpense && !isWideScreen && (
+      {showAddExpense && (
         <AddExpenseModal onClose={() => setShowAddExpense(false)} />
       )}
 
-      {editingExpense && !isWideScreen && (
+      {editingExpense && (
         <EditExpenseModal 
           expense={editingExpense}
           onClose={() => setEditingExpense(null)} 

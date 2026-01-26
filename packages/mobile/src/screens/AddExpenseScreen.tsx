@@ -21,7 +21,7 @@ import { useTheme } from '../theme/ThemeProvider';
 export function AddExpenseScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const { members, group, addExpense, addMember } = useGroupStore();
+  const { members, group, addExpense } = useGroupStore();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   
@@ -41,10 +41,6 @@ export function AddExpenseScreen() {
   const [includedMembers, setIncludedMembers] = useState<Set<string>>(new Set());
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
   
-  // New member
-  const [newMemberName, setNewMemberName] = useState('');
-  const [isAddingMember, setIsAddingMember] = useState(false);
-  
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -55,24 +51,6 @@ export function AddExpenseScreen() {
       }
     }
   }, [members]);
-
-  const handleAddNewMember = async () => {
-    if (!newMemberName.trim()) return;
-    
-    setIsAddingMember(true);
-    try {
-      const newMember = await addMember(newMemberName.trim());
-      setNewMemberName('');
-      setIncludedMembers(prev => new Set([...prev, newMember.id]));
-      if (!singlePayer) {
-        setSinglePayer(newMember.id);
-      }
-    } catch (err) {
-      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.failedToAddMember'));
-    } finally {
-      setIsAddingMember(false);
-    }
-  };
 
   const handlePayerChange = (memberId: string, amount: string) => {
     setMultiplePayers(prev => {
@@ -319,36 +297,6 @@ export function AddExpenseScreen() {
           )}
         </View>
 
-        {/* Add Member */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.colors.text }]}>{t('member.membersLabel')}</Text>
-          {members.length === 0 && (
-            <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
-              {t('member.addMemberHintSingle')}
-            </Text>
-          )}
-          <View style={styles.addMemberRow}>
-            <TextInput
-              style={[styles.input, { flex: 1, backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
-              placeholder={t('member.addNewMemberPlaceholder')}
-              placeholderTextColor={theme.colors.textSecondary}
-              value={newMemberName}
-              onChangeText={setNewMemberName}
-              onSubmitEditing={handleAddNewMember}
-              returnKeyType="done"
-            />
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-              onPress={handleAddNewMember}
-              disabled={isAddingMember || !newMemberName.trim()}
-            >
-              <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-                {isAddingMember ? '...' : t('member.addMember')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Payer */}
         {members.length > 0 && (
           <View style={styles.section}>
@@ -572,10 +520,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
   },
-  addMemberRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
   dateTimeRow: {
     flexDirection: 'row',
     gap: 12,
@@ -586,11 +530,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'center',
-  },
-  addButton: {
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    justifyContent: 'center',
   },
   payerList: {
     gap: 8,
