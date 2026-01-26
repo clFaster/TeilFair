@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faChevronUp, faCheck, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 
@@ -283,9 +283,30 @@ export function AddExpenseForm({
 
         {/* Payer Section */}
         {members.length > 0 && (
-          <div className="input-group">
-            <label>{t('expense.whoPaidLabel')}</label>
-            
+          <div className="input-group section-card">
+            <div className="section-header">
+              <label>{t('expense.whoPaidLabel')}</label>
+              <div className="segmented-control" role="group" aria-label={t('expense.whoPaidLabel')}>
+                <button
+                  type="button"
+                  className={`segmented-button ${!showMultiplePayers ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowMultiplePayers(false);
+                    setMultiplePayers({});
+                  }}
+                >
+                  {t('expense.singlePayer')}
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-button ${showMultiplePayers ? 'active' : ''}`}
+                  onClick={() => setShowMultiplePayers(true)}
+                >
+                  {t('expense.multiplePayers')}
+                </button>
+              </div>
+            </div>
+
             {!showMultiplePayers ? (
               <>
                 <select
@@ -300,23 +321,11 @@ export function AddExpenseForm({
                     </option>
                   ))}
                 </select>
-                <button
-                  type="button"
-                  className="advanced-toggle"
-                  onClick={() => setShowMultiplePayers(true)}
-                >
-                  <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
-                  <span>{t('expense.multiplePayers')}</span>
-                </button>
+                <p className="helper-text text-muted">{t('expense.singlePayer')}</p>
               </>
             ) : (
               <div className="advanced-content">
-                <div style={{ 
-                  padding: '12px 16px', 
-                  background: 'var(--color-surface)', 
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: '12px'
-                }}>
+                <div className="inline-total">
                   <div className="text-sm">
                     <span className="text-muted">{t('expense.totalEntered')} </span>
                     <span className={totalPaidMultiple === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
@@ -332,7 +341,7 @@ export function AddExpenseForm({
                       type="number"
                       step="0.01"
                       min="0"
-                    className="input action-input"
+                      className="input action-input"
                       placeholder={t('expense.amountPlaceholder')}
                       value={multiplePayers[member.id] || ''}
                       onChange={e => handlePayerChange(member.id, e.target.value)}
@@ -340,17 +349,6 @@ export function AddExpenseForm({
                     />
                   </div>
                 ))}
-                <button
-                  type="button"
-                  className="advanced-toggle mt-2"
-                  onClick={() => {
-                    setShowMultiplePayers(false);
-                    setMultiplePayers({});
-                  }}
-                >
-                  <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
-                  <span>{t('expense.singlePayer')}</span>
-                </button>
               </div>
             )}
           </div>
@@ -358,22 +356,43 @@ export function AddExpenseForm({
         
         {/* Split Section */}
         {members.length > 0 && (
-          <div className="input-group">
-            <label>
-              {t('expense.splitBetweenLabel')} 
-              <span style={{ 
-                marginLeft: '8px', 
-                padding: '2px 8px', 
-                background: 'var(--color-primary)', 
-                color: 'white', 
-                borderRadius: 'var(--radius-full)',
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 600
-              }}>
-                {includedMembers.size}
-              </span>
-            </label>
-            
+          <div className="input-group section-card">
+            <div className="section-header">
+              <label>
+                {t('expense.splitBetweenLabel')} 
+                <span style={{ 
+                  marginLeft: '8px', 
+                  padding: '2px 8px', 
+                  background: 'var(--color-primary)', 
+                  color: 'white', 
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600
+                }}>
+                  {includedMembers.size}
+                </span>
+              </label>
+              <div className="segmented-control" role="group" aria-label={t('expense.splitBetweenLabel')}>
+                <button
+                  type="button"
+                  className={`segmented-button ${!showCustomSplit ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowCustomSplit(false);
+                    setCustomSplits({});
+                  }}
+                >
+                  {t('expense.equalSplit')}
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-button ${showCustomSplit ? 'active' : ''}`}
+                  onClick={() => setShowCustomSplit(true)}
+                >
+                  {t('expense.customSplitAmounts')}
+                </button>
+              </div>
+            </div>
+
             {!showCustomSplit ? (
               <>
                 <div style={{ marginBottom: '12px' }}>
@@ -396,23 +415,11 @@ export function AddExpenseForm({
                     </div>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  className="advanced-toggle"
-                  onClick={() => setShowCustomSplit(true)}
-                >
-                  <FontAwesomeIcon icon={faChevronDown} className="advanced-toggle-icon" />
-                  <span>{t('expense.customSplitAmounts')}</span>
-                </button>
+                <p className="helper-text text-muted">{t('expense.equalSplit')}</p>
               </>
             ) : (
               <div className="advanced-content">
-                <div style={{ 
-                  padding: '12px 16px', 
-                  background: 'var(--color-surface)', 
-                  borderRadius: 'var(--radius-md)',
-                  marginBottom: '12px'
-                }}>
+                <div className="inline-total">
                   <div className="text-sm">
                     <span className="text-muted">{t('expense.totalEntered')} </span>
                     <span className={totalCustomSplit === parseFloat(totalAmount) ? 'text-success' : 'text-warning'} style={{ fontWeight: 600 }}>
@@ -428,7 +435,7 @@ export function AddExpenseForm({
                       type="number"
                       step="0.01"
                       min="0"
-                    className="input action-input"
+                      className="input action-input"
                       placeholder={t('expense.amountPlaceholder')}
                       value={customSplits[member.id] || ''}
                       onChange={e => handleCustomSplitChange(member.id, e.target.value)}
@@ -436,17 +443,6 @@ export function AddExpenseForm({
                     />
                   </div>
                 ))}
-                <button
-                  type="button"
-                  className="advanced-toggle mt-2"
-                  onClick={() => {
-                    setShowCustomSplit(false);
-                    setCustomSplits({});
-                  }}
-                >
-                  <FontAwesomeIcon icon={faChevronUp} className="advanced-toggle-icon" />
-                  <span>{t('expense.equalSplit')}</span>
-                </button>
               </div>
             )}
           </div>
