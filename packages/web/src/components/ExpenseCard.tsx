@@ -43,6 +43,7 @@ export function ExpenseCard({
   return (
     <div
       className="expense-card"
+      data-testid="expense-card"
       style={{
         animationDelay: `${animationDelay}s`,
         opacity: isDeleting ? 0.5 : 1,
@@ -95,6 +96,7 @@ export function ExpenseCard({
                 </button>
                 <button
                   className="btn btn-sm btn-ghost expense-action-button"
+                  data-testid="expense-delete-button"
                   onClick={onDelete}
                   disabled={isDeleting}
                   title={deleteLabel}

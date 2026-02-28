@@ -289,6 +289,7 @@ export function GroupPage() {
             <div className="tabs">
               <button 
                 className={`tab ${activeTab === 'expenses' ? 'active' : ''}`}
+                data-testid="expenses-tab-button"
                 onClick={() => setActiveTab('expenses')}
               >
                 <FontAwesomeIcon icon={faReceipt} style={{ marginRight: '6px', opacity: 0.8 }} />
@@ -305,6 +306,7 @@ export function GroupPage() {
               )}
               <button 
                 className={`tab ${activeTab === 'members' ? 'active' : ''}`}
+                data-testid="members-tab-button"
                 onClick={() => setActiveTab('members')}
               >
                 <FontAwesomeIcon icon={faUsers} style={{ marginRight: '6px', opacity: 0.8 }} />
@@ -319,6 +321,7 @@ export function GroupPage() {
                   {canWrite && (
                     <button 
                       className="btn btn-primary btn-block mb-3 action-button"
+                      data-testid="add-expense-button"
                       onClick={() => {
                         setEditingExpense(null); // Clear any editing state
                         setViewingExpense(null);

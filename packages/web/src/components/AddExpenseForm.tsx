@@ -238,6 +238,7 @@ export function AddExpenseForm({
             id="description"
             type="text"
             className="input action-input"
+            data-testid="expense-description-input"
             placeholder={t('expense.descriptionPlaceholder')}
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -253,6 +254,7 @@ export function AddExpenseForm({
             step="0.01"
             min="0.01"
             className="input action-input"
+            data-testid="expense-amount-input"
             placeholder={t('expense.amountPlaceholder')}
             value={totalAmount}
             onChange={e => setTotalAmount(e.target.value)}
@@ -473,6 +475,7 @@ export function AddExpenseForm({
         <button 
           type="submit" 
           className="btn btn-primary action-button-sm" 
+          data-testid="expense-submit-button"
           disabled={loading || members.length < 1}
           style={!showCancelButton ? { width: '100%' } : undefined}
         >

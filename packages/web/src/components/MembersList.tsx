@@ -37,6 +37,7 @@ export function MembersListForm({ canEdit }: Readonly<MembersListProps>) {
         <input
           type="text"
           className="input action-input"
+          data-testid="member-name-input"
           placeholder={t('member.memberNamePlaceholder')}
           value={newMemberName}
           onChange={(e) => setNewMemberName(e.target.value)}
@@ -45,6 +46,7 @@ export function MembersListForm({ canEdit }: Readonly<MembersListProps>) {
         <button 
           type="submit" 
           className="btn btn-primary action-button" 
+          data-testid="member-submit-button"
           disabled={loading || !newMemberName.trim()}
           style={{ flexShrink: 0 }}
         >
@@ -152,6 +154,7 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
                 key={member.id}
                 style={{ animationDelay: `${index * 0.05}s` }}
                 className="animate-in member-card"
+                data-testid="member-card"
               >
                 {/* Avatar */}
                 <div className="member-card-avatar">
@@ -217,6 +220,7 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
                         </button>
                         <button
                           className="btn btn-sm btn-ghost member-card-action"
+                          data-testid="member-delete-button"
                           onClick={() => handleDeleteMember(member.id)}
                           title={t('member.deleteTitle')}
                           style={{ color: 'var(--color-danger)' }}

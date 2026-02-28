@@ -166,6 +166,17 @@ pnpm mobile
 pnpm test
 ```
 
+**Run Web System Tests (Playwright)**:
+```bash
+pnpm --filter @teilfair/web exec playwright install
+pnpm --filter @teilfair/web run test:system
+```
+
+Before running, copy `packages/web/.env.systemtest.example` to `packages/web/.env.systemtest.local`
+and fill `SYSTEM_TEST_GROUP_ID` plus `SYSTEM_TEST_TOKEN` for a writable test group.
+
+The system test opens the configured group, adds one expense, and removes it again.
+
 **Build All Packages**:
 ```bash
 pnpm build
