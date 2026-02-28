@@ -1,0 +1,146 @@
+name: System Tests
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: system-tests
+  cancel-in-progress: false
+
+jobs:
+  web-system-tests:
+    name: Web System Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
+        with:
+          cache: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Normalize base URL variable
+        run: |
+          BASE_URL_VALUE="${{ vars.BASE_URL }}"
+          BASE_URL_TRIMMED="$(echo "$BASE_URL_VALUE" | xargs)"
+          BASE_URL_NORMALIZED="${BASE_URL_TRIMMED%/}"
+          echo "SYSTEM_TEST_BASE_URL=$BASE_URL_NORMALIZED" >> "$GITHUB_ENV"
+
+      - name: Install Playwright browser
+        run: pnpm --filter @teilfair/web exec playwright install --with-deps chromium
+
+      - name: Run web system tests
+        env:
+          SYSTEM_TEST_GROUP_ID: ${{ secrets.SYSTEM_TEST_GROUP_ID }}
+          SYSTEM_TEST_TOKEN: ${{ secrets.SYSTEM_TEST_TOKEN }}
+        run: pnpm --filter @teilfair/web run test:system
+
+      - name: Add test summary
+        if: always()
+        run: |
+          node <<'EOF'
+          const fs = require('node:fs');
+
+          const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+          const resultFile = 'packages/web/test-results/results.json';
+          const lines = ['## Web system tests'];
+
+          if (!fs.existsSync(resultFile)) {
+            lines.push('');
+            lines.push('- No JSON result file found at `packages/web/test-results/results.json`.');
+            lines.push('- Check the workflow logs and Playwright artifacts for details.');
+            fs.appendFileSync(summaryFile, `${lines.join('\n')}\n`);
+            process.exit(0);
+          }
+
+          const report = JSON.parse(fs.readFileSync(resultFile, 'utf8'));
+          const stats = report.stats || {};
+          const passed = Number(stats.expected || 0);
+          const failed = Number(stats.unexpected || 0);
+          const flaky = Number(stats.flaky || 0);
+          const skipped = Number(stats.skipped || 0);
+          const durationMs = Number(stats.duration || 0);
+          const status = failed > 0 ? 'failed' : 'passed';
+
+          lines.push('');
+          lines.push(`- Status: **${status}**`);
+          lines.push(`- Passed: **${passed}**`);
+          lines.push(`- Failed: **${failed}**`);
+          lines.push(`- Flaky: **${flaky}**`);
+          lines.push(`- Skipped: **${skipped}**`);
+          lines.push(`- Duration: **${(durationMs / 1000).toFixed(1)}s**`);
+
+          const failedTests = [];
+
+          const collectFailedTests = (suites) => {
+            if (!Array.isArray(suites)) return;
+
+            for (const suite of suites) {
+              if (Array.isArray(suite.specs)) {
+                for (const spec of suite.specs) {
+                  const titlePath = [...(spec.titlePath || []), spec.title]
+                    .filter(Boolean)
+                    .join(' > ');
+
+                  for (const test of spec.tests || []) {
+                    const resultStatuses = (test.results || []).map((result) => result.status);
+                    const hasFailedResult = resultStatuses.some((statusValue) =>
+                      ['failed', 'timedOut', 'interrupted'].includes(statusValue)
+                    );
+                    const isFailed = test.status === 'unexpected' || hasFailedResult;
+
+                    if (!isFailed) continue;
+
+                    const projectSuffix = test.projectName ? ` (${test.projectName})` : '';
+                    const title = titlePath || test.title || 'Unnamed test';
+                    failedTests.push(`- \`${title}\`${projectSuffix}`);
+                  }
+                }
+              }
+
+              collectFailedTests(suite.suites);
+            }
+          };
+
+          collectFailedTests(report.suites);
+
+          if (failedTests.length > 0) {
+            lines.push('');
+            lines.push('<details><summary>Failed tests</summary>');
+            lines.push('');
+            lines.push(...failedTests.slice(0, 20));
+
+            if (failedTests.length > 20) {
+              lines.push(`- ... and ${failedTests.length - 20} more`);
+            }
+
+            lines.push('');
+            lines.push('</details>');
+          }
+
+          fs.appendFileSync(summaryFile, `${lines.join('\n')}\n`);
+          EOF
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-system-test-report
+          path: |
+            packages/web/playwright-report
+            packages/web/test-results
+          if-no-files-found: ignore
+          retention-days: 14
