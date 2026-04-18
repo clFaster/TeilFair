@@ -15,7 +15,7 @@
     "build": "pnpm --filter @teilfair/shared run build && pnpm --filter @teilfair/web run build"
   },
   "devDependencies": {
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
