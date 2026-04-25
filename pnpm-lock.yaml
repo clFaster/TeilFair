@@ -42,8 +42,8 @@ importers:
         specifier: ^17.0.8
         version: 17.0.8(expo@54.0.32(@babel/core@7.29.0)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3))(react@19.2.3)
       expo-secure-store:
-        specifier: ~15.0.8
-        version: 15.0.8(expo@54.0.32(@babel/core@7.29.0)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3))
+        specifier: ~55.0.11
+        version: 55.0.11(expo@54.0.32(@babel/core@7.29.0)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3))
       expo-status-bar:
         specifier: ~3.0.9
         version: 3.0.9(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3)
@@ -2295,8 +2295,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  expo-secure-store@15.0.8:
-    resolution: {integrity: sha512-lHnzvRajBu4u+P99+0GEMijQMFCOYpWRO4dWsXSuMt77+THPIGjzNvVKrGSl6mMrLsfVaKL8BpwYZLGlgA+zAw==}
+  expo-secure-store@55.0.11:
+    resolution: {integrity: sha512-uESAb/yZvWTs0wI/IulCCVI6psoGO8T59XI3dRTkPfc/F8r1AXpVi/jh+gkmjG8lcU6ni2AUC1HNSFW9rLEXlg==}
     peerDependencies:
       expo: '*'
 
@@ -6461,7 +6461,7 @@ snapshots:
       react: 19.2.3
       react-native: 0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3)
 
-  expo-secure-store@15.0.8(expo@54.0.32(@babel/core@7.29.0)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3)):
+  expo-secure-store@55.0.11(expo@54.0.32(@babel/core@7.29.0)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3)):
     dependencies:
       expo: 54.0.32(@babel/core@7.29.0)(react-native@0.83.1(@babel/core@7.29.0)(@types/react@19.2.9)(react@19.2.3))(react@19.2.3)
 
