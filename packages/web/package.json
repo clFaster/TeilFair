@@ -1,7 +1,7 @@
 {
   "name": "@teilfair/web",
   "private": true,
-  "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017",
+  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -17,32 +17,32 @@
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
     "@fortawesome/free-solid-svg-icons": "^7.2.0",
     "@fortawesome/react-fontawesome": "^3.3.1",
-    "@supabase/supabase-js": "^2.98.0",
+    "@supabase/supabase-js": "^2.107.0",
     "@teilfair/shared": "workspace:*",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^2.0.0",
     "i18next": "^26.3.1",
     "i18next-browser-languagedetector": "^8.2.1",
-    "react": "^19.2.4",
+    "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-i18next": "^16.5.4",
-    "react-router-dom": "^7.13.1",
-    "zustand": "^5.0.11"
+    "react-i18next": "^16.6.6",
+    "react-router-dom": "^7.17.0",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
-    "@types/node": "^25.3.3",
-    "@types/react": "^19.2.14",
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitejs/plugin-react": "^5.2.0",
     "dotenv": "^17.4.2",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.4.0",
+    "globals": "^17.6.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1",
+    "typescript-eslint": "^8.60.1",
     "vite": "^8.0.16"
   }
 }
