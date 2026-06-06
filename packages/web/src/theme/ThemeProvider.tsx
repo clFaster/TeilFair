@@ -3,20 +3,9 @@
  * React context for managing theme across the web application
  */
 
-import { createContext, useContext, type ReactNode } from 'react';
-import { type ThemeMode, type Theme } from '@teilfair/shared';
-import { useTheme as useThemeHook, type ThemePreference } from './useTheme';
-
-interface ThemeContextValue {
-  theme: Theme;
-  mode: ThemeMode;
-  toggleTheme: () => void;
-  setThemePreference: (preference: ThemePreference) => void;
-  isDark: boolean;
-  isLight: boolean;
-}
-
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+import { type ReactNode } from 'react';
+import { useTheme as useThemeHook } from './useTheme';
+import { ThemeContext } from './ThemeContext';
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -33,15 +22,4 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-/**
- * Hook to access theme context
- */
-export function useTheme(): ThemeContextValue {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
 }

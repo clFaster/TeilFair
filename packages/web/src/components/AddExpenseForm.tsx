@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -38,27 +38,24 @@ export function AddExpenseForm({
   });
   
   // Payer state
-  const [singlePayer, setSinglePayer] = useState<string>('');
+  const [singlePayer, setSinglePayer] = useState<string>(members[0]?.id ?? '');
   const [showMultiplePayers, setShowMultiplePayers] = useState(false);
   const [multiplePayers, setMultiplePayers] = useState<Record<string, string>>({});
   
   // Split state
   const [showCustomSplit, setShowCustomSplit] = useState(false);
-  const [includedMembers, setIncludedMembers] = useState<Set<string>>(new Set());
+  const [includedMembers, setIncludedMembers] = useState<Set<string>>(() => new Set(members.map(m => m.id)));
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Initialize with all existing members selected for split
-  useEffect(() => {
-    if (members.length > 0) {
-      setIncludedMembers(new Set(members.map(m => m.id)));
-      if (!singlePayer) {
-        setSinglePayer(members[0].id);
-      }
-    }
-  }, [members]);
+  const defaultSinglePayer = members[0]?.id ?? '';
+  const selectedSinglePayer = singlePayer || defaultSinglePayer;
+
+  const selectedIncludedMembers = includedMembers.size > 0
+    ? includedMembers
+    : new Set(members.map(m => m.id));
 
   const resetForm = () => {
     setDescription('');
@@ -78,7 +75,8 @@ export function AddExpenseForm({
   const handlePayerChange = (memberId: string, amount: string) => {
     setMultiplePayers(prev => {
       if (amount === '' || amount === '0') {
-        const { [memberId]: _, ...rest } = prev;
+        const rest = { ...prev };
+        delete rest[memberId];
         return rest;
       }
       return { ...prev, [memberId]: amount };
@@ -87,7 +85,8 @@ export function AddExpenseForm({
 
   const toggleMemberInSplit = (memberId: string) => {
     setIncludedMembers(prev => {
-      const next = new Set(prev);
+      const base = prev.size > 0 ? prev : new Set(members.map(m => m.id));
+      const next = new Set(base);
       if (next.has(memberId)) {
         if (next.size > 1) {
           next.delete(memberId);
@@ -113,7 +112,7 @@ export function AddExpenseForm({
       return;
     }
     
-    if (includedMembers.size < 1) {
+    if (selectedIncludedMembers.size < 1) {
       setError('Please select at least one person to split with');
       return;
     }
@@ -136,11 +135,11 @@ export function AddExpenseForm({
         return;
       }
     } else {
-      if (!singlePayer) {
+      if (!selectedSinglePayer) {
         setError('Please select who paid');
         return;
       }
-      payerEntries = [{ memberId: singlePayer, amount }];
+      payerEntries = [{ memberId: selectedSinglePayer, amount }];
     }
     
     let splits: Array<{ memberId: string; share: number; shareType: ShareType }>;
@@ -167,7 +166,7 @@ export function AddExpenseForm({
         shareType: 'fixed' as ShareType,
       }));
     } else {
-      splits = Array.from(includedMembers).map(memberId => ({
+      splits = Array.from(selectedIncludedMembers).map(memberId => ({
         memberId,
         share: 1,
         shareType: 'ratio' as ShareType,
@@ -209,13 +208,13 @@ export function AddExpenseForm({
     0
   );
 
-  const splitAmount = includedMembers.size > 0 && totalAmount 
-    ? parseFloat(totalAmount) / includedMembers.size 
+  const splitAmount = selectedIncludedMembers.size > 0 && totalAmount 
+    ? parseFloat(totalAmount) / selectedIncludedMembers.size 
     : 0;
 
   const splitParticipantsCount = showCustomSplit
     ? Object.values(customSplits).filter(amt => (parseFloat(amt) || 0) > 0).length
-    : includedMembers.size;
+    : selectedIncludedMembers.size;
 
   return (
     <form onSubmit={handleSubmit} className="expense-form">
@@ -317,7 +316,7 @@ export function AddExpenseForm({
               <>
                 <select
                   className="select mb-2 action-input"
-                  value={singlePayer}
+                  value={selectedSinglePayer}
                   onChange={e => setSinglePayer(e.target.value)}
                 >
                   <option value="">{t('expense.selectPayer')}</option>
@@ -405,17 +404,17 @@ export function AddExpenseForm({
                   {members.map(member => (
                     <div 
                       key={member.id} 
-                      className={`member-select-item ${includedMembers.has(member.id) ? 'selected' : ''}`}
+                      className={`member-select-item ${selectedIncludedMembers.has(member.id) ? 'selected' : ''}`}
                       onClick={() => toggleMemberInSplit(member.id)}
                       style={{ marginBottom: '8px' }}
                     >
-                      <div className={`checkbox ${includedMembers.has(member.id) ? 'checked' : ''}`}>
-                        {includedMembers.has(member.id) && (
+                      <div className={`checkbox ${selectedIncludedMembers.has(member.id) ? 'checked' : ''}`}>
+                        {selectedIncludedMembers.has(member.id) && (
                           <FontAwesomeIcon icon={faCheck} style={{ color: 'white', fontSize: '10px' }} />
                         )}
                       </div>
                       <span className="name">{member.name}</span>
-                      {includedMembers.has(member.id) && totalAmount && (
+                      {selectedIncludedMembers.has(member.id) && totalAmount && (
                         <span className="amount">{formatCurrency(splitAmount)}</span>
                       )}
                     </div>

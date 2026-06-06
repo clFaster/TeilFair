@@ -5,7 +5,7 @@ import { AppFooter } from '../components/AppFooter';
 import { LogoIcon } from '../components/LogoIcon';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { ThemeToggleButton } from '../components/ThemeToggleButton';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeContext';
 
 export function PrivacyPage() {
   const { t } = useTranslation();

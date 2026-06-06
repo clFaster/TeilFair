@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeContext';
 import { LogoIcon } from '../components/LogoIcon';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { AppHeader } from '../components/AppHeader';

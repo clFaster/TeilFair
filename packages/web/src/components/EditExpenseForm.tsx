@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faChevronUp, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +16,25 @@ interface EditExpenseFormProps {
 export function EditExpenseForm({ 
   expense,
   onSuccess, 
+  onCancel,
+  showHeader = false,
+  showCancelButton = true,
+}: EditExpenseFormProps) {
+  return (
+    <EditExpenseFormInner
+      key={expense.id}
+      expense={expense}
+      onSuccess={onSuccess}
+      onCancel={onCancel}
+      showHeader={showHeader}
+      showCancelButton={showCancelButton}
+    />
+  );
+}
+
+function EditExpenseFormInner({
+  expense,
+  onSuccess,
   onCancel,
   showHeader = false,
   showCancelButton = true,
@@ -39,63 +58,47 @@ export function EditExpenseForm({
     return `${hours}:${minutes}`;
   });
   
-  const [singlePayer, setSinglePayer] = useState<string>('');
-  const [showMultiplePayers, setShowMultiplePayers] = useState(false);
-  const [multiplePayers, setMultiplePayers] = useState<Record<string, string>>({});
+  const [singlePayer, setSinglePayer] = useState<string>(
+    expense.payers.length === 1 ? expense.payers[0].memberId : ''
+  );
+  const [showMultiplePayers, setShowMultiplePayers] = useState(expense.payers.length > 1);
+  const [multiplePayers, setMultiplePayers] = useState<Record<string, string>>(() => {
+    if (expense.payers.length <= 1) {
+      return {};
+    }
+    const payerMap: Record<string, string> = {};
+    expense.payers.forEach(p => {
+      payerMap[p.memberId] = p.amount.toString();
+    });
+    return payerMap;
+  });
   
-  const [showCustomSplit, setShowCustomSplit] = useState(false);
-  const [includedMembers, setIncludedMembers] = useState<Set<string>>(new Set());
-  const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+  const [showCustomSplit, setShowCustomSplit] = useState(
+    expense.splits.some(s => s.shareType === 'fixed')
+  );
+  const [includedMembers, setIncludedMembers] = useState<Set<string>>(
+    () => new Set(expense.splits.map(s => s.memberId))
+  );
+  const [customSplits, setCustomSplits] = useState<Record<string, string>>(() => {
+    const hasCustomSplit = expense.splits.some(s => s.shareType === 'fixed');
+    if (!hasCustomSplit) {
+      return {};
+    }
+    const splitMap: Record<string, string> = {};
+    expense.splits.forEach(s => {
+      splitMap[s.memberId] = s.share.toString();
+    });
+    return splitMap;
+  });
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Initialize form with expense data
-  useEffect(() => {
-    // Reset form when expense changes
-    setDescription(expense.description);
-    setTotalAmount(expense.totalAmount.toString());
-    
-    const expDate = new Date(expense.date);
-    setDate(`${expDate.getFullYear()}-${String(expDate.getMonth() + 1).padStart(2, '0')}-${String(expDate.getDate()).padStart(2, '0')}`);
-    setTime(`${String(expDate.getHours()).padStart(2, '0')}:${String(expDate.getMinutes()).padStart(2, '0')}`);
-    
-    if (expense.payers.length === 1) {
-      setSinglePayer(expense.payers[0].memberId);
-      setShowMultiplePayers(false);
-      setMultiplePayers({});
-    } else {
-      setShowMultiplePayers(true);
-      setSinglePayer('');
-      const payerMap: Record<string, string> = {};
-      expense.payers.forEach(p => {
-        payerMap[p.memberId] = p.amount.toString();
-      });
-      setMultiplePayers(payerMap);
-    }
-    
-    const hasCustomSplit = expense.splits.some(s => s.shareType === 'fixed');
-    if (hasCustomSplit) {
-      setShowCustomSplit(true);
-      const splitMap: Record<string, string> = {};
-      expense.splits.forEach(s => {
-        splitMap[s.memberId] = s.share.toString();
-      });
-      setCustomSplits(splitMap);
-      setIncludedMembers(new Set(expense.splits.map(s => s.memberId)));
-    } else {
-      setShowCustomSplit(false);
-      setCustomSplits({});
-      setIncludedMembers(new Set(expense.splits.map(s => s.memberId)));
-    }
-    
-    setError('');
-  }, [expense]);
-
   const handlePayerChange = (memberId: string, amount: string) => {
     setMultiplePayers(prev => {
       if (amount === '' || amount === '0') {
-        const { [memberId]: _, ...rest } = prev;
+        const rest = { ...prev };
+        delete rest[memberId];
         return rest;
       }
       return { ...prev, [memberId]: amount };

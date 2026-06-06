@@ -19,7 +19,7 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
 import { ThemeToggleButton } from '../components/ThemeToggleButton';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeContext';
 import type { Expense } from '@teilfair/shared';
 
 type Tab = 'expenses' | 'balances' | 'members';

@@ -2,7 +2,7 @@
  * Example: Using TeilFair Theme in a Web Component
  */
 
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/ThemeContext';
 
 export function ExampleThemeUsage() {
   const { theme, mode, toggleTheme, isDark } = useTheme();
