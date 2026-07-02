@@ -1,7 +1,7 @@
 {
   "name": "@teilfair/shared",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.4.1",
+  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -17,11 +17,11 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@types/node": "^25.3.3",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.8"
+    "@types/node": "^26.1.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   },
   "dependencies": {
-    "i18next": "^26.3.1"
+    "i18next": "^26.3.4"
   }
 }
