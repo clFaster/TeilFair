@@ -903,6 +903,10 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+.confirm-dialog {
+  max-width: 400px;
+}
+
 @media (max-width: 480px) {
   .modal {
     max-width: 100%;

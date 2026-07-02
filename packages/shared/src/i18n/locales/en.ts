@@ -15,6 +15,7 @@ const en = {
     edit: 'Edit',
     add: 'Add',
     close: 'Close',
+    ok: 'OK',
     copy: 'Copy',
     copied: 'Copied!',
     open: 'Open',
@@ -201,7 +202,9 @@ const en = {
     // Confirm delete
     confirmDelete: 'Are you sure you want to delete this member?',
     confirmDeleteNamed: 'Are you sure you want to delete {{name}}?',
+    confirmDeleteTitle: 'Delete Member',
     cannotDelete: 'Cannot delete a member who is part of an expense. Remove them from all expenses first.',
+    cannotDeleteTitle: 'Member In Use',
     
     // Labels
     membersLabel: 'Members',

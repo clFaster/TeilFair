@@ -5,6 +5,7 @@ import { faClock } from '@fortawesome/free-solid-svg-icons';
 import type { Expense } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { ExpenseCard } from './ExpenseCard';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface ExpensesListProps {
   canEdit: boolean;
@@ -16,6 +17,7 @@ export function ExpensesList({ canEdit, onEditExpense, onViewExpense }: Readonly
   const { t } = useTranslation();
   const { expenses, members, group, deleteExpense } = useGroupStore();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const getMemberName = (memberId: string) => {
     return members.find(m => m.id === memberId)?.name || t('common.unknown');
@@ -54,7 +56,6 @@ export function ExpensesList({ canEdit, onEditExpense, onViewExpense }: Readonly
   };
 
   const handleDelete = async (expenseId: string) => {
-    if (!confirm(t('expense.confirmDelete'))) return;
     setDeletingId(expenseId);
     try {
       await deleteExpense(expenseId);
@@ -99,39 +100,50 @@ export function ExpensesList({ canEdit, onEditExpense, onViewExpense }: Readonly
 
   return (
     <div>
-        {sortedExpenses.map((expense, index) => {
-          const payerNames = expense.payers.length === 1
-            ? getMemberName(expense.payers[0].memberId)
-            : expense.payers.map(p => getMemberName(p.memberId)).join(' & ');
+      {sortedExpenses.map((expense, index) => {
+        const payerNames = expense.payers.length === 1
+          ? getMemberName(expense.payers[0].memberId)
+          : expense.payers.map(p => getMemberName(p.memberId)).join(' & ');
 
-          const splitInfo = expense.splits.length === members.length
-            ? t('expense.splitEqually')
-            : t('expense.splitBetween', { count: expense.splits.length });
+        const splitInfo = expense.splits.length === members.length
+          ? t('expense.splitEqually')
+          : t('expense.splitBetween', { count: expense.splits.length });
 
-          const isDeleting = deletingId === expense.id;
-          const viewLabel = t('expense.viewDetails');
+        const isDeleting = deletingId === expense.id;
+        const viewLabel = t('expense.viewDetails');
 
-          return (
-            <ExpenseCard
-              key={expense.id}
-              animationDelay={index * 0.05}
-              formattedAmount={formatCurrency(expense.totalAmount)}
-              dateTimeLabel={`${formatDate(expense.date)} ${t('common.at')} ${formatTime(expense.date)}`}
-              description={expense.description || t('expense.defaultDescription')}
-              paidByText={t('expense.paidBy', { names: payerNames })}
-              splitInfo={splitInfo}
-              editLabel={t('common.edit')}
-              deleteLabel={t('common.delete')}
-              deletingLabel={t('expense.deleting')}
-              viewLabel={!canEdit ? viewLabel : undefined}
-              canEdit={canEdit}
-              isDeleting={isDeleting}
-              onEdit={() => handleEditClick(expense)}
-              onDelete={() => handleDelete(expense.id)}
-              onView={!canEdit ? () => onViewExpense?.(expense) : undefined}
-            />
-          );
-        })}
-      </div>
+        return (
+          <ExpenseCard
+            key={expense.id}
+            animationDelay={index * 0.05}
+            formattedAmount={formatCurrency(expense.totalAmount)}
+            dateTimeLabel={`${formatDate(expense.date)} ${t('common.at')} ${formatTime(expense.date)}`}
+            description={expense.description || t('expense.defaultDescription')}
+            paidByText={t('expense.paidBy', { names: payerNames })}
+            splitInfo={splitInfo}
+            editLabel={t('common.edit')}
+            deleteLabel={t('common.delete')}
+            deletingLabel={t('expense.deleting')}
+            viewLabel={!canEdit ? viewLabel : undefined}
+            canEdit={canEdit}
+            isDeleting={isDeleting}
+            onEdit={() => handleEditClick(expense)}
+            onDelete={() => setPendingDeleteId(expense.id)}
+            onView={!canEdit ? () => onViewExpense?.(expense) : undefined}
+          />
+        );
+      })}
+
+      {pendingDeleteId && (
+        <ConfirmDialog
+          title={t('expense.confirmDeleteTitle')}
+          message={t('expense.confirmDelete')}
+          danger
+          confirmLabel={t('common.delete')}
+          onConfirm={() => handleDelete(pendingDeleteId)}
+          onClose={() => setPendingDeleteId(null)}
+        />
+      )}
+    </div>
   );
 }

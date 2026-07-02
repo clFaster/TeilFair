@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus, faEdit, faTrash, faCheck, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface MembersListProps {
   canEdit: boolean;
@@ -65,6 +66,8 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
+  const [inUseNotice, setInUseNotice] = useState(false);
 
   const handleUpdateMember = async (memberId: string) => {
     if (!editingName.trim() || loading) return;
@@ -78,19 +81,21 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
     }
   };
 
-  const handleDeleteMember = async (memberId: string) => {
+  const requestDeleteMember = (memberId: string, name: string) => {
     const isUsed = expenses.some(
       e => e.payers.some(p => p.memberId === memberId) ||
            e.splits.some(s => s.memberId === memberId)
     );
     
     if (isUsed) {
-      alert(t('member.cannotDelete'));
+      setInUseNotice(true);
       return;
     }
     
-    if (!confirm(t('member.confirmDelete'))) return;
-    
+    setPendingDelete({ id: memberId, name });
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
     setLoading(true);
     try {
       await deleteMember(memberId);
@@ -221,7 +226,7 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
                         <button
                           className="btn btn-sm btn-ghost member-card-action"
                           data-testid="member-delete-button"
-                          onClick={() => handleDeleteMember(member.id)}
+                          onClick={() => requestDeleteMember(member.id, member.name)}
                           title={t('member.deleteTitle')}
                           style={{ color: 'var(--color-danger)' }}
                         >
@@ -235,6 +240,26 @@ export function MembersList({ canEdit }: Readonly<MembersListProps>) {
             );
           })}
         </div>
+      )}
+
+      {pendingDelete && (
+        <ConfirmDialog
+          title={t('member.confirmDeleteTitle')}
+          message={t('member.confirmDeleteNamed', { name: pendingDelete.name })}
+          danger
+          confirmLabel={t('common.delete')}
+          onConfirm={() => handleDeleteMember(pendingDelete.id)}
+          onClose={() => setPendingDelete(null)}
+        />
+      )}
+
+      {inUseNotice && (
+        <ConfirmDialog
+          title={t('member.cannotDeleteTitle')}
+          message={t('member.cannotDelete')}
+          infoOnly
+          onClose={() => setInUseNotice(false)}
+        />
       )}
     </div>
   );
