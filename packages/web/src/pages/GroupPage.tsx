@@ -224,7 +224,6 @@ export function GroupPage() {
   return (
     <div className="app app-group">
       <AppHeader
-        wide
         left={(
           <>
             <Link to="/" className="btn btn-ghost app-header-icon" title={t('accessibility.backToHome')}>

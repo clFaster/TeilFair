@@ -204,6 +204,20 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Keep the header in sync with the marketing container's wide breakpoints
+   so the logo/actions never jump position when navigating between pages. */
+@media (min-width: 1600px) {
+  .header-content {
+    max-width: 1180px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .header-content {
+    max-width: 1320px;
+  }
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -1663,6 +1677,28 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
 }
 
+.theme-toggle-icon {
+  display: inline-block;
+  animation: theme-icon-swap 0.4s ease;
+}
+
+@keyframes theme-icon-swap {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle-icon {
+    animation: none;
+  }
+}
+
 
 /* ============================================
     FOOTER - Minimal
@@ -1832,10 +1868,6 @@ h1, h2, h3, h4, h5, h6 {
    WIDE SCREEN LAYOUT (Side Panel)
    ============================================ */
 @media (min-width: 1024px) {
-  .header-content-wide {
-    max-width: 1280px;
-  }
-  
   .wide-layout {
     display: flex;
     gap: var(--spacing-xl);
@@ -1920,10 +1952,6 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Extra wide screens (ultrawide monitors) */
 @media (min-width: 1440px) {
-  .header-content-wide {
-    max-width: 1400px;
-  }
-  
   .wide-layout {
     max-width: 1400px;
   }
@@ -2398,6 +2426,17 @@ select:focus:not(:focus-visible) {
   }
 }
 
+/* ============================================
+   THEME TOGGLE ANIMATION - Cross-fade
+   Uses the View Transitions API (progressive enhancement; browsers
+   without support simply swap colors instantly, no animation).
+   ============================================ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+  animation-timing-function: ease-in-out;
+}
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -2407,6 +2446,11 @@ select:focus:not(:focus-visible) {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }
 
@@ -2448,65 +2492,22 @@ select:focus:not(:focus-visible) {
 }
 
 /* ============================================
-    LANGUAGE SWITCHER - Dropdown selector
+    LANGUAGE SWITCHER - Single-click toggle
     ============================================ */
-.language-switcher {
-  position: relative;
-}
-
 .language-switcher-button {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: auto;
+  padding: 0 var(--spacing-sm);
 }
 
-
-.language-switcher-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: var(--spacing-sm);
-  background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  min-width: 160px;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease;
-}
-
-.language-option {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border: none;
-  background: transparent;
-  color: var(--color-text);
-  font-family: var(--font-body);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.language-option:hover {
-  background: var(--color-surface);
-  color: var(--color-primary);
-}
-
-.language-option.active {
-  background: rgba(10, 125, 108, 0.08);
-  color: var(--color-primary);
+.language-switcher-label {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-}
-
-.language-option::before {
-  content: '✓ ';
-  margin-right: 4px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.language-option.active::before {
-  opacity: 1;
+  letter-spacing: 0.02em;
 }
 
 /* ============================================

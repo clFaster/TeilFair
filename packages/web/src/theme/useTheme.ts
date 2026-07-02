@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { themes, type ThemeMode, type Theme } from '@teilfair/shared';
 import { injectTheme } from './index';
+import { applyThemeWithTransition } from './themeTransition';
 
 export type ThemePreference = 'light' | 'dark';
 
@@ -40,10 +41,14 @@ export function useTheme() {
   }, [mode]);
 
   const toggleTheme = () => {
-    setMode(prev => prev === 'light' ? 'dark' : 'light');
+    const next: ThemeMode = mode === 'light' ? 'dark' : 'light';
+    applyThemeWithTransition(next);
+    setMode(next);
   };
 
   const setThemePreference = (newPreference: ThemePreference) => {
+    if (newPreference === mode) return;
+    applyThemeWithTransition(newPreference);
     setMode(newPreference);
   };
 

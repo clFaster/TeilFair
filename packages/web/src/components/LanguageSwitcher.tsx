@@ -1,71 +1,35 @@
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEarthEurope } from '@fortawesome/free-solid-svg-icons';
-import { useState, useEffect, useRef } from 'react';
+
+const LANGUAGES = [
+  { code: 'en', label: 'EN' },
+  { code: 'de', label: 'DE' },
+];
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'de', name: 'Deutsch' },
-  ];
+  // Handles en-US, de-DE, etc. by matching the base language code.
+  const activeIndex = LANGUAGES.findIndex((lang) => i18n.language.startsWith(lang.code));
+  const current = LANGUAGES[activeIndex >= 0 ? activeIndex : 0];
+  const next = LANGUAGES[(activeIndex >= 0 ? activeIndex : 0) === 0 ? 1 : 0];
 
-  const handleLanguageChange = async (langCode: string) => {
-    await i18n.changeLanguage(langCode);
-    setIsOpen(false);
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen]);
-
-  // Check if current language matches the language code (handles en-US, de-DE, etc.)
-  const isActiveLanguage = (langCode: string) => {
-    return i18n.language.startsWith(langCode);
+  const handleClick = () => {
+    // Switching is a plain, single-click toggle so users can flip back and
+    // forth instantly without a dropdown having to open/close each time.
+    i18n.changeLanguage(next.code);
   };
 
   return (
-    <div className="language-switcher" ref={dropdownRef}>
-        <button
-          className="language-switcher-button app-header-icon"
-        onClick={() => setIsOpen(!isOpen)}
-        title={t('accessibility.languageSelector')}
-        aria-label={t('accessibility.languageSelector')}
-        aria-expanded={isOpen}
-      >
-        <FontAwesomeIcon icon={faEarthEurope} style={{ fontSize: '18px' }} />
-      </button>
-
-      {isOpen && (
-        <div className="language-switcher-dropdown">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              className={`language-option ${isActiveLanguage(lang.code) ? 'active' : ''}`}
-              onClick={() => handleLanguageChange(lang.code)}
-              aria-current={isActiveLanguage(lang.code) ? 'true' : 'false'}
-            >
-              {lang.name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <button
+      className="language-switcher-button app-header-icon"
+      onClick={handleClick}
+      title={t('accessibility.languageSelector')}
+      aria-label={t('accessibility.languageSelector')}
+    >
+      <FontAwesomeIcon icon={faEarthEurope} style={{ fontSize: '16px' }} />
+      <span className="language-switcher-label">{current.label}</span>
+    </button>
   );
 }
