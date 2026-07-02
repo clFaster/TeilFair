@@ -15,15 +15,7 @@ import { HomeRecentGroups } from '../components/HomeRecentGroups';
 import { HomeHowItWorks } from '../components/HomeHowItWorks';
 
 export function HomePage() {
-  const { t, i18n } = useTranslation();
-  
-  // DEBUG: Log translation info
-  console.log('Current language:', i18n.language);
-  console.log('Available resources:', Object.keys(i18n.store?.data || {}));
-  console.log('Test translation home.heroTitle:', t('home.heroTitle'));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  console.log('German heroTitle from store:', (i18n.store?.data as any)?.de?.translation?.home?.heroTitle);
-  
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
   const { mode, setThemePreference } = useTheme();
@@ -38,7 +30,8 @@ export function HomePage() {
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!groupName.trim()) return;
-    
+    setError('');
+
     try {
       const group = await createGroup(groupName.trim(), currency);
       navigate(`/g/${group.id}?t=${group.writeToken}`);

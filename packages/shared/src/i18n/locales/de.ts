@@ -237,6 +237,20 @@ const de = {
     failedToCreateGroup: 'Gruppe konnte nicht erstellt werden',
   },
 
+  // Seite nicht gefunden
+  notFound: {
+    title: 'Seite nicht gefunden',
+    description: 'Die gesuchte Seite existiert nicht oder wurde verschoben.',
+  },
+
+  // Error Boundary
+  errorBoundary: {
+    title: 'Etwas ist schiefgelaufen',
+    description:
+      'Ein unerwarteter Fehler ist aufgetreten. Bitte laden Sie die Seite neu und versuchen Sie es erneut.',
+    reload: 'Seite neu laden',
+  },
+
   // Validation
   validation: {
     enterValidAmount: 'Bitte geben Sie einen gültigen Betrag ein',

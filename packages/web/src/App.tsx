@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { ThemeProvider } from './theme/ThemeProvider';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Route-level code splitting: each page becomes its own chunk, loaded on demand.
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
@@ -13,15 +14,27 @@ const PrivacyPage = lazy(() =>
 const ImprintPage = lazy(() =>
   import('./pages/ImprintPage').then((m) => ({ default: m.ImprintPage }))
 );
+const NotFoundPage = lazy(() =>
+  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
+);
+
+function RouteFallback() {
+  return (
+    <div className="route-loading" aria-busy="true">
+      <div className="route-loading-spinner" />
+    </div>
+  );
+}
 
 function AppContent() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/g/:groupId" element={<GroupPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/imprint" element={<ImprintPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   );
@@ -29,13 +42,15 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-      <Analytics />
-      <SpeedInsights />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+        <Analytics />
+        <SpeedInsights />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

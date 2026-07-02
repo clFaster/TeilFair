@@ -1,0 +1,4 @@
+# Group pages contain capability tokens in their URLs and must never be indexed.
+User-agent: *
+Disallow: /g/
+Allow: /

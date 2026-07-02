@@ -272,6 +272,19 @@ const en = {
     failedToCreateGroup: 'Failed to create group',
   },
 
+  // Not found page
+  notFound: {
+    title: 'Page Not Found',
+    description: "The page you're looking for doesn't exist or has been moved.",
+  },
+
+  // Error boundary
+  errorBoundary: {
+    title: 'Something went wrong',
+    description: 'An unexpected error occurred. Please reload the page and try again.',
+    reload: 'Reload page',
+  },
+
   // Validation messages
   validation: {
     enterValidAmount: 'Please enter a valid amount',
