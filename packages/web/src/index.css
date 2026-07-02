@@ -58,7 +58,8 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 40;
 }
 
-/* Homepage layout - footer always visible */
+/* Homepage layout - normal document flow, footer directly follows the
+   content instead of being trapped in a nested scroll area. */
 .app-home {
   min-height: 100vh;
   min-height: 100dvh;
@@ -67,27 +68,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .app-home .container {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
 }
 
 .app-home .footer {
   flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
-  z-index: 40;
+  margin-top: 0;
+  position: static;
 }
 
 @media (max-width: 768px) {
   .app .footer {
     position: static;
     bottom: auto;
-  }
-
-  .app-home .container {
-    overflow-y: visible;
   }
 }
 
@@ -2009,8 +2004,14 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--spacing-md);
+}
+
+@media (min-width: 1600px) {
+  .feature-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .feature-card {
@@ -2342,10 +2343,22 @@ select:focus:not(:focus-visible) {
   }
 }
 
+/* Wide desktop monitors - give the marketing page room to breathe
+   instead of floating in a sea of empty background. */
+@media (min-width: 1600px) {
+  .container {
+    max-width: 1180px;
+  }
+}
+
 /* Ultra-wide monitors */
 @media (min-width: 1920px) {
   :root {
     font-size: 18px;
+  }
+
+  .container {
+    max-width: 1320px;
   }
   
   .wide-layout {
@@ -2358,6 +2371,21 @@ select:focus:not(:focus-visible) {
   
   .side-panel {
     width: 480px;
+  }
+}
+
+/* Super ultra-wide monitors (e.g. 27"+ 4K, 34" ultrawide) */
+@media (min-width: 2200px) {
+  .wide-layout {
+    max-width: 1840px;
+  }
+
+  .main-content {
+    max-width: 1080px;
+  }
+
+  .side-panel {
+    width: 540px;
   }
 }
 
