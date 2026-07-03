@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeProvider';
@@ -52,64 +52,48 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <MobileIcon name="globe" color={theme.colors.primary.a0} size={18} />
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                {t('accessibility.languageSelector')}
-              </Text>
-            </View>
-            <View style={[styles.segmented, { backgroundColor: theme.colors.surfaceTonal.a10 }]}>
-              {[
-                ['en', 'English'],
-                ['de', 'Deutsch'],
-              ].map(([code, label]) => {
-                const active = i18n.language === code;
-                return (
-                  <TouchableOpacity
-                    key={code}
-                    style={[styles.segment, active && { backgroundColor: theme.colors.primary.a0 }]}
-                    onPress={() => changeLanguage(code)}
-                  >
-                    <Text style={[styles.segmentText, { color: active ? '#fff' : theme.colors.text }]}>
-                      {label}
+          <View style={[styles.list, { borderColor: theme.colors.border }]}>
+            {[
+              ['en', 'English'],
+              ['de', 'Deutsch'],
+            ].map(([code, label]) => {
+              const active = i18n.language === code;
+              return (
+                <TouchableOpacity
+                  key={code}
+                  style={[styles.row, { borderBottomColor: theme.colors.border }]}
+                  onPress={() => changeLanguage(code)}
+                >
+                  <View style={[styles.rowIcon, { backgroundColor: theme.colors.surfaceTonal.a10 }]}>
+                    <MobileIcon name="globe" color={theme.colors.primary.a0} size={18} />
+                  </View>
+                  <View style={styles.rowText}>
+                    <Text style={[styles.rowLabel, { color: theme.colors.text }]}>{label}</Text>
+                    <Text style={[styles.rowDescription, { color: theme.colors.textSecondary }]}>
+                      {t('accessibility.languageSelector')}
                     </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
+                  </View>
+                  {active && <MobileIcon name="check" color={theme.colors.primary.a0} size={19} strokeWidth={2.5} />}
+                </TouchableOpacity>
+              );
+            })}
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <MobileIcon name={mode === 'dark' ? 'moon' : 'sun'} color={theme.colors.accent.a0} size={18} />
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                {t('settings.appearance')}
-              </Text>
-            </View>
-            <View style={[styles.segmented, { backgroundColor: theme.colors.surfaceTonal.a10 }]}>
-              {[
-                ['light', t('theme.light'), 'sun'],
-                ['dark', t('theme.dark'), 'moon'],
-              ].map(([value, label, icon]) => {
-                const active = mode === value;
-                return (
-                  <TouchableOpacity
-                    key={value}
-                    style={[styles.segment, styles.iconSegment, active && { backgroundColor: theme.colors.primary.a0 }]}
-                    onPress={() => selectTheme(value as 'light' | 'dark')}
-                  >
-                    <MobileIcon
-                      name={icon as 'sun' | 'moon'}
-                      color={active ? '#fff' : theme.colors.text}
-                      size={16}
-                    />
-                    <Text style={[styles.segmentText, { color: active ? '#fff' : theme.colors.text }]}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View style={[styles.row, styles.lastRow]}>
+              <View style={[styles.rowIcon, { backgroundColor: theme.colors.surfaceTonal.a10 }]}>
+                <MobileIcon name={mode === 'dark' ? 'moon' : 'sun'} color={theme.colors.accent.a0} size={18} />
+              </View>
+              <View style={styles.rowText}>
+                <Text style={[styles.rowLabel, { color: theme.colors.text }]}>{t('theme.dark')}</Text>
+                <Text style={[styles.rowDescription, { color: theme.colors.textSecondary }]}>
+                  {t('settings.appearance')}
+                </Text>
+              </View>
+              <Switch
+                value={mode === 'dark'}
+                onValueChange={(enabled) => selectTheme(enabled ? 'dark' : 'light')}
+                trackColor={{ false: theme.colors.surfaceTonal.a20, true: theme.colors.primary.a20 }}
+                thumbColor={mode === 'dark' ? theme.colors.primary.a0 : '#fff'}
+              />
             </View>
           </View>
         </Pressable>
@@ -161,38 +145,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  section: {
-    gap: 10,
+  list: {
+    borderWidth: 1,
+    borderRadius: 18,
+    overflow: 'hidden',
   },
-  sectionHeader: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 64,
+    borderBottomWidth: 1,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
+  lastRow: {
+    borderBottomWidth: 0,
   },
-  segmented: {
-    flexDirection: 'row',
-    borderRadius: 16,
-    padding: 4,
-    gap: 4,
-  },
-  segment: {
-    flex: 1,
+  rowIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
-    borderRadius: 13,
-    paddingHorizontal: 10,
   },
-  iconSegment: {
-    flexDirection: 'row',
-    gap: 8,
+  rowText: {
+    flex: 1,
   },
-  segmentText: {
-    fontSize: 14,
+  rowLabel: {
+    fontSize: 15,
     fontWeight: '800',
+  },
+  rowDescription: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });

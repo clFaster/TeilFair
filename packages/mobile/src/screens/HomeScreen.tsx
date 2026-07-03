@@ -23,6 +23,7 @@ import { SettingsSheet } from '../components/SettingsSheet';
 import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+type HomeMode = 'create' | 'join';
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY'];
 
@@ -32,9 +33,8 @@ export function HomeScreen() {
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  
-  const [showCreate, setShowCreate] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
+
+  const [mode, setMode] = useState<HomeMode>('create');
   const [groupName, setGroupName] = useState('');
   const [currency, setCurrency] = useState('EUR');
   const [joinLink, setJoinLink] = useState('');
@@ -45,12 +45,12 @@ export function HomeScreen() {
       Alert.alert(t('common.error'), t('validation.enterGroupName'));
       return;
     }
-    
+
     try {
       const group = await createGroup(groupName.trim(), currency);
-      navigation.navigate('Group', { 
-        groupId: group.id, 
-        token: group.writeToken 
+      navigation.navigate('Group', {
+        groupId: group.id,
+        token: group.writeToken,
       });
     } catch (err) {
       Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.failedToCreate'));
@@ -62,15 +62,15 @@ export function HomeScreen() {
       const url = new URL(joinLink);
       const pathMatch = url.pathname.match(/\/g\/([a-f0-9-]+)/i);
       const token = url.searchParams.get('t');
-      
+
       if (!pathMatch || !token) {
         Alert.alert(t('common.error'), t('error.invalidLink'));
         return;
       }
-      
+
       const groupId = pathMatch[1];
       const success = await loadGroup(groupId, token);
-      
+
       if (success) {
         navigation.navigate('Group', { groupId, token });
       } else {
@@ -93,292 +93,218 @@ export function HomeScreen() {
 
   const formatLastAccessed = (lastAccessed: number) => {
     return new Intl.DateTimeFormat(undefined, {
-      year: 'numeric',
       month: 'short',
       day: 'numeric',
     }).format(new Date(lastAccessed));
+  };
+
+  const formatCurrency = (amount?: number, currencyCode = 'EUR') => {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currencyCode,
+      maximumFractionDigits: 0,
+    }).format(amount ?? 0);
   };
 
   const handleShareRecent = (item: RecentGroup) => {
     const url = `https://teilfair.app/g/${item.id}?t=${item.token}`;
     const message = t('share.shareMessageDefault', { groupName: item.name, url });
 
-    Alert.alert(
-      t('share.sharePromptTitle'),
-      url,
-      [
-        {
-          text: t('common.copy'),
-          onPress: async () => {
-            await Clipboard.setStringAsync(url);
-            Alert.alert(t('common.copied'), url);
-          },
+    Alert.alert(t('share.sharePromptTitle'), url, [
+      {
+        text: t('common.copy'),
+        onPress: async () => {
+          await Clipboard.setStringAsync(url);
+          Alert.alert(t('common.copied'), url);
         },
-        {
-          text: t('common.share'),
-          onPress: async () => {
-            try {
-              await Share.share({ message });
-            } catch {
-              // User cancelled.
-            }
-          },
+      },
+      {
+        text: t('common.share'),
+        onPress: async () => {
+          try {
+            await Share.share({ message });
+          } catch {
+            // User cancelled.
+          }
         },
-        { text: t('common.cancel'), style: 'cancel' },
-      ],
-    );
+      },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
   };
 
-  const howItWorksSteps = [
-    t('home.howItWorksStep1'),
-    t('home.howItWorksStep2'),
-    t('home.howItWorksStep3'),
-    t('home.howItWorksStep4'),
-  ];
+  const primaryAction = mode === 'create' ? handleCreateGroup : handleJoinGroup;
+  const primaryLabel = mode === 'create'
+    ? loading ? t('home.creating') : t('home.createButton')
+    : loading ? t('home.joining') : t('home.joinButton');
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[styles.hero, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <LogoIcon size={42} />
-              <View>
-                <Text style={[styles.logo, { color: theme.colors.text }]}>{t('common.appName')}</Text>
-                <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                  {t('common.tagline')}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={[styles.iconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-              onPress={() => setShowSettings(true)}
-            >
-              <MobileIcon name="settings" color={theme.colors.text} size={20} />
-            </TouchableOpacity>
+      <View style={[styles.appHeader, { paddingTop: insets.top + 12, borderBottomColor: theme.colors.border }]}>
+        <View style={styles.brandRow}>
+          <LogoIcon size={36} />
+          <View>
+            <Text style={[styles.appTitle, { color: theme.colors.text }]}>{t('common.appName')}</Text>
+            <Text style={[styles.appSubtitle, { color: theme.colors.textSecondary }]}>{t('common.tagline')}</Text>
           </View>
-          <Text style={[styles.heroTitle, { color: theme.colors.text }]}>
-            {t('home.heroTitle')}
-          </Text>
-          <Text style={[styles.heroSubtitle, { color: theme.colors.textSecondary }]}>
-            {t('home.heroSubtitle')}
+        </View>
+        <TouchableOpacity
+          style={[styles.headerIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+          onPress={() => setShowSettings(true)}
+          accessibilityLabel={t('settings.title')}
+        >
+          <MobileIcon name="settings" color={theme.colors.text} size={20} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.screenTitle, { color: theme.colors.text }]}>{t('home.recentGroupsTitle')}</Text>
+          <Text style={[styles.screenMeta, { color: theme.colors.textSecondary }]}>
+            {recentGroups.length > 0 ? `${recentGroups.length}` : ''}
           </Text>
         </View>
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
-            onPress={() => { setShowCreate(true); setShowJoin(false); }}
-          >
-            <MobileIcon name="plus" color="#fff" size={18} />
-            <Text style={styles.primaryButtonText}>{t('home.createGroup')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonOutline, { borderColor: theme.colors.border }]}
-            onPress={() => { setShowJoin(true); setShowCreate(false); }}
-          >
-            <MobileIcon name="open" color={theme.colors.text} size={18} />
-            <Text style={[styles.outlineButtonText, { color: theme.colors.text }]}>
-              {t('home.joinGroup')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {showCreate && (
-          <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.createFormTitle')}</Text>
-            <TextInput
-              style={[
-                styles.input,
-                { 
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.background,
-                  color: theme.colors.text,
-                }
-              ]}
-              placeholder={t('home.groupNameLabel')}
-              placeholderTextColor={theme.colors.textSecondary}
-              value={groupName}
-              onChangeText={setGroupName}
-            />
-            <Text style={[styles.label, { color: theme.colors.text }]}>{t('home.currencyLabel')}</Text>
-            <View style={styles.currencyRow}>
-              {CURRENCIES.map((c) => (
+        {recentGroups.length > 0 ? (
+          <View style={[styles.listPanel, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            {recentGroups.map((item, index) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.recentRow,
+                  index < recentGroups.length - 1 && { borderBottomColor: theme.colors.border, borderBottomWidth: 1 },
+                ]}
+              >
                 <TouchableOpacity
-                  key={c}
-                  style={[
-                    styles.currencyButton,
-                    { 
-                      backgroundColor: currency === c 
-                        ? theme.colors.primary.a0 
-                        : theme.colors.surfaceTonal.a10,
-                      borderColor: currency === c 
-                        ? theme.colors.primary.a0 
-                        : theme.colors.border,
-                    },
-                  ]}
-                  onPress={() => setCurrency(c)}
+                  style={styles.recentMain}
+                  onPress={() => handleOpenRecent(item.id, item.token)}
+                  activeOpacity={0.72}
                 >
-                  <Text style={[
-                    styles.currencyButtonText,
-                    { color: currency === c ? '#fff' : theme.colors.text },
-                  ]}>
-                    {c}
-                  </Text>
+                  <View style={[styles.avatar, { backgroundColor: theme.colors.primary.a0 }]}>
+                    <Text style={styles.avatarText}>{item.name.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={styles.recentText}>
+                    <Text style={[styles.recentName, { color: theme.colors.text }]} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={[styles.recentMeta, { color: theme.colors.textSecondary }]} numberOfLines={1}>
+                      {formatLastAccessed(item.lastAccessed)} · {item.memberCount ?? 0} {t('group.tabMembers').toLowerCase()} · {formatCurrency(item.totalExpenses, item.currency)}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
-              ))}
+                <TouchableOpacity
+                  style={[styles.rowIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                  onPress={() => handleShareRecent(item)}
+                  accessibilityLabel={t('common.share')}
+                >
+                  <MobileIcon name="share" color={theme.colors.text} size={18} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={[styles.emptyPanel, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            <View style={[styles.emptyIcon, { backgroundColor: theme.colors.surfaceTonal.a10 }]}>
+              <MobileIcon name="users" color={theme.colors.primary.a0} size={22} />
             </View>
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
-                onPress={handleCreateGroup}
-                disabled={loading}
-              >
-                <MobileIcon name="plus" color="#fff" size={18} />
-                <Text style={styles.primaryButtonText}>
-                  {loading ? t('home.creating') : t('home.createButton')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.buttonOutline, { borderColor: theme.colors.border }]}
-                onPress={() => setShowCreate(false)}
-              >
-                <Text style={[styles.outlineButtonText, { color: theme.colors.text }]}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>{t('home.createGroup')}</Text>
+            <Text style={[styles.emptyCopy, { color: theme.colors.textSecondary }]}>
+              {t('home.heroSubtitle')}
+            </Text>
           </View>
         )}
 
-        {showJoin && (
-          <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.joinFormTitle')}</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.screenTitle, { color: theme.colors.text }]}>{t('common.add')}</Text>
+        </View>
+
+        <View style={[styles.actionPanel, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+          <View style={[styles.segmented, { backgroundColor: theme.colors.surfaceTonal.a10 }]}>
+            {[
+              ['create', t('home.createGroup'), 'plus'],
+              ['join', t('home.joinGroup'), 'open'],
+            ].map(([value, label, icon]) => {
+              const active = mode === value;
+              return (
+                <TouchableOpacity
+                  key={value}
+                  style={[styles.segment, active && { backgroundColor: theme.colors.primary.a0 }]}
+                  onPress={() => setMode(value as HomeMode)}
+                >
+                  <MobileIcon name={icon as 'plus' | 'open'} color={active ? '#fff' : theme.colors.text} size={16} />
+                  <Text style={[styles.segmentText, { color: active ? '#fff' : theme.colors.text }]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {mode === 'create' ? (
+            <>
+              <TextInput
+                style={[styles.input, { backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }]}
+                placeholder={t('home.groupNamePlaceholder')}
+                placeholderTextColor={theme.colors.textSecondary}
+                value={groupName}
+                onChangeText={setGroupName}
+                returnKeyType="done"
+                onSubmitEditing={handleCreateGroup}
+              />
+              <View style={styles.currencyRow}>
+                {CURRENCIES.map((item) => {
+                  const active = currency === item;
+                  return (
+                    <TouchableOpacity
+                      key={item}
+                      style={[
+                        styles.currencyChip,
+                        {
+                          backgroundColor: active ? theme.colors.primary.a0 : theme.colors.surfaceTonal.a10,
+                          borderColor: active ? theme.colors.primary.a0 : theme.colors.border,
+                        },
+                      ]}
+                      onPress={() => setCurrency(item)}
+                    >
+                      <Text style={[styles.currencyText, { color: active ? '#fff' : theme.colors.text }]}>
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          ) : (
             <TextInput
-              style={[
-                styles.input,
-                { 
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.background,
-                  color: theme.colors.text,
-                }
-              ]}
+              style={[styles.input, { backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder={t('home.linkPlaceholder')}
               placeholderTextColor={theme.colors.textSecondary}
               value={joinLink}
               onChangeText={setJoinLink}
               autoCapitalize="none"
+              keyboardType="url"
+              returnKeyType="go"
+              onSubmitEditing={handleJoinGroup}
             />
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
-                onPress={handleJoinGroup}
-                disabled={loading}
-              >
-                <MobileIcon name="open" color="#fff" size={18} />
-                <Text style={styles.primaryButtonText}>
-                  {loading ? t('home.joining') : t('home.joinButton')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.buttonOutline, { borderColor: theme.colors.border }]}
-                onPress={() => setShowJoin(false)}
-              >
-                <Text style={[styles.outlineButtonText, { color: theme.colors.text }]}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {recentGroups.length > 0 && (
-          <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.recentGroupsTitleMobile')}</Text>
-            {recentGroups.map((item) => (
-              <View 
-                key={item.id}
-                style={[styles.recentItem, { borderBottomColor: theme.colors.border }]}
-              >
-                <View style={styles.recentInfo}>
-                  <Text style={[styles.recentName, { color: theme.colors.text }]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.recentMeta, { color: theme.colors.textSecondary }]}>
-                    {t('common.lastUpdated', { date: formatLastAccessed(item.lastAccessed) })}
-                  </Text>
-                  <View style={[
-                    styles.badge,
-                    { 
-                      backgroundColor: 'transparent',
-                      borderColor: item.permission === 'write' 
-                        ? theme.colors.success.a10 
-                        : theme.colors.info.a10,
-                      borderWidth: 1,
-                      borderStyle: 'dashed',
-                    },
-                  ]}>
-                    <Text style={[
-                      styles.badgeText,
-                      { 
-                        color: item.permission === 'write' 
-                          ? theme.colors.success.a0 
-                          : theme.colors.info.a0 
-                      }
-                    ]}>
-                      {item.permission === 'write' ? t('common.editPermission') : t('common.viewPermission')}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.recentButtons}>
-                  <TouchableOpacity
-                    style={[styles.smallIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-                    onPress={() => handleShareRecent(item)}
-                  >
-                    <MobileIcon name="share" color={theme.colors.text} size={17} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.smallIconButton, { backgroundColor: theme.colors.primary.a0 }]}
-                    onPress={() => handleOpenRecent(item.id, item.token)}
-                  >
-                    <MobileIcon name="open" color="#fff" size={17} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.smallIconButton, { backgroundColor: theme.colors.danger.a20 }]}
-                    onPress={() => removeFromRecent(item.id)}
-                  >
-                    <MobileIcon name="trash" color={theme.colors.danger.a0} size={17} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* How it works */}
-        <View style={[styles.card, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-          <Text style={[styles.cardTitle, { color: theme.colors.text }]}>{t('home.howItWorksTitle')}</Text>
-          {howItWorksSteps.map((step, index) => (
-            <View key={index} style={styles.stepRow}>
-              <View style={[styles.stepNumber, { backgroundColor: theme.colors.primary.a0 }]}>
-                <MobileIcon
-                  name={index === 0 ? 'share' : index === 1 ? 'receipt' : index === 2 ? 'users' : 'balance'}
-                  color="#fff"
-                  size={16}
-                />
-              </View>
-              <Text style={[styles.stepText, { color: theme.colors.textSecondary }]}>{step}</Text>
-            </View>
-          ))}
+          )}
         </View>
       </ScrollView>
+
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12, backgroundColor: theme.colors.card, borderTopColor: theme.colors.border }]}>
+        <TouchableOpacity
+          style={[styles.primaryAction, { backgroundColor: theme.colors.primary.a0 }, loading && { opacity: 0.6 }]}
+          onPress={primaryAction}
+          disabled={loading}
+        >
+          <MobileIcon name={mode === 'create' ? 'plus' : 'open'} color="#fff" size={19} />
+          <Text style={styles.primaryActionText}>{primaryLabel}</Text>
+        </TouchableOpacity>
+      </View>
+
       <SettingsSheet visible={showSettings} onClose={() => setShowSettings(false)} />
     </View>
   );
@@ -388,186 +314,193 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: 16,
-  },
-  hero: {
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 18,
-  },
-  header: {
+  appHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 22,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
   },
-  logoContainer: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  logo: {
+  appTitle: {
     fontSize: 22,
     fontWeight: '800',
   },
-  iconButton: {
+  appSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  headerIconButton: {
     width: 44,
     height: 44,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  subtitle: {
-    fontSize: 13,
-    marginTop: 2,
+  scrollView: {
+    flex: 1,
   },
-  heroTitle: {
-    fontSize: 36,
-    lineHeight: 40,
-    fontWeight: '900',
-    marginBottom: 10,
+  content: {
+    padding: 16,
+    gap: 16,
   },
-  heroSubtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  buttonRow: {
+  sectionHeader: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
   },
-  button: {
+  screenTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  screenMeta: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  listPanel: {
+    borderWidth: 1,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  recentMain: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 48,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
     borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
+  avatarText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
   },
-  smallButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  recentText: {
+    flex: 1,
   },
-  smallIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  recentName: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  recentMeta: {
+    fontSize: 12,
+    marginTop: 3,
+  },
+  rowIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  outlineButtonText: {
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  card: {
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
+  emptyPanel: {
     borderWidth: 1,
+    borderRadius: 18,
+    padding: 20,
+    alignItems: 'center',
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
+  emptyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
-  label: {
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  emptyCopy: {
     fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  actionPanel: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 14,
+    gap: 14,
+  },
+  segmented: {
+    flexDirection: 'row',
+    borderRadius: 15,
+    padding: 4,
+    gap: 4,
+  },
+  segment: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+  },
+  segmentText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     fontSize: 16,
-    marginBottom: 16,
   },
   currencyRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
   },
-  currencyButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+  currencyChip: {
+    minWidth: 58,
+    alignItems: 'center',
     borderWidth: 1,
-  },
-  currencyButtonText: {
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  recentItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  recentInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  recentName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  recentMeta: {
-    fontSize: 12,
-  },
-  recentButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    gap: 8,
-    maxWidth: 180,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  stepNumber: {
-    width: 34,
-    height: 34,
     borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  currencyText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  bottomBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  primaryAction: {
+    minHeight: 52,
+    borderRadius: 16,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
   },
-  stepText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+  primaryActionText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
   },
 });

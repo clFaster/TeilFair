@@ -212,6 +212,8 @@ export function GroupScreen() {
     return new Date(date).toLocaleDateString();
   };
 
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
+
   const getMemberBalance = (memberId: string) => {
     return memberBalances.find((balance) => balance.memberId === memberId)?.netBalance ?? 0;
   };
@@ -289,61 +291,62 @@ export function GroupScreen() {
           <Text style={[styles.groupName, { color: theme.colors.text }]} numberOfLines={1}>
             {group.name}
           </Text>
-          <Text style={[styles.currency, { color: theme.colors.textSecondary }]}>{group.currency}</Text>
+          <Text style={[styles.currency, { color: theme.colors.textSecondary }]}>
+            {group.currency} · {canWrite ? t('common.editPermission') : t('common.viewPermission')}
+          </Text>
         </View>
         <View style={styles.headerRight}>
-          <View style={[
-            styles.badge, 
-            { 
-              backgroundColor: 'transparent',
-              borderColor: canWrite ? theme.colors.success.a10 : theme.colors.info.a10 
-            }
-          ]}>
-            <Text style={[
-              styles.badgeText,
-              { color: canWrite ? theme.colors.success.a0 : theme.colors.info.a0 }
-            ]}>
-              {canWrite ? t('common.editPermission') : t('common.viewPermission')}
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={[styles.roundIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+            onPress={handleShare}
+            accessibilityLabel={t('common.share')}
+          >
+            <MobileIcon name="share" color={theme.colors.text} size={19} />
+          </TouchableOpacity>
+          {canWrite && (
+            <TouchableOpacity
+              style={[styles.roundIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+              onPress={() => navigation.navigate('EditGroup')}
+              accessibilityLabel={t('common.edit')}
+            >
+              <MobileIcon name="edit" color={theme.colors.text} size={19} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.roundIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+            onPress={() => setShowSettings(true)}
+            accessibilityLabel={t('settings.title')}
+          >
+            <MobileIcon name="settings" color={theme.colors.text} size={19} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      <View style={[styles.utilityBar, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
-        <TouchableOpacity
-          style={[styles.utilityButton, styles.utilityButtonPrimary, { backgroundColor: theme.colors.primary.a0 }]}
-          onPress={handleShare}
-        >
-          <MobileIcon name="share" color="#fff" size={17} />
-          <Text style={[styles.utilityButtonText, { color: '#fff' }]}>{t('common.share')}</Text>
-        </TouchableOpacity>
-        {canWrite && (
-          <TouchableOpacity
-            style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-            onPress={() => navigation.navigate('EditGroup')}
-          >
-            <MobileIcon name="edit" color={theme.colors.text} size={17} />
-            <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>{t('common.edit')}</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-          onPress={() => setShowSettings(true)}
-        >
-          <MobileIcon name="settings" color={theme.colors.text} size={17} />
-          <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>{t('settings.title')}</Text>
-        </TouchableOpacity>
+      <View style={[styles.summaryPanel, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>{t('group.totalExpenses')}</Text>
+          <Text style={[styles.summaryValue, { color: theme.colors.text }]}>{formatCurrency(totalExpenses)}</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>{t('group.tabExpenses')}</Text>
+          <Text style={[styles.summaryValue, { color: theme.colors.text }]}>{expenses.length}</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryLabel, { color: theme.colors.textSecondary }]}>{t('group.tabMembers')}</Text>
+          <Text style={[styles.summaryValue, { color: theme.colors.text }]}>{members.length}</Text>
+        </View>
       </View>
 
-      {/* Tabs */}
-      <View style={[styles.tabs, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
+      <View style={[styles.tabsWrap, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.tabs, { backgroundColor: theme.colors.surfaceTonal.a10 }]}>
         <TouchableOpacity
           style={[
             styles.tab, 
-            activeTab === 'expenses' && { borderBottomColor: theme.colors.primary.a0 }
+            activeTab === 'expenses' && { backgroundColor: theme.colors.card }
           ]}
           onPress={() => setActiveTab('expenses')}
         >
+          <MobileIcon name="receipt" color={activeTab === 'expenses' ? theme.colors.primary.a0 : theme.colors.textSecondary} size={16} />
           <Text style={[
             styles.tabText, 
             { color: activeTab === 'expenses' ? theme.colors.primary.a0 : theme.colors.textSecondary }
@@ -354,10 +357,11 @@ export function GroupScreen() {
         <TouchableOpacity
           style={[
             styles.tab, 
-            activeTab === 'balances' && { borderBottomColor: theme.colors.primary.a0 }
+            activeTab === 'balances' && { backgroundColor: theme.colors.card }
           ]}
           onPress={() => setActiveTab('balances')}
         >
+          <MobileIcon name="balance" color={activeTab === 'balances' ? theme.colors.primary.a0 : theme.colors.textSecondary} size={16} />
           <Text style={[
             styles.tabText, 
             { color: activeTab === 'balances' ? theme.colors.primary.a0 : theme.colors.textSecondary }
@@ -368,10 +372,11 @@ export function GroupScreen() {
         <TouchableOpacity
           style={[
             styles.tab, 
-            activeTab === 'members' && { borderBottomColor: theme.colors.primary.a0 }
+            activeTab === 'members' && { backgroundColor: theme.colors.card }
           ]}
           onPress={() => setActiveTab('members')}
         >
+          <MobileIcon name="users" color={activeTab === 'members' ? theme.colors.primary.a0 : theme.colors.textSecondary} size={16} />
           <Text style={[
             styles.tabText, 
             { color: activeTab === 'members' ? theme.colors.primary.a0 : theme.colors.textSecondary }
@@ -379,6 +384,7 @@ export function GroupScreen() {
             {t('group.tabMembersCount', { count: members.length })}
           </Text>
         </TouchableOpacity>
+      </View>
       </View>
 
       <ScrollView 
@@ -447,16 +453,18 @@ export function GroupScreen() {
                   {canWrite && (
                     <View style={styles.expenseButtons}>
                       <TouchableOpacity
-                        style={[styles.editButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                        style={[styles.iconActionButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
                         onPress={() => navigation.navigate('EditExpense', { expenseId: expense.id })}
+                        accessibilityLabel={t('common.edit')}
                       >
-                        <Text style={[styles.editButtonText, { color: theme.colors.text }]}>{t('common.edit')}</Text>
+                        <MobileIcon name="edit" color={theme.colors.text} size={17} />
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.deleteButton, { backgroundColor: theme.colors.danger.a20 }]}
+                        style={[styles.iconActionButton, { backgroundColor: theme.colors.danger.a20 }]}
                         onPress={() => handleDeleteExpense(expense.id)}
+                        accessibilityLabel={t('common.delete')}
                       >
-                        <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>{t('common.delete')}</Text>
+                        <MobileIcon name="trash" color={theme.colors.danger.a0} size={17} />
                       </TouchableOpacity>
                     </View>
                   )}
@@ -501,7 +509,7 @@ export function GroupScreen() {
                           <Text style={[styles.settlementName, { color: theme.colors.text }]}>
                             {getMemberName(settlement.fromMemberId)}
                           </Text>
-                          <Text style={[styles.settlementArrow, { color: theme.colors.settlement.accent }]}>→</Text>
+                          <MobileIcon name="arrowRight" color={theme.colors.settlement.accent} size={18} />
                           <Text style={[styles.settlementName, { color: theme.colors.text }]}>
                             {getMemberName(settlement.toMemberId)}
                           </Text>
@@ -535,8 +543,9 @@ export function GroupScreen() {
                 <TouchableOpacity
                   style={[styles.addMemberButton, { backgroundColor: theme.colors.primary.a0 }]}
                   onPress={handleAddMember}
+                  accessibilityLabel={t('member.addMember')}
                 >
-                  <Text style={styles.primaryButtonText}>{t('member.addMember')}</Text>
+                  <MobileIcon name="plus" color="#fff" size={18} />
                 </TouchableOpacity>
               </View>
             )}
@@ -591,31 +600,35 @@ export function GroupScreen() {
                         {isEditing ? (
                           <>
                             <TouchableOpacity
-                              style={[styles.editButton, { backgroundColor: theme.colors.primary.a0 }]}
+                              style={[styles.iconActionButton, { backgroundColor: theme.colors.primary.a0 }]}
                               onPress={handleUpdateMember}
+                              accessibilityLabel={t('common.save')}
                             >
-                              <Text style={styles.primaryButtonText}>{t('common.save')}</Text>
+                              <MobileIcon name="check" color="#fff" size={17} />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              style={[styles.editButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                              style={[styles.iconActionButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
                               onPress={cancelEditingMember}
+                              accessibilityLabel={t('common.cancel')}
                             >
-                              <Text style={[styles.editButtonText, { color: theme.colors.text }]}>{t('common.cancel')}</Text>
+                              <MobileIcon name="close" color={theme.colors.text} size={17} />
                             </TouchableOpacity>
                           </>
                         ) : (
                           <>
                             <TouchableOpacity
-                              style={[styles.editButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                              style={[styles.iconActionButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
                               onPress={() => startEditingMember(member.id, member.name)}
+                              accessibilityLabel={t('common.edit')}
                             >
-                              <Text style={[styles.editButtonText, { color: theme.colors.text }]}>{t('common.edit')}</Text>
+                              <MobileIcon name="edit" color={theme.colors.text} size={17} />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              style={[styles.deleteButton, { backgroundColor: theme.colors.danger.a20 }]}
+                              style={[styles.iconActionButton, { backgroundColor: theme.colors.danger.a20 }]}
                               onPress={() => handleDeleteMember(member.id, member.name)}
+                              accessibilityLabel={t('common.delete')}
                             >
-                              <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>{t('common.delete')}</Text>
+                              <MobileIcon name="trash" color={theme.colors.danger.a0} size={17} />
                             </TouchableOpacity>
                           </>
                         )}
@@ -678,79 +691,51 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  shareButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  shareButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  iconButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  iconButtonText: {
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  utilityBar: {
+  summaryPanel: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  utilityButton: {
-    flexDirection: 'row',
-    gap: 7,
-    minWidth: 56,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  utilityButtonPrimary: {
+  summaryItem: {
     flex: 1,
   },
-  utilityButtonText: {
-    fontSize: 13,
+  summaryLabel: {
+    fontSize: 11,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  tabsWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   tabs: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
+    borderRadius: 16,
+    padding: 4,
+    gap: 4,
   },
   tab: {
     flex: 1,
-    paddingVertical: 14,
+    minHeight: 44,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    justifyContent: 'center',
+    borderRadius: 12,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '800',
   },
   content: {
     flex: 1,
@@ -771,8 +756,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
+    minHeight: 52,
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -798,9 +783,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   expenseCard: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 10,
     borderWidth: 1,
   },
   expenseHeader: {
@@ -826,12 +811,21 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   expenseDetails: {
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: 13,
+    marginBottom: 8,
   },
   expenseButtons: {
     flexDirection: 'row',
     gap: 8,
+    justifyContent: 'flex-end',
+    marginTop: 2,
+  },
+  iconActionButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   editButton: {
     paddingVertical: 8,
@@ -886,10 +880,6 @@ const styles = StyleSheet.create({
   settlementName: {
     fontWeight: '500',
   },
-  settlementArrow: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
   settlementAmount: {
     fontWeight: '700',
     fontSize: 16,
@@ -907,9 +897,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   addMemberButton: {
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    width: 52,
+    borderRadius: 16,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   memberRow: {
     flexDirection: 'row',

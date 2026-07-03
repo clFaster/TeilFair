@@ -9,6 +9,7 @@ export type MobileIconName =
   | 'edit'
   | 'plus'
   | 'back'
+  | 'arrowRight'
   | 'check'
   | 'trash'
   | 'receipt'
@@ -78,6 +79,7 @@ export function MobileIcon({
       )}
       {name === 'plus' && <Path d="M12 5v14M5 12h14" {...common} />}
       {name === 'back' && <Path d="M15 18 9 12l6-6" {...common} />}
+      {name === 'arrowRight' && <Path d="M5 12h14M13 6l6 6-6 6" {...common} />}
       {name === 'check' && <Path d="m5 12 4 4L19 6" {...common} />}
       {name === 'trash' && (
         <>
