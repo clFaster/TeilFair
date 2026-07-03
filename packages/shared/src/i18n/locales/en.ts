@@ -45,6 +45,12 @@ const en = {
     currentMode: 'Current mode: {{mode}}',
   },
 
+  settings: {
+    title: 'Settings',
+    subtitle: 'Language and appearance',
+    appearance: 'Appearance',
+  },
+
   // Currency names
   currency: {
     EUR: 'EUR - Euro',

@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import type { ShareType } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
+import { MobileIcon } from '../components/MobileIcon';
 
 export function AddExpenseScreen() {
   const { t } = useTranslation();
@@ -403,7 +404,7 @@ export function AddExpenseScreen() {
                       }
                     ]}>
                       {includedMembers.has(member.id) && (
-                        <Text style={styles.checkmark}>✓</Text>
+                        <MobileIcon name="check" color="#fff" size={14} strokeWidth={2.5} />
                       )}
                     </View>
                     <Text style={{ flex: 1, color: theme.colors.text, fontWeight: '500' }}>{member.name}</Text>

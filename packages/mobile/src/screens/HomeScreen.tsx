@@ -18,7 +18,8 @@ import type { RecentGroup } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { MobileIcon } from '../components/MobileIcon';
+import { SettingsSheet } from '../components/SettingsSheet';
 import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -29,7 +30,7 @@ export function HomeScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
-  const { theme, mode, setThemePreference } = useTheme();
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   
   const [showCreate, setShowCreate] = useState(false);
@@ -37,6 +38,7 @@ export function HomeScreen() {
   const [groupName, setGroupName] = useState('');
   const [currency, setCurrency] = useState('EUR');
   const [joinLink, setJoinLink] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
@@ -127,14 +129,6 @@ export function HomeScreen() {
     );
   };
 
-  const cycleTheme = () => {
-    setThemePreference(mode === 'light' ? 'dark' : 'light');
-  };
-
-  const getThemeIcon = () => {
-    return mode === 'dark' ? '🌙' : '☀️';
-  };
-
   const howItWorksSteps = [
     t('home.howItWorksStep1'),
     t('home.howItWorksStep2'),
@@ -152,37 +146,45 @@ export function HomeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <LogoIcon size={32} />
-            <Text style={[styles.logo, { color: theme.colors.primary.a0 }]}>{t('common.appName')}</Text>
+        <View style={[styles.hero, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <LogoIcon size={42} />
+              <View>
+                <Text style={[styles.logo, { color: theme.colors.text }]}>{t('common.appName')}</Text>
+                <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+                  {t('common.tagline')}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.iconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+              onPress={() => setShowSettings(true)}
+            >
+              <MobileIcon name="settings" color={theme.colors.text} size={20} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity 
-            style={[styles.themeButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-            onPress={cycleTheme}
-          >
-            <Text style={styles.themeIcon}>{getThemeIcon()}</Text>
-          </TouchableOpacity>
-         </View>
-         
-         <LanguageSwitcher />
-         
-         <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-           {t('common.tagline')}
-         </Text>
+          <Text style={[styles.heroTitle, { color: theme.colors.text }]}>
+            {t('home.heroTitle')}
+          </Text>
+          <Text style={[styles.heroSubtitle, { color: theme.colors.textSecondary }]}>
+            {t('home.heroSubtitle')}
+          </Text>
+        </View>
 
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
             onPress={() => { setShowCreate(true); setShowJoin(false); }}
           >
+            <MobileIcon name="plus" color="#fff" size={18} />
             <Text style={styles.primaryButtonText}>{t('home.createGroup')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.buttonOutline, { borderColor: theme.colors.border }]}
             onPress={() => { setShowJoin(true); setShowCreate(false); }}
           >
+            <MobileIcon name="open" color={theme.colors.text} size={18} />
             <Text style={[styles.outlineButtonText, { color: theme.colors.text }]}>
               {t('home.joinGroup')}
             </Text>
@@ -239,6 +241,7 @@ export function HomeScreen() {
                 onPress={handleCreateGroup}
                 disabled={loading}
               >
+                <MobileIcon name="plus" color="#fff" size={18} />
                 <Text style={styles.primaryButtonText}>
                   {loading ? t('home.creating') : t('home.createButton')}
                 </Text>
@@ -279,6 +282,7 @@ export function HomeScreen() {
                 onPress={handleJoinGroup}
                 disabled={loading}
               >
+                <MobileIcon name="open" color="#fff" size={18} />
                 <Text style={styles.primaryButtonText}>
                   {loading ? t('home.joining') : t('home.joinButton')}
                 </Text>
@@ -335,26 +339,22 @@ export function HomeScreen() {
                 </View>
                 <View style={styles.recentButtons}>
                   <TouchableOpacity
-                    style={[styles.smallButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                    style={[styles.smallIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
                     onPress={() => handleShareRecent(item)}
                   >
-                    <Text style={{ color: theme.colors.text, fontWeight: '500' }}>
-                      {t('common.share')}
-                    </Text>
+                    <MobileIcon name="share" color={theme.colors.text} size={17} />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.smallButton, { backgroundColor: theme.colors.primary.a0 }]}
+                    style={[styles.smallIconButton, { backgroundColor: theme.colors.primary.a0 }]}
                     onPress={() => handleOpenRecent(item.id, item.token)}
                   >
-                    <Text style={styles.primaryButtonText}>{t('common.open')}</Text>
+                    <MobileIcon name="open" color="#fff" size={17} />
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.smallButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                    style={[styles.smallIconButton, { backgroundColor: theme.colors.danger.a20 }]}
                     onPress={() => removeFromRecent(item.id)}
                   >
-                    <Text style={{ color: theme.colors.text, fontWeight: '500' }}>
-                      {t('common.remove')}
-                    </Text>
+                    <MobileIcon name="trash" color={theme.colors.danger.a0} size={17} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -368,13 +368,18 @@ export function HomeScreen() {
           {howItWorksSteps.map((step, index) => (
             <View key={index} style={styles.stepRow}>
               <View style={[styles.stepNumber, { backgroundColor: theme.colors.primary.a0 }]}>
-                <Text style={styles.stepNumberText}>{index + 1}</Text>
+                <MobileIcon
+                  name={index === 0 ? 'share' : index === 1 ? 'receipt' : index === 2 ? 'users' : 'balance'}
+                  color="#fff"
+                  size={16}
+                />
               </View>
               <Text style={[styles.stepText, { color: theme.colors.textSecondary }]}>{step}</Text>
             </View>
           ))}
         </View>
       </ScrollView>
+      <SettingsSheet visible={showSettings} onClose={() => setShowSettings(false)} />
     </View>
   );
 }
@@ -389,34 +394,47 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 16,
   },
+  hero: {
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 18,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 22,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   logo: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
   },
-  themeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  themeIcon: {
-    fontSize: 20,
-  },
   subtitle: {
-    fontSize: 16,
-    marginBottom: 24,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  heroTitle: {
+    fontSize: 36,
+    lineHeight: 40,
+    fontWeight: '900',
+    marginBottom: 10,
+  },
+  heroSubtitle: {
+    fontSize: 15,
+    lineHeight: 22,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -425,9 +443,12 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
     paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     alignItems: 'center',
   },
   buttonOutline: {
@@ -439,6 +460,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
   },
+  smallIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   primaryButtonText: {
     color: '#fff',
     fontWeight: '600',
@@ -449,8 +477,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   card: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 18,
+    padding: 18,
     marginBottom: 16,
     borderWidth: 1,
   },
@@ -531,16 +559,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  stepNumberText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
   },
   stepText: {
     flex: 1,

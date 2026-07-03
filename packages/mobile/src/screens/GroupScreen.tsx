@@ -9,7 +9,6 @@ import {
   Share,
   TextInput,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -19,6 +18,8 @@ import { useTranslation } from 'react-i18next';
 import { createGroupUrls } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
+import { MobileIcon } from '../components/MobileIcon';
+import { SettingsSheet } from '../components/SettingsSheet';
 import type { RootStackParamList } from '../../App';
 
 type GroupScreenRouteProp = RouteProp<RootStackParamList, 'Group'>;
@@ -27,12 +28,12 @@ type GroupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, '
 type Tab = 'expenses' | 'balances' | 'members';
 
 export function GroupScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const route = useRoute<GroupScreenRouteProp>();
   const navigation = useNavigation<GroupScreenNavigationProp>();
   const { groupId } = route.params;
   const token = route.params.token ?? route.params.t;
-  const { theme, mode, setThemePreference } = useTheme();
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   
   const {
@@ -55,6 +56,7 @@ export function GroupScreen() {
   const [newMemberName, setNewMemberName] = useState('');
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingMemberName, setEditingMemberName] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -195,16 +197,6 @@ export function GroupScreen() {
     }
   };
 
-  const cycleTheme = () => {
-    setThemePreference(mode === 'light' ? 'dark' : 'light');
-  };
-
-  const toggleLanguage = async () => {
-    const nextLanguage = i18n.language === 'de' ? 'en' : 'de';
-    await i18n.changeLanguage(nextLanguage);
-    await AsyncStorage.setItem('language', nextLanguage);
-  };
-
   const getMemberName = (memberId: string) => {
     return members.find(m => m.id === memberId)?.name || 'Unknown';
   };
@@ -288,10 +280,10 @@ export function GroupScreen() {
         }
       ]}>
         <TouchableOpacity 
-          style={styles.backButton}
+          style={[styles.roundIconButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
           onPress={() => navigation.goBack()}
         >
-          <Text style={[styles.backButtonText, { color: theme.colors.primary.a0 }]}>← {t('common.back')}</Text>
+          <MobileIcon name="back" color={theme.colors.text} size={20} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={[styles.groupName, { color: theme.colors.text }]} numberOfLines={1}>
@@ -319,9 +311,10 @@ export function GroupScreen() {
 
       <View style={[styles.utilityBar, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
         <TouchableOpacity
-          style={[styles.utilityButton, { backgroundColor: theme.colors.primary.a0 }]}
+          style={[styles.utilityButton, styles.utilityButtonPrimary, { backgroundColor: theme.colors.primary.a0 }]}
           onPress={handleShare}
         >
+          <MobileIcon name="share" color="#fff" size={17} />
           <Text style={[styles.utilityButtonText, { color: '#fff' }]}>{t('common.share')}</Text>
         </TouchableOpacity>
         {canWrite && (
@@ -329,24 +322,16 @@ export function GroupScreen() {
             style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
             onPress={() => navigation.navigate('EditGroup')}
           >
+            <MobileIcon name="edit" color={theme.colors.text} size={17} />
             <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>{t('common.edit')}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
           style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-          onPress={toggleLanguage}
+          onPress={() => setShowSettings(true)}
         >
-          <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>
-            {i18n.language === 'de' ? 'DE' : 'EN'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
-          onPress={cycleTheme}
-        >
-          <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>
-            {mode === 'dark' ? t('theme.dark') : t('theme.light')}
-          </Text>
+          <MobileIcon name="settings" color={theme.colors.text} size={17} />
+          <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>{t('settings.title')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -413,7 +398,8 @@ export function GroupScreen() {
                 onPress={() => navigation.navigate('AddExpense')}
                 disabled={members.length < 1}
               >
-                <Text style={styles.primaryButtonText}>+ {t('expense.addExpense')}</Text>
+                <MobileIcon name="plus" color="#fff" size={18} />
+                <Text style={styles.primaryButtonText}>{t('expense.addExpense')}</Text>
               </TouchableOpacity>
             )}
             
@@ -642,6 +628,7 @@ export function GroupScreen() {
           </View>
         )}
       </ScrollView>
+      <SettingsSheet visible={showSettings} onClose={() => setShowSettings(false)} />
     </View>
   );
 }
@@ -666,6 +653,13 @@ const styles = StyleSheet.create({
   },
   backButton: {
     paddingVertical: 4,
+  },
+  roundIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backButtonText: {
     fontSize: 16,
@@ -727,11 +721,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   utilityButton: {
+    flexDirection: 'row',
+    gap: 7,
     minWidth: 56,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  utilityButtonPrimary: {
+    flex: 1,
   },
   utilityButtonText: {
     fontSize: 13,
@@ -768,6 +768,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   addButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

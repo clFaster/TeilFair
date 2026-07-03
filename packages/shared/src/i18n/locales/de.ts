@@ -45,6 +45,12 @@ const de = {
     currentMode: 'Aktueller Modus: {{mode}}',
   },
 
+  settings: {
+    title: 'Einstellungen',
+    subtitle: 'Sprache und Darstellung',
+    appearance: 'Darstellung',
+  },
+
   // Currencies
   currency: {
     EUR: 'EUR - Euro',

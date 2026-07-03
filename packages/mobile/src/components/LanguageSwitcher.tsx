@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MobileIcon } from './MobileIcon';
 
 const styles = StyleSheet.create({
   container: {
@@ -13,6 +14,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 12,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   buttonText: {
     fontSize: 14,
@@ -87,9 +93,10 @@ export function LanguageSwitcher() {
         style={styles.buttonContainer}
         onPress={() => setIsModalVisible(true)}
       >
-        <Text style={styles.buttonText}>
-          🌐 {t('accessibility.languageSelector')}
-        </Text>
+        <View style={styles.buttonContent}>
+          <MobileIcon name="globe" color="#1f2937" size={16} />
+          <Text style={styles.buttonText}>{t('accessibility.languageSelector')}</Text>
+        </View>
       </TouchableOpacity>
 
       <Modal
@@ -119,7 +126,9 @@ export function LanguageSwitcher() {
                 >
                   {lang.name}
                 </Text>
-                {i18n.language === lang.code && <Text style={styles.checkmark}>✓</Text>}
+                {i18n.language === lang.code && (
+                  <MobileIcon name="check" color="#0a7d6c" size={16} strokeWidth={2.5} />
+                )}
               </TouchableOpacity>
             ))}
           </View>
