@@ -108,6 +108,7 @@ const de = {
     memberCount_plural: '{{count}} Mitglieder',
     totalExpenses: 'Gesamtausgaben',
     summary: 'Zusammenfassung',
+    editGroup: 'Gruppe bearbeiten',
     loadingGroup: 'Gruppe wird geladen...',
     groupNotFoundTitle: 'Gruppe nicht gefunden',
     groupNotFoundDescription: 'Diese Gruppe existiert nicht oder Sie haben keinen Zugriff.',

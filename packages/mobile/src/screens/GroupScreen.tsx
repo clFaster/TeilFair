@@ -9,6 +9,7 @@ import {
   Share,
   TextInput,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -26,11 +27,12 @@ type GroupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, '
 type Tab = 'expenses' | 'balances' | 'members';
 
 export function GroupScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const route = useRoute<GroupScreenRouteProp>();
   const navigation = useNavigation<GroupScreenNavigationProp>();
-  const { groupId, token } = route.params;
-  const { theme } = useTheme();
+  const { groupId } = route.params;
+  const token = route.params.token ?? route.params.t;
+  const { theme, mode, setThemePreference } = useTheme();
   const insets = useSafeAreaInsets();
   
   const {
@@ -44,15 +46,20 @@ export function GroupScreen() {
     error,
     loadGroup,
     addMember,
+    updateMember,
     deleteMember,
     deleteExpense,
   } = useGroupStore();
   
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const [newMemberName, setNewMemberName] = useState('');
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingMemberName, setEditingMemberName] = useState('');
 
   useEffect(() => {
-    loadGroup(groupId, token);
+    if (token) {
+      loadGroup(groupId, token);
+    }
   }, [groupId, token]);
 
   const canWrite = permission === 'write';
@@ -64,6 +71,27 @@ export function GroupScreen() {
       setNewMemberName('');
     } catch (err) {
       Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.failedToAddMember'));
+    }
+  };
+
+  const startEditingMember = (memberId: string, name: string) => {
+    setEditingMemberId(memberId);
+    setEditingMemberName(name);
+  };
+
+  const cancelEditingMember = () => {
+    setEditingMemberId(null);
+    setEditingMemberName('');
+  };
+
+  const handleUpdateMember = async () => {
+    if (!editingMemberId || !editingMemberName.trim()) return;
+
+    try {
+      await updateMember(editingMemberId, editingMemberName.trim());
+      cancelEditingMember();
+    } catch (err) {
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('error.generic'));
     }
   };
 
@@ -99,7 +127,34 @@ export function GroupScreen() {
     );
   };
 
-  const handleShare = async () => {
+  const shareOrCopyLink = (url: string, message: string) => {
+    Alert.alert(
+      t('share.sharePromptTitle'),
+      url,
+      [
+        {
+          text: t('common.copy'),
+          onPress: async () => {
+            await Clipboard.setStringAsync(url);
+            Alert.alert(t('common.copied'), url);
+          },
+        },
+        {
+          text: t('common.share'),
+          onPress: async () => {
+            try {
+              await Share.share({ message });
+            } catch {
+              // User cancelled.
+            }
+          },
+        },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
+  };
+
+  const handleShare = () => {
     if (!group) return;
     
     const baseUrl = 'https://teilfair.app';
@@ -113,27 +168,17 @@ export function GroupScreen() {
         [
           {
             text: t('share.shareViewOnly'),
-            onPress: async () => {
-              try {
-                await Share.share({
-                  message: t('share.shareMessageViewOnly', { groupName: group.name, url: urls.readUrl }),
-                });
-              } catch (err) {
-                // User cancelled
-              }
-            },
+            onPress: () => shareOrCopyLink(
+              urls.readUrl,
+              t('share.shareMessageViewOnly', { groupName: group.name, url: urls.readUrl }),
+            ),
           },
           {
             text: t('share.shareEditAccess'),
-            onPress: async () => {
-              try {
-                await Share.share({
-                  message: t('share.shareMessageEditAccess', { groupName: group.name, url: urls.writeUrl }),
-                });
-              } catch (err) {
-                // User cancelled
-              }
-            },
+            onPress: () => shareOrCopyLink(
+              urls.writeUrl,
+              t('share.shareMessageEditAccess', { groupName: group.name, url: urls.writeUrl }),
+            ),
           },
           {
             text: t('common.cancel'),
@@ -143,14 +188,21 @@ export function GroupScreen() {
       );
     } else {
       // User only has read access, share the read link
-      try {
-        await Share.share({
-          message: t('share.shareMessageDefault', { groupName: group.name, url: urls.readUrl }),
-        });
-      } catch (err) {
-        // User cancelled
-      }
+      shareOrCopyLink(
+        urls.readUrl,
+        t('share.shareMessageDefault', { groupName: group.name, url: urls.readUrl }),
+      );
     }
+  };
+
+  const cycleTheme = () => {
+    setThemePreference(mode === 'light' ? 'dark' : 'light');
+  };
+
+  const toggleLanguage = async () => {
+    const nextLanguage = i18n.language === 'de' ? 'en' : 'de';
+    await i18n.changeLanguage(nextLanguage);
+    await AsyncStorage.setItem('language', nextLanguage);
   };
 
   const getMemberName = (memberId: string) => {
@@ -167,6 +219,32 @@ export function GroupScreen() {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString();
   };
+
+  const getMemberBalance = (memberId: string) => {
+    return memberBalances.find((balance) => balance.memberId === memberId)?.netBalance ?? 0;
+  };
+
+  const getBalanceLabel = (amount: number) => {
+    if (amount > 0.01) return `${t('balance.getsBack')} ${formatCurrency(Math.abs(amount))}`;
+    if (amount < -0.01) return `${t('balance.owes')} ${formatCurrency(Math.abs(amount))}`;
+    return t('balance.settled');
+  };
+
+  if (!token) {
+    return (
+      <View style={[styles.centered, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
+        <Text style={[styles.error, { color: theme.colors.danger.a10 }]}>
+          {t('group.invalidLinkDescription')}
+        </Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.colors.primary.a0 }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.primaryButtonText}>{t('common.goBack')}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (loading && !group) {
     return (
@@ -236,13 +314,40 @@ export function GroupScreen() {
               {canWrite ? t('common.editPermission') : t('common.viewPermission')}
             </Text>
           </View>
-          <TouchableOpacity 
-            style={[styles.shareButton, { backgroundColor: theme.colors.primary.a0 }]} 
-            onPress={handleShare}
-          >
-            <Text style={styles.shareButtonText}>{t('common.share')}</Text>
-          </TouchableOpacity>
         </View>
+      </View>
+
+      <View style={[styles.utilityBar, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
+        <TouchableOpacity
+          style={[styles.utilityButton, { backgroundColor: theme.colors.primary.a0 }]}
+          onPress={handleShare}
+        >
+          <Text style={[styles.utilityButtonText, { color: '#fff' }]}>{t('common.share')}</Text>
+        </TouchableOpacity>
+        {canWrite && (
+          <TouchableOpacity
+            style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+            onPress={() => navigation.navigate('EditGroup')}
+          >
+            <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>{t('common.edit')}</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+          onPress={toggleLanguage}
+        >
+          <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>
+            {i18n.language === 'de' ? 'DE' : 'EN'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.utilityButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+          onPress={cycleTheme}
+        >
+          <Text style={[styles.utilityButtonText, { color: theme.colors.text }]}>
+            {mode === 'dark' ? t('theme.dark') : t('theme.light')}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Tabs */}
@@ -303,18 +408,18 @@ export function GroupScreen() {
                 style={[
                   styles.addButton, 
                   { backgroundColor: theme.colors.primary.a0 },
-                  members.length < 2 && { opacity: 0.5 }
+                  members.length < 1 && { opacity: 0.5 }
                 ]}
                 onPress={() => navigation.navigate('AddExpense')}
-                disabled={members.length < 2}
+                disabled={members.length < 1}
               >
                 <Text style={styles.primaryButtonText}>+ {t('expense.addExpense')}</Text>
               </TouchableOpacity>
             )}
             
-            {members.length < 2 && (
+            {members.length < 1 && (
               <Text style={[styles.hint, { color: theme.colors.textSecondary }]}>
-                {t('member.addMemberHint')}
+                {t('member.addMemberHintSingle')}
               </Text>
             )}
             
@@ -329,19 +434,30 @@ export function GroupScreen() {
               </View>
             ) : (
               expenses.map((expense) => (
-                <View key={expense.id} style={[styles.expenseCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
-                  <View style={styles.expenseHeader}>
-                    <View style={styles.expenseInfo}>
-                      <Text style={[styles.expenseDescription, { color: theme.colors.text }]}>{expense.description}</Text>
-                      <Text style={[styles.expenseDate, { color: theme.colors.textSecondary }]}>{formatDate(expense.date)}</Text>
+                <View
+                  key={expense.id}
+                  style={[styles.expenseCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+                >
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ExpenseDetails', { expenseId: expense.id })}
+                    activeOpacity={0.78}
+                  >
+                    <View style={styles.expenseHeader}>
+                      <View style={styles.expenseInfo}>
+                        <Text style={[styles.expenseDescription, { color: theme.colors.text }]}>{expense.description}</Text>
+                        <Text style={[styles.expenseDate, { color: theme.colors.textSecondary }]}>{formatDate(expense.date)}</Text>
+                      </View>
+                      <Text style={[styles.expenseAmount, { color: theme.colors.text }]}>
+                        {formatCurrency(expense.totalAmount)}
+                      </Text>
                     </View>
-                    <Text style={[styles.expenseAmount, { color: theme.colors.text }]}>
-                      {formatCurrency(expense.totalAmount)}
+                    <Text style={[styles.expenseDetails, { color: theme.colors.textSecondary }]}>
+                      {t('expense.paidBy', { names: expense.payers.map(p => getMemberName(p.memberId)).join(', ') })}
                     </Text>
-                  </View>
-                  <Text style={[styles.expenseDetails, { color: theme.colors.textSecondary }]}>
-                    {t('expense.paidBy', { names: expense.payers.map(p => getMemberName(p.memberId)).join(', ') })}
-                  </Text>
+                    <Text style={[styles.expenseDetails, { color: theme.colors.textSecondary }]}>
+                      {t('expense.viewDetails')}
+                    </Text>
+                  </TouchableOpacity>
                   {canWrite && (
                     <View style={styles.expenseButtons}>
                       <TouchableOpacity
@@ -447,19 +563,81 @@ export function GroupScreen() {
                 </Text>
               </View>
             ) : (
-              members.map((member) => (
-                <View key={member.id} style={[styles.memberRow, { borderColor: theme.colors.border }]}>
-                  <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
-                  {canWrite && (
-                    <TouchableOpacity
-                      style={[styles.deleteButton, { backgroundColor: theme.colors.danger.a20 }]}
-                      onPress={() => handleDeleteMember(member.id, member.name)}
-                    >
-                      <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>{t('common.delete')}</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))
+              members.map((member) => {
+                const isEditing = editingMemberId === member.id;
+                const balance = getMemberBalance(member.id);
+
+                return (
+                  <View key={member.id} style={[styles.memberRow, { borderColor: theme.colors.border }]}>
+                    <View style={styles.memberInfo}>
+                      {isEditing ? (
+                        <TextInput
+                          style={[styles.input, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, color: theme.colors.text }]}
+                          placeholder={t('member.memberNamePlaceholder')}
+                          placeholderTextColor={theme.colors.textSecondary}
+                          value={editingMemberName}
+                          onChangeText={setEditingMemberName}
+                          onSubmitEditing={handleUpdateMember}
+                          returnKeyType="done"
+                        />
+                      ) : (
+                        <>
+                          <Text style={[styles.memberName, { color: theme.colors.text }]}>{member.name}</Text>
+                          <Text
+                            style={[
+                              styles.memberBalance,
+                              {
+                                color: balance > 0.01
+                                  ? theme.colors.success.a0
+                                  : balance < -0.01
+                                    ? theme.colors.danger.a0
+                                    : theme.colors.textSecondary,
+                              },
+                            ]}
+                          >
+                            {getBalanceLabel(balance)}
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                    {canWrite && (
+                      <View style={styles.memberActions}>
+                        {isEditing ? (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.editButton, { backgroundColor: theme.colors.primary.a0 }]}
+                              onPress={handleUpdateMember}
+                            >
+                              <Text style={styles.primaryButtonText}>{t('common.save')}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.editButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                              onPress={cancelEditingMember}
+                            >
+                              <Text style={[styles.editButtonText, { color: theme.colors.text }]}>{t('common.cancel')}</Text>
+                            </TouchableOpacity>
+                          </>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.editButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                              onPress={() => startEditingMember(member.id, member.name)}
+                            >
+                              <Text style={[styles.editButtonText, { color: theme.colors.text }]}>{t('common.edit')}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.deleteButton, { backgroundColor: theme.colors.danger.a20 }]}
+                              onPress={() => handleDeleteMember(member.id, member.name)}
+                            >
+                              <Text style={[styles.deleteButtonText, { color: theme.colors.danger.a0 }]}>{t('common.delete')}</Text>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                );
+              })
             )}
           </View>
         )}
@@ -530,6 +708,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+  },
+  iconButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  iconButtonText: {
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  utilityBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  utilityButton: {
+    minWidth: 56,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  utilityButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   tabs: {
     flexDirection: 'row',
@@ -708,9 +914,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
+    gap: 12,
+  },
+  memberInfo: {
+    flex: 1,
   },
   memberName: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  memberBalance: {
+    fontSize: 13,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  memberActions: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
   },
 });

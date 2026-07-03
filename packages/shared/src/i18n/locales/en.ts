@@ -121,6 +121,7 @@ const en = {
     memberCount_plural: '{{count}} members',
     totalExpenses: 'Total Expenses',
     summary: 'Summary',
+    editGroup: 'Edit Group',
     
     // States
     loadingGroup: 'Loading group...',

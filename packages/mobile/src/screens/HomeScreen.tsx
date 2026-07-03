@@ -7,11 +7,14 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  Share,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RecentGroup } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
@@ -84,6 +87,44 @@ export function HomeScreen() {
       removeFromRecent(groupId);
       Alert.alert(t('common.error'), t('error.groupNoLongerAccessible'));
     }
+  };
+
+  const formatLastAccessed = (lastAccessed: number) => {
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(new Date(lastAccessed));
+  };
+
+  const handleShareRecent = (item: RecentGroup) => {
+    const url = `https://teilfair.app/g/${item.id}?t=${item.token}`;
+    const message = t('share.shareMessageDefault', { groupName: item.name, url });
+
+    Alert.alert(
+      t('share.sharePromptTitle'),
+      url,
+      [
+        {
+          text: t('common.copy'),
+          onPress: async () => {
+            await Clipboard.setStringAsync(url);
+            Alert.alert(t('common.copied'), url);
+          },
+        },
+        {
+          text: t('common.share'),
+          onPress: async () => {
+            try {
+              await Share.share({ message });
+            } catch {
+              // User cancelled.
+            }
+          },
+        },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
   };
 
   const cycleTheme = () => {
@@ -266,6 +307,9 @@ export function HomeScreen() {
                   <Text style={[styles.recentName, { color: theme.colors.text }]}>
                     {item.name}
                   </Text>
+                  <Text style={[styles.recentMeta, { color: theme.colors.textSecondary }]}>
+                    {t('common.lastUpdated', { date: formatLastAccessed(item.lastAccessed) })}
+                  </Text>
                   <View style={[
                     styles.badge,
                     { 
@@ -290,6 +334,14 @@ export function HomeScreen() {
                   </View>
                 </View>
                 <View style={styles.recentButtons}>
+                  <TouchableOpacity
+                    style={[styles.smallButton, { backgroundColor: theme.colors.surfaceTonal.a10 }]}
+                    onPress={() => handleShareRecent(item)}
+                  >
+                    <Text style={{ color: theme.colors.text, fontWeight: '500' }}>
+                      {t('common.share')}
+                    </Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.smallButton, { backgroundColor: theme.colors.primary.a0 }]}
                     onPress={() => handleOpenRecent(item.id, item.token)}
@@ -444,18 +496,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   recentInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
     flex: 1,
+    gap: 4,
   },
   recentName: {
     fontSize: 16,
     fontWeight: '500',
   },
+  recentMeta: {
+    fontSize: 12,
+  },
   recentButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
     gap: 8,
+    maxWidth: 180,
   },
   badge: {
     paddingHorizontal: 8,
