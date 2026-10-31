@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faShare, faPlus, faReceipt, faUsers, faChartPie,
-  faArrowLeft, faSpinner, faExclamationTriangle, faHome, faEye
+  faPlus, faReceipt, faUsers, faChartPie, faXmark, faUserPlus,
+  faExclamationTriangle, faHome, faEye, faLinkSlash, faMagnifyingGlass,
+  type IconDefinition
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 import { MembersList, MembersListForm } from '../components/MembersList';
@@ -12,43 +13,46 @@ import { ExpensesList } from '../components/ExpensesList';
 import { ExpenseDetailsContent, ExpenseDetailsModal } from '../components/ExpenseDetailsModal';
 import { BalancesSummary } from '../components/BalancesSummary';
 import { AddExpenseModal } from '../components/AddExpenseModal';
+import { AddMemberModal } from '../components/AddMemberModal';
 import { EditExpenseModal } from '../components/EditExpenseModal';
 import { ShareModal } from '../components/ShareModal';
-import { LogoIcon } from '../components/LogoIcon';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
-import { ThemeToggleButton } from '../components/ThemeToggleButton';
-import { useTheme } from '../theme/ThemeContext';
+import { GroupHeader } from '../components/GroupHeader';
+import { TabList, type TabItem } from '../components/TabList';
+import { MobileTabBar } from '../components/MobileTabBar';
+import { Fab } from '../components/Fab';
+import { EmptyState } from '../components/EmptyState';
+import { GroupPageSkeleton } from '../components/Skeleton';
+import { tabId, tabPanelId } from '../components/tabIds';
+import { DESKTOP_QUERY, useMediaQuery } from '../hooks/useMediaQuery';
 import type { Expense } from '@teilfair/shared';
 
 type Tab = 'expenses' | 'balances' | 'members';
 
-// Hook to detect screen size
-function useScreenSize() {
-  const [screenSize, setScreenSize] = useState<'mobile' | 'tablet' | 'desktop' | 'wide'>(() => {
-    if (typeof window === 'undefined') return 'mobile';
-    const w = window.innerWidth;
-    if (w < 640) return 'mobile';
-    if (w < 1024) return 'tablet';
-    if (w < 1440) return 'desktop';
-    return 'wide';
-  });
-  
-  useEffect(() => {
-    const handleResize = () => {
-      const w = window.innerWidth;
-      if (w < 640) setScreenSize('mobile');
-      else if (w < 1024) setScreenSize('tablet');
-      else if (w < 1440) setScreenSize('desktop');
-      else setScreenSize('wide');
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  return screenSize;
+const TAB_PREFIX = 'group';
+
+interface FabConfig {
+  icon: IconDefinition;
+  label: string;
+  testId: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+interface GroupStatusProps {
+  children: ReactNode;
+}
+
+/** Full-page status (invalid link, error, not found) inside the app shell. */
+function GroupStatus({ children }: Readonly<GroupStatusProps>) {
+  return (
+    <div className="app">
+      <AppHeader backTo="/" />
+      <main className="container status-page">{children}</main>
+      <AppFooter />
+    </div>
+  );
 }
 
 export function GroupPage() {
@@ -56,25 +60,39 @@ export function GroupPage() {
   const { groupId } = useParams<{ groupId: string }>();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('t');
-  const { mode, setThemePreference } = useTheme();
-  const screenSize = useScreenSize();
-  const isWideScreen = screenSize === 'desktop' || screenSize === 'wide';
-  
-  const { 
-    group, 
-    members, 
+  const isDesktop = useMediaQuery(DESKTOP_QUERY);
+
+  const {
+    group,
+    members,
     expenses,
-    permission, 
-    loading, 
-    error, 
-    loadGroup 
+    permission,
+    loading,
+    error,
+    loadGroup
   } = useGroupStore();
-  
+
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const detailsHeadingRef = useRef<HTMLHeadingElement>(null);
+  const detailsTriggerRef = useRef<HTMLElement | null>(null);
+  const focusMembersTabRef = useRef(false);
+  const panelRef = useRef<HTMLElement>(null);
+  // Each section keeps its own scroll offset; only user tab changes move the page.
+  const scrollPositions = useRef<Partial<Record<Tab, number>>>({});
+  const pendingScrollRef = useRef(false);
+
+  // Balances live in the side panel on desktop, so that tab only exists below 1024px.
+  const currentTab: Tab = isDesktop && activeTab === 'balances' ? 'expenses' : activeTab;
+
+  // The member sheet is phone-only; desktop has the inline form on the Members tab.
+  if (isDesktop && showAddMember) {
+    setShowAddMember(false);
+  }
 
   useEffect(() => {
     if (groupId && token) {
@@ -82,82 +100,110 @@ export function GroupPage() {
     }
   }, [groupId, token, loadGroup]);
 
-  const cycleTheme = () => {
-    setThemePreference(mode === 'light' ? 'dark' : 'light');
-  };
+  // The empty-state CTA unmounts its own button, so hand focus to the Members tab instead.
+  useEffect(() => {
+    if (!focusMembersTabRef.current) return;
+    focusMembersTabRef.current = false;
+    document.getElementById(tabId(TAB_PREFIX, 'members'))?.focus({ preventScroll: true });
+  }, [activeTab]);
 
-  // Error and loading states
+  // After a tab change: restore the section's last position, or on first visit bring the
+  // panel heading just below the sticky header if the page was scrolled past it.
+  useLayoutEffect(() => {
+    if (!pendingScrollRef.current) return;
+    pendingScrollRef.current = false;
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const margin = Number.parseFloat(getComputedStyle(panel).scrollMarginTop) || 0;
+    const panelTop = panel.getBoundingClientRect().top + window.scrollY - margin;
+    const saved = scrollPositions.current[currentTab];
+    const target = saved ?? (window.scrollY > panelTop ? panelTop : window.scrollY);
+    // Instant overrides `html { scroll-behavior: smooth }`: no animated jump.
+    window.scrollTo({ top: target, behavior: 'instant' });
+  }, [currentTab]);
+
+  // Desktop: move focus to the details panel when an expense is opened there.
+  const viewingId = viewingExpense?.id;
+  useEffect(() => {
+    if (isDesktop && viewingId) {
+      detailsHeadingRef.current?.focus();
+    }
+  }, [isDesktop, viewingId]);
+
+  const goHome = (
+    <Link to="/" className="btn btn-primary">
+      <FontAwesomeIcon icon={faHome} aria-hidden="true" />
+      {t('common.goHome')}
+    </Link>
+  );
+
   if (!groupId || !token) {
     return (
-      <div className="app">
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-          <div className="card text-center" style={{ maxWidth: '400px' }}>
-            <FontAwesomeIcon icon={faExclamationTriangle} style={{ fontSize: '48px', color: 'var(--color-warning)', marginBottom: '16px' }} />
-            <h2 style={{ marginBottom: '8px' }}>{t('group.invalidLinkTitle')}</h2>
-            <p className="text-secondary mb-4">{t('group.invalidLinkDescription')}</p>
-            <Link to="/" className="btn btn-primary">
-              <FontAwesomeIcon icon={faHome} style={{ marginRight: '8px' }} />
-              {t('common.goHome')}
-            </Link>
-          </div>
-        </div>
-      </div>
+      <GroupStatus>
+        <EmptyState
+          variant="page"
+          titleAs="h1"
+          tone="warning"
+          icon={faLinkSlash}
+          title={t('group.invalidLinkTitle')}
+          description={t('group.invalidLinkDescription')}
+          action={goHome}
+        />
+      </GroupStatus>
     );
   }
 
   if (loading && !group) {
     return (
-      <div className="app">
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-          <div className="card text-center" style={{ maxWidth: '400px' }}>
-            <FontAwesomeIcon icon={faSpinner} spin style={{ fontSize: '48px', color: 'var(--color-primary)', marginBottom: '16px' }} />
-            <p className="text-secondary">{t('group.loadingGroup')}</p>
-          </div>
-        </div>
+      <div className="app app-group">
+        <AppHeader backTo="/" />
+        <GroupPageSkeleton label={t('group.loadingGroup')} />
       </div>
     );
   }
 
   if (error && !group) {
     return (
-      <div className="app">
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-          <div className="card text-center" style={{ maxWidth: '400px' }}>
-            <FontAwesomeIcon icon={faExclamationTriangle} style={{ fontSize: '48px', color: 'var(--color-danger)', marginBottom: '16px' }} />
-            <h2 style={{ marginBottom: '8px' }}>{t('common.error')}</h2>
-            <p className="text-danger mb-4">{error}</p>
-            <Link to="/" className="btn btn-primary">
-              <FontAwesomeIcon icon={faHome} style={{ marginRight: '8px' }} />
-              {t('common.goHome')}
-            </Link>
-          </div>
-        </div>
-      </div>
+      <GroupStatus>
+        <EmptyState
+          variant="page"
+          titleAs="h1"
+          tone="danger"
+          role="alert"
+          icon={faExclamationTriangle}
+          title={t('common.error')}
+          description={error}
+          action={goHome}
+        />
+      </GroupStatus>
     );
   }
 
   if (!group) {
     return (
-      <div className="app">
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-          <div className="card text-center" style={{ maxWidth: '400px' }}>
-            <FontAwesomeIcon icon={faExclamationTriangle} style={{ fontSize: '48px', color: 'var(--color-text-muted)', marginBottom: '16px' }} />
-            <h2 style={{ marginBottom: '8px' }}>{t('group.groupNotFoundTitle')}</h2>
-            <p className="text-secondary mb-4">{t('group.groupNotFoundDescription')}</p>
-            <Link to="/" className="btn btn-primary">
-              <FontAwesomeIcon icon={faHome} style={{ marginRight: '8px' }} />
-              {t('common.goHome')}
-            </Link>
-          </div>
-        </div>
-      </div>
+      <GroupStatus>
+        <EmptyState
+          variant="page"
+          titleAs="h1"
+          tone="muted"
+          icon={faMagnifyingGlass}
+          title={t('group.groupNotFoundTitle')}
+          description={t('group.groupNotFoundDescription')}
+          action={goHome}
+        />
+      </GroupStatus>
     );
   }
 
   const canWrite = permission === 'write';
+  const hasMembers = members.length > 0;
   const totalExpenses = expenses.reduce((sum, e) => sum + e.totalAmount, 0);
+  // Always show the store's current copy; a deleted expense simply closes the details.
+  const shownExpense = viewingExpense
+    ? expenses.find((expense) => expense.id === viewingExpense.id) ?? null
+    : null;
 
-  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
@@ -165,247 +211,251 @@ export function GroupPage() {
     }).format(amount);
   };
 
-  // Render side panel content
+  const tabs: TabItem<Tab>[] = [
+    { id: 'expenses', label: t('group.tabExpenses'), icon: faReceipt, testId: 'expenses-tab-button' },
+    ...(isDesktop ? [] : [{ id: 'balances' as const, label: t('group.tabBalances'), icon: faChartPie, testId: 'balances-tab-button' }]),
+    { id: 'members', label: t('group.tabMembers'), icon: faUsers, testId: 'members-tab-button' },
+  ];
+  const currentTabLabel = tabs.find((tab) => tab.id === currentTab)?.label;
+
+  const changeTab = (next: Tab) => {
+    if (next === currentTab) return;
+    scrollPositions.current[currentTab] = window.scrollY;
+    pendingScrollRef.current = true;
+    setActiveTab(next);
+  };
+
+  const closeDetails = () => {
+    setViewingExpense(null);
+    // Desktop panel: hand focus back to the "view" button that opened it.
+    const trigger = detailsTriggerRef.current;
+    detailsTriggerRef.current = null;
+    if (isDesktop && trigger?.isConnected) trigger.focus();
+  };
+
+  const openAddExpense = () => {
+    setEditingExpense(null);
+    setViewingExpense(null);
+    setShowAddExpense(true);
+  };
+
+  // Phones: the FAB adds to the current section; Balances has nothing to add.
+  const fabByTab: Record<Tab, FabConfig | null> = {
+    expenses: {
+      icon: faPlus,
+      label: t('expense.addExpense'),
+      testId: 'add-expense-button',
+      onClick: openAddExpense,
+      disabled: !hasMembers,
+    },
+    balances: null,
+    members: {
+      icon: faUserPlus,
+      label: t('member.addMemberTitle'),
+      testId: 'add-member-button',
+      onClick: () => setShowAddMember(true),
+    },
+  };
+  const fab = !isDesktop && canWrite ? fabByTab[currentTab] : null;
+
   const renderSidePanel = () => {
-    if (viewingExpense) {
+    if (shownExpense) {
       return (
-        <div className="side-panel-card">
+        <section
+          className="side-panel-card"
+          aria-labelledby="side-panel-details-title"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') closeDetails();
+          }}
+        >
           <div className="side-panel-header">
-            <h3>
-              <FontAwesomeIcon icon={faEye} style={{ marginRight: '8px', opacity: 0.7 }} />
+            <h2 id="side-panel-details-title" ref={detailsHeadingRef} tabIndex={-1}>
+              <FontAwesomeIcon icon={faEye} className="side-panel-header-icon" aria-hidden="true" />
               {t('expense.viewExpense')}
-            </h3>
-            <button className="btn btn-sm btn-ghost expense-dialog-close" onClick={() => setViewingExpense(null)}>
-              &times;
+            </h2>
+            <button
+              type="button"
+              className="btn-close"
+              onClick={closeDetails}
+              aria-label={t('common.close')}
+              title={t('common.close')}
+            >
+              <FontAwesomeIcon icon={faXmark} aria-hidden="true" />
             </button>
           </div>
           <div className="side-panel-scroll">
-            <ExpenseDetailsContent expense={viewingExpense} />
+            <ExpenseDetailsContent expense={shownExpense} />
           </div>
-        </div>
+        </section>
       );
     }
-    
+
     return (
-      <div className="side-panel-card">
-        <h3 className="side-panel-title">{t('group.summary')}</h3>
-        
-        {/* Quick Stats */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '12px', 
-          marginBottom: '24px',
-          padding: '16px',
-          background: 'var(--color-surface)',
-          borderRadius: 'var(--radius-lg)'
-        }}>
-          <div>
-            <div className="text-muted text-sm">{t('group.totalExpenses')}</div>
-            <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-primary)' }}>
-              {formatCurrency(totalExpenses)}
-            </div>
+      <section className="side-panel-card" aria-labelledby="side-panel-summary-title">
+        <h2 id="side-panel-summary-title" className="side-panel-title">{t('group.summary')}</h2>
+
+        <dl className="summary-stats">
+          <div className="summary-stat summary-stat-primary">
+            <dt>{t('group.totalExpenses')}</dt>
+            <dd>{formatCurrency(totalExpenses)}</dd>
           </div>
-          <div>
-            <div className="text-muted text-sm">{t('group.tabMembers')}</div>
-            <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700 }}>
-              {members.length}
-            </div>
+          <div className="summary-stat">
+            <dt>{t('group.averagePerMember')}</dt>
+            <dd>{formatCurrency(hasMembers ? totalExpenses / members.length : 0)}</dd>
           </div>
-        </div>
+        </dl>
 
         <div className="side-panel-scroll">
           <BalancesSummary />
         </div>
-      </div>
+      </section>
+    );
+  };
+
+  const renderTabContent = () => {
+    if (currentTab === 'balances') {
+      return <BalancesSummary />;
+    }
+
+    if (currentTab === 'members') {
+      return (
+        <>
+          {isDesktop && canWrite && (
+            <div className="tab-panel-actions">
+              <MembersListForm canEdit={canWrite} />
+            </div>
+          )}
+          <MembersList canEdit={canWrite} />
+        </>
+      );
+    }
+
+    if (!hasMembers) {
+      return (
+        <EmptyState
+          icon={faUsers}
+          title={t('member.addMembersFirst')}
+          description={t('member.addMembersToTrack')}
+          action={(
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                focusMembersTabRef.current = true;
+                changeTab('members');
+              }}
+            >
+              {t('member.goToMembers')}
+            </button>
+          )}
+        />
+      );
+    }
+
+    return (
+      <ExpensesList
+        canEdit={canWrite}
+        onAddExpense={openAddExpense}
+        selectedExpenseId={isDesktop ? shownExpense?.id : undefined}
+        onEditExpense={(expense) => {
+          setShowAddExpense(false);
+          setEditingExpense(expense);
+          setViewingExpense(null);
+        }}
+        onViewExpense={(expense) => {
+          if (document.activeElement instanceof HTMLElement) {
+            detailsTriggerRef.current = document.activeElement;
+          }
+          setShowAddExpense(false);
+          setEditingExpense(null);
+          setViewingExpense(expense);
+        }}
+      />
     );
   };
 
   return (
-    <div className="app app-group">
-      <AppHeader
-        left={(
-          <>
-            <Link to="/" className="btn btn-ghost app-header-icon" title={t('accessibility.backToHome')}>
-              <FontAwesomeIcon icon={faArrowLeft} />
-            </Link>
-            <Link to="/" className="logo">
-              <LogoIcon size={32} />
-              <span>{t('common.appName')}</span>
-            </Link>
-          </>
-        )}
-        right={(
-          <>
-            <LanguageSwitcher />
-            <ThemeToggleButton
-              mode={mode}
-              onToggle={cycleTheme}
-              title={t('accessibility.themeToggle', { mode })}
-              size={16}
-            />
-          </>
-        )}
-      />
+    <div className={`app app-group${fab ? ' has-fab' : ''}`}>
+      <AppHeader backTo="/" />
 
-      <div className={isWideScreen ? 'wide-layout group-layout' : 'container group-layout'}>
-        <div className="main-content">
-          <div className="card">
-            {/* Group Header */}
-            <div className="card-header group-header">
-              <div className="group-header-left">
-                <div className="group-title-row">
-                  <h1 className="card-title group-title-compact">{group.name}</h1>
+      <main className="group-shell">
+        <div className="group-main">
+          <GroupHeader
+            name={group.name}
+            expenseCount={expenses.length}
+            memberCount={members.length}
+            canWrite={canWrite}
+            total={formatCurrency(totalExpenses)}
+            onShare={() => setShowShare(true)}
+          />
+
+          {/* Fixed to the bottom visually, but before its panel in DOM (Tab) order */}
+          {!isDesktop && (
+            <MobileTabBar tabs={tabs} active={currentTab} onChange={changeTab} idPrefix={TAB_PREFIX} />
+          )}
+
+          <section className="card group-panel" ref={panelRef}>
+            {isDesktop ? (
+              <div className="group-panel-toolbar">
+                <TabList
+                  tabs={tabs}
+                  active={currentTab}
+                  onChange={changeTab}
+                  idPrefix={TAB_PREFIX}
+                  label={t('accessibility.mainNavigation')}
+                  className="tabs"
+                  tabClassName="tab"
+                />
+                {canWrite && currentTab === 'expenses' && (
                   <button
-                    className="btn btn-sm btn-ghost group-share-button"
-                    onClick={() => setShowShare(true)}
-                    title={t('common.share')}
-                    aria-label={t('common.share')}
+                    type="button"
+                    className="btn btn-primary action-button"
+                    data-testid="add-expense-button"
+                    onClick={openAddExpense}
+                    disabled={!hasMembers}
                   >
-                    <FontAwesomeIcon icon={faShare} />
-                    <span className="sr-only">{t('common.share')}</span>
+                    <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
+                    <span>{t('expense.addExpense')}</span>
                   </button>
-                </div>
-                <div className="group-meta-row">
-                  <span className="group-meta-item">
-                    {t(expenses.length === 1 ? 'group.expenseCount' : 'group.expenseCount_plural', { count: expenses.length })}
-                  </span>
-                  <span className="group-meta-item">
-                    {t(members.length === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: members.length })}
-                  </span>
-                  <span className="badge group-access-badge">
-                    {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
-                  </span>
-                </div>
+                )}
               </div>
-              <div className="group-header-total">
-                <div className="group-total-label">{t('common.total')}</div>
-                <div className="group-total-value">{formatCurrency(totalExpenses)}</div>
+            ) : (
+              <h2 className="group-panel-title">{currentTabLabel}</h2>
+            )}
+
+            <div
+              role="tabpanel"
+              id={tabPanelId(TAB_PREFIX, currentTab)}
+              aria-labelledby={tabId(TAB_PREFIX, currentTab)}
+              className="tab-panel"
+              tabIndex={0}
+            >
+              <div key={currentTab} className="animate-in">
+                {renderTabContent()}
               </div>
             </div>
-            
-            {/* Tabs */}
-            <div className="tabs">
-              <button 
-                className={`tab ${activeTab === 'expenses' ? 'active' : ''}`}
-                data-testid="expenses-tab-button"
-                onClick={() => setActiveTab('expenses')}
-              >
-                <FontAwesomeIcon icon={faReceipt} style={{ marginRight: '6px', opacity: 0.8 }} />
-                {t('group.tabExpenses')}
-              </button>
-              {!isWideScreen && (
-                <button 
-                  className={`tab ${activeTab === 'balances' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('balances')}
-                >
-                  <FontAwesomeIcon icon={faChartPie} style={{ marginRight: '6px', opacity: 0.8 }} />
-                  {t('group.tabBalances')}
-                </button>
-              )}
-              <button 
-                className={`tab ${activeTab === 'members' ? 'active' : ''}`}
-                data-testid="members-tab-button"
-                onClick={() => setActiveTab('members')}
-              >
-                <FontAwesomeIcon icon={faUsers} style={{ marginRight: '6px', opacity: 0.8 }} />
-                {t('group.tabMembers')}
-              </button>
-            </div>
+          </section>
 
-            {/* Tab Content */}
-            {activeTab === 'expenses' && (
-              <div className="tab-panel">
-                <div className="tab-panel-actions">
-                  {canWrite && (
-                    <button 
-                      className="btn btn-primary btn-block mb-3 action-button"
-                      data-testid="add-expense-button"
-                      onClick={() => {
-                        setEditingExpense(null); // Clear any editing state
-                        setViewingExpense(null);
-                        setShowAddExpense(true);
-                      }}
-                      disabled={members.length < 1}
-                    >
-                      <FontAwesomeIcon icon={faPlus} />
-                      <span>{t('expense.addExpense')}</span>
-                    </button>
-                  )}
-                  {members.length < 1 && (
-                    <div style={{ 
-                      textAlign: 'center', 
-                      padding: '20px', 
-                      background: 'var(--color-surface)', 
-                      borderRadius: 'var(--radius-lg)',
-                      marginBottom: '16px'
-                    }}>
-                      <p className="text-secondary">
-                        <FontAwesomeIcon icon={faUsers} style={{ marginRight: '8px', opacity: 0.6 }} />
-                        {t('member.addMembersToTrack')}
-                      </p>
-                      <button 
-                        className="btn btn-sm btn-secondary mt-2"
-                        onClick={() => setActiveTab('members')}
-                      >
-                        {t('member.goToMembers')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div className="tab-content-scroll">
-                  <div className="animate-in">
-                    <ExpensesList 
-                      canEdit={canWrite} 
-                      onEditExpense={(expense) => {
-                        setShowAddExpense(false); // Clear add state
-                        setEditingExpense(expense);
-                        setViewingExpense(null);
-                      }}
-                      onViewExpense={(expense) => {
-                        setShowAddExpense(false);
-                        setEditingExpense(null);
-                        setViewingExpense(expense);
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'balances' && !isWideScreen && (
-              <div className="tab-panel">
-                <div className="tab-content-scroll">
-                  <div className="animate-in">
-                    <BalancesSummary />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'members' && (
-              <div className="tab-panel">
-                <div className="tab-panel-actions">
-                  <MembersListForm canEdit={canWrite} />
-                </div>
-                <div className="tab-content-scroll">
-                  <div className="animate-in">
-                    <MembersList canEdit={canWrite} />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* After the panel content, before the footer in Tab order */}
+          {fab && (
+            <Fab
+              key={fab.testId}
+              icon={fab.icon}
+              label={fab.label}
+              onClick={fab.onClick}
+              disabled={fab.disabled}
+              testId={fab.testId}
+            />
+          )}
         </div>
-        
-        {/* Side panel for wide screens */}
-        {isWideScreen && (
-          <aside className="side-panel">
+
+        {isDesktop && (
+          <aside className="group-aside" aria-label={t('group.summary')}>
             {renderSidePanel()}
           </aside>
         )}
-      </div>
-      
+      </main>
+
       <AppFooter />
 
       {/* Modals */}
@@ -414,21 +464,25 @@ export function GroupPage() {
       )}
 
       {editingExpense && (
-        <EditExpenseModal 
+        <EditExpenseModal
           expense={editingExpense}
-          onClose={() => setEditingExpense(null)} 
+          onClose={() => setEditingExpense(null)}
         />
       )}
 
-      {viewingExpense && !isWideScreen && (
+      {shownExpense && !isDesktop && (
         <ExpenseDetailsModal
-          expense={viewingExpense}
+          expense={shownExpense}
           onClose={() => setViewingExpense(null)}
         />
       )}
 
       {showShare && (
         <ShareModal onClose={() => setShowShare(false)} />
+      )}
+
+      {showAddMember && (
+        <AddMemberModal onClose={() => setShowAddMember(false)} />
       )}
     </div>
   );

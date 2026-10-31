@@ -1,38 +1,14 @@
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
-import { LogoIcon } from '../components/LogoIcon';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
-import { ThemeToggleButton } from '../components/ThemeToggleButton';
-import { useTheme } from '../theme/ThemeContext';
+import { LegalBackLink } from '../components/LegalBackLink';
 
 export function PrivacyPage() {
-  const { t } = useTranslation();
-  const { mode, toggleTheme } = useTheme();
-  
   return (
-    <div className="legal-page">
-      <AppHeader
-        left={(
-          <Link to="/" className="logo">
-            <LogoIcon size={32} />
-            <span>{t('common.appName')}</span>
-          </Link>
-        )}
-        right={(
-          <>
-            <LanguageSwitcher />
-            <ThemeToggleButton
-              mode={mode}
-              onToggle={toggleTheme}
-              title={t('accessibility.themeToggle', { mode })}
-            />
-          </>
-        )}
-      />
-      
-      <main className="legal-content">
+    <div className="app">
+      <AppHeader />
+
+      <main className="legal-content" lang="de">
+        <LegalBackLink />
         <h1>Datenschutzerklärung</h1>
 
         <section>

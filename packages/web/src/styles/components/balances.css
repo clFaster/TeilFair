@@ -1,0 +1,252 @@
+/* ============================================
+   BALANCES (BalancesSummary.tsx)
+   Lives in the phone Balances tab and the narrow desktop side panel, so
+   the layout reacts to its own width (container query), not the viewport.
+   ============================================ */
+.balances {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.balances-section {
+  min-width: 0;
+}
+
+.balances-heading {
+  margin-bottom: 12px;
+  font-size: var(--font-size-md);
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+
+.balances-hint {
+  margin: -6px 0 12px;
+  font-size: var(--font-size-sm);
+  color: var(--text-3);
+}
+
+.balance-list,
+.settlement-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  list-style: none;
+}
+
+.balance-positive { color: var(--color-success); }
+.balance-negative { color: var(--color-danger); }
+.balance-zero { color: var(--text-3); }
+
+/* Row: avatar | name + state | amount, bar underneath the text column */
+.balance-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'avatar main amount'
+    '.      bar  bar';
+  align-items: center;
+  gap: 10px 12px;
+  padding: 12px var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
+
+.balance-row .avatar {
+  grid-area: avatar;
+}
+
+.balance-row-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.balance-name {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+
+.balance-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-3);
+}
+
+.balance-amount {
+  grid-area: amount;
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+/* Diverging bar: credit grows right of the axis, debt grows left */
+.balance-bar {
+  grid-area: bar;
+  display: block;
+  width: 100%;
+  height: 6px;
+}
+
+.balance-bar-track {
+  fill: var(--color-border);
+}
+
+.balance-bar-axis {
+  stroke: var(--text-3);
+  stroke-width: 2;
+}
+
+.balance-row.is-positive .balance-bar-fill { fill: var(--color-success); }
+.balance-row.is-negative .balance-bar-fill { fill: var(--color-danger); }
+
+/* ============================================
+   SETTLEMENTS - warm gold, distinct from the teal balances
+   ============================================ */
+.settlement-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px var(--spacing-md);
+  padding: 12px var(--spacing-md);
+  background: var(--color-settlement-bg);
+  border: 1px solid var(--color-settlement-border);
+  border-radius: var(--radius-lg);
+}
+
+.settlement-parties {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.settlement-party {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.settlement-name {
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+
+.settlement-arrow {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-settlement-ring);
+  color: var(--color-settlement-accent);
+  font-size: var(--font-size-xs);
+}
+
+.settlement-amount {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-settlement-accent);
+  white-space: nowrap;
+}
+
+/* Narrow (phones, 1024px side panel): parties on top, amount on its own line */
+@container (max-width: 340px) {
+  .settlement-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .settlement-parties {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .settlement-amount {
+    padding-top: 10px;
+    border-top: 1px dashed var(--color-settlement-border);
+    font-size: var(--font-size-lg);
+    text-align: right;
+  }
+}
+
+/* ============================================
+   ALL SETTLED - celebratory state
+   ============================================ */
+.balances-settled {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(160deg, var(--clr-success-a20) 0%, var(--color-primary-soft) 100%);
+}
+
+/* Decorative confetti in the brand colors */
+.balances-settled::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 24%, var(--clr-accent-a20) 0 4px, transparent 5px),
+    radial-gradient(circle at 86% 18%, var(--color-primary) 0 3px, transparent 4px),
+    radial-gradient(circle at 24% 80%, var(--color-primary) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 74%, var(--clr-accent-a10) 0 4px, transparent 5px),
+    radial-gradient(circle at 50% 10%, var(--color-success) 0 2px, transparent 3px),
+    radial-gradient(circle at 64% 90%, var(--clr-accent-a20) 0 3px, transparent 4px);
+  opacity: 0.75;
+}
+
+.balances-settled-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-full);
+  background: var(--color-success);
+  color: var(--surface-1);
+  font-size: 28px;
+  box-shadow: 0 0 0 6px var(--surface-1), var(--shadow-md);
+  animation: settledPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.balances-settled-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-success);
+}
+
+.balances-settled-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-2);
+}
+
+@keyframes settledPop {
+  from { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  to { transform: scale(1); }
+}

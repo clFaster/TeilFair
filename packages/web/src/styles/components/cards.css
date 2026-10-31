@@ -1,0 +1,142 @@
+/* ============================================
+   CARDS - Elegant with subtle shadows
+   ============================================ */
+.card {
+  background: var(--surface-1);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+@media (max-width: 639.98px) {
+  .card {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* ============================================
+   AVATARS (Avatar.tsx) - initial chips, one stable tone per member.
+   Tones stay inside the teal/gold identity plus three calm neighbours;
+   every fg/bg pair is AA in both themes.
+   ============================================ */
+.avatar {
+  --avatar-size: 40px;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: var(--radius-full);
+  background: var(--avatar-bg);
+  color: var(--avatar-fg);
+  font-family: var(--font-display);
+  font-size: calc(var(--avatar-size) * 0.42);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.avatar-sm { --avatar-size: 32px; }
+.avatar-lg { --avatar-size: 44px; }
+
+.avatar-tone-0 { --avatar-bg: #d3efe9; --avatar-fg: #075a4e; }
+.avatar-tone-1 { --avatar-bg: #fbe8bf; --avatar-fg: #7a4706; }
+.avatar-tone-2 { --avatar-bg: #dce6f8; --avatar-fg: #24438a; }
+.avatar-tone-3 { --avatar-bg: #f8dde2; --avatar-fg: #8c2340; }
+.avatar-tone-4 { --avatar-bg: #e2eed6; --avatar-fg: #375f19; }
+
+[data-theme='dark'] .avatar-tone-0 { --avatar-bg: rgba(45, 212, 191, 0.16); --avatar-fg: #7ae5d8; }
+[data-theme='dark'] .avatar-tone-1 { --avatar-bg: rgba(251, 191, 36, 0.16); --avatar-fg: #fcd34d; }
+[data-theme='dark'] .avatar-tone-2 { --avatar-bg: rgba(96, 165, 250, 0.16); --avatar-fg: #a9c9fb; }
+[data-theme='dark'] .avatar-tone-3 { --avatar-bg: rgba(251, 113, 133, 0.16); --avatar-fg: #fda4af; }
+[data-theme='dark'] .avatar-tone-4 { --avatar-bg: rgba(132, 204, 22, 0.16); --avatar-fg: #bef264; }
+
+/* ============================================
+   ICON ACTIONS - round icon buttons inside list cards.
+   44px on touch, 36px where a precise pointer is available.
+   ============================================ */
+.icon-action {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--tap-target);
+  height: var(--tap-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.icon-action:hover:not(:disabled) {
+  background: var(--color-surface);
+  color: var(--text-1);
+}
+
+.icon-action:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.icon-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.icon-action-primary,
+.icon-action-primary:hover:not(:disabled) {
+  color: var(--color-primary);
+}
+
+.icon-action-danger {
+  color: var(--color-danger);
+}
+
+.icon-action-danger:hover:not(:disabled) {
+  background: var(--clr-danger-a20);
+  color: var(--color-danger);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .icon-action {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* ============================================
+   BADGES - Refined tokens
+   ============================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-read {
+  background: var(--clr-info-a20);
+  color: var(--clr-info-a0);
+}
+
+.badge-write {
+  background: var(--clr-success-a20);
+  color: var(--clr-success-a0);
+}

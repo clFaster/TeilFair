@@ -4,7 +4,10 @@ import { type ThemePreference } from './useTheme';
 
 export interface ThemeContextValue {
   theme: Theme;
+  /** The resolved, active mode. */
   mode: ThemeMode;
+  /** The user's choice; "system" until the user toggles. */
+  preference: ThemePreference;
   toggleTheme: () => void;
   setThemePreference: (preference: ThemePreference) => void;
   isDark: boolean;

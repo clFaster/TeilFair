@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faClock, faArrowRight, faShare, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronRight, faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useTranslation } from 'react-i18next';
 import type { RecentGroup } from '@teilfair/shared';
+import { Avatar } from './Avatar';
 
 interface HomeRecentGroupsProps {
   groups: RecentGroup[];
@@ -11,106 +12,116 @@ interface HomeRecentGroupsProps {
   onRemove: (groupId: string) => void;
 }
 
-export function HomeRecentGroups({ groups, loading, onOpen, onRemove }: HomeRecentGroupsProps) {
-  const { t } = useTranslation();
-  const [copiedGroupId, setCopiedGroupId] = useState<string | null>(null);
+const DAY = 24 * 60 * 60 * 1000;
 
-  const formatLastAccessed = (lastAccessed: number) => {
-    const date = new Date(lastAccessed);
-    return new Intl.DateTimeFormat(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
-  };
+/** "today", "yesterday", "3 days ago", then a short date. */
+function formatRelative(timestamp: number, locale: string) {
+  const startOfDay = (time: number) => new Date(time).setHours(0, 0, 0, 0);
+  const days = Math.round((startOfDay(Date.now()) - startOfDay(timestamp)) / DAY);
+  if (days >= 0 && days < 7) {
+    return new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-days, 'day');
+  }
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(timestamp);
+}
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const input = document.createElement('input');
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+  }
+}
+
+export function HomeRecentGroups({ groups, loading, onOpen, onRemove }: Readonly<HomeRecentGroupsProps>) {
+  const { t, i18n } = useTranslation();
+  const [copiedGroupId, setCopiedGroupId] = useState<string | null>(null);
+  const resetTimer = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => window.clearTimeout(resetTimer.current), []);
 
   const handleShare = async (group: RecentGroup) => {
-    const shareUrl = `${globalThis.location.origin}/g/${group.id}?t=${group.token}`;
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-    } catch {
-      const input = document.createElement('input');
-      input.value = shareUrl;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand('copy');
-      document.body.removeChild(input);
-    }
-
+    await copyText(`${globalThis.location.origin}/g/${group.id}?t=${group.token}`);
     setCopiedGroupId(group.id);
-    setTimeout(() => setCopiedGroupId(null), 2000);
+    window.clearTimeout(resetTimer.current);
+    resetTimer.current = window.setTimeout(() => setCopiedGroupId(null), 2000);
   };
-
 
   if (groups.length === 0) {
     return null;
   }
 
   return (
-    <div className="card animate-in animate-delay-1">
-      <h2 className="card-title mb-3">
-        <FontAwesomeIcon icon={faUsers} style={{ marginRight: '10px', opacity: 0.7 }} />
+    <section className="home-section animate-in animate-delay-1" aria-labelledby="recent-groups-title">
+      <h2 id="recent-groups-title" className="home-section-title">
         {t('home.recentGroupsTitle')}
+        <span className="home-section-count">{groups.length}</span>
       </h2>
-      <div>
-        {groups.map((group) => {
+
+      <ul className="recent-list">
+        {groups.map((group, index) => {
           const isCopied = copiedGroupId === group.id;
-          const lastAccessedLabel = formatLastAccessed(group.lastAccessed);
+          const canWrite = group.permission === 'write';
+          const memberCount = group.memberCount;
 
           return (
-            <div key={group.id} className="recent-group-card">
-              <div className="recent-group-main">
-                <div className="recent-group-header">
-                  <div className="recent-group-title">
-                    <span className="name">{group.name}</span>
-                    <span className="badge group-access-badge">
-                      {group.permission === 'write' ? t('common.fullAccess') : t('common.viewOnly')}
+            <li key={group.id} className="recent-card">
+              <button
+                type="button"
+                className="recent-card-open"
+                onClick={() => onOpen(group.id, group.token)}
+                disabled={loading}
+              >
+                <Avatar name={group.name} tone={index} />
+                <span className="recent-card-body">
+                  <span className="recent-card-name line-clamp-2">{group.name}</span>
+                  <span className="recent-card-meta">
+                    <span className={`access-pill ${canWrite ? 'is-write' : 'is-read'}`}>
+                      {canWrite ? t('common.fullAccess') : t('common.viewOnly')}
                     </span>
-                  </div>
-                </div>
-                <div className="recent-group-stats">
-                  <div className="recent-group-stat">
-                    <FontAwesomeIcon icon={faClock} style={{ opacity: 0.6, fontSize: '12px' }} />
-                    <span>{t('common.lastUpdated', { date: lastAccessedLabel })}</span>
-                  </div>
-                </div>
+                    <span>{t('home.lastOpened', { when: formatRelative(group.lastAccessed, i18n.language) })}</span>
+                    {memberCount !== undefined && memberCount > 0 && (
+                      <span>
+                        {t(memberCount === 1 ? 'group.memberCount' : 'group.memberCount_plural', { count: memberCount })}
+                      </span>
+                    )}
+                  </span>
+                </span>
+                <FontAwesomeIcon icon={faChevronRight} className="recent-card-arrow" aria-hidden="true" />
+              </button>
+
+              <div className="recent-card-actions">
+                <button
+                  type="button"
+                  className="icon-action icon-action-primary"
+                  onClick={() => handleShare(group)}
+                  aria-label={t('home.copyGroupLink', { name: group.name })}
+                  title={isCopied ? t('common.copied') : t('common.share')}
+                >
+                  <FontAwesomeIcon icon={isCopied ? faCheck : faLink} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-action icon-action-danger"
+                  onClick={() => onRemove(group.id)}
+                  aria-label={t('home.removeRecentGroup', { name: group.name })}
+                  title={t('common.remove')}
+                >
+                  <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
+                </button>
               </div>
-              <div className="recent-group-side">
-                <div className="recent-group-actions">
-                  <div className="recent-group-action-group">
-                    <button
-                      className="btn btn-sm btn-ghost expense-action-button"
-                      onClick={() => handleShare(group)}
-                      title={t('common.share')}
-                      aria-label={t('common.share')}
-                    >
-                      <FontAwesomeIcon icon={isCopied ? faCheck : faShare} />
-                    </button>
-                    <button
-                      className="btn btn-sm btn-ghost expense-action-button"
-                      onClick={() => onRemove(group.id)}
-                      title={t('common.remove')}
-                      aria-label={t('common.remove')}
-                      style={{ color: 'var(--color-danger)' }}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </div>
-                  <button
-                    className="btn btn-sm btn-primary recent-group-open"
-                    onClick={() => onOpen(group.id, group.token)}
-                    disabled={loading}
-                  >
-                    {t('common.open')}
-                    <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '6px', fontSize: '10px' }} />
-                  </button>
-                </div>
-              </div>
-            </div>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+
+      <p className="sr-only" aria-live="polite">
+        {copiedGroupId ? t('common.copied') : ''}
+      </p>
+    </section>
   );
 }

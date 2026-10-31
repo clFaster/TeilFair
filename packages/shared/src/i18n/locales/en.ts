@@ -15,6 +15,7 @@ const en = {
     edit: 'Edit',
     add: 'Add',
     close: 'Close',
+    done: 'Done',
     ok: 'OK',
     copy: 'Copy',
     copied: 'Copied!',
@@ -110,6 +111,16 @@ const en = {
     howItWorksStep2: 'Add expenses as they happen',
     howItWorksStep3: 'Split costs equally or with custom amounts',
     howItWorksStep4: 'See who owes whom and settle up',
+
+    // Hero value props
+    valueNoAccount: 'No account needed',
+    valueCurrencies: '12 currencies',
+    valueSettle: 'Fewest payments to settle',
+
+    // Recent group cards
+    lastOpened: 'Opened {{when}}',
+    copyGroupLink: 'Copy link to {{name}}',
+    removeRecentGroup: 'Remove {{name}} from this list',
   },
 
   // Group page
@@ -126,6 +137,7 @@ const en = {
     memberCount: '{{count}} member',
     memberCount_plural: '{{count}} members',
     totalExpenses: 'Total Expenses',
+    averagePerMember: 'Avg. per member',
     summary: 'Summary',
     editGroup: 'Edit Group',
     
@@ -172,11 +184,33 @@ const en = {
     equalSplit: 'Equal split',
     useCustomSplit: '+ Custom split amounts',
     useEqualSplit: '- Use equal split',
+    remaining: '{{amount}} left',
+    overBy: '{{amount}} too much',
+    balanced: 'Adds up',
+    paidAmountFor: 'Amount paid by {{name}}',
+    shareAmountFor: 'Share of {{name}}',
+
+    // Validation
+    errors: {
+      validAmount: 'Please enter an amount greater than 0',
+      amountFormat: '"{{value}}" isn\'t a valid amount. Use one decimal separator, e.g. 1234.56 or 1,234.56',
+      amountFormatWhole: '"{{value}}" isn\'t a valid amount. {{currency}} has no decimals, so enter a whole number, e.g. 1500 or 1,500',
+      amountTooLarge: 'Amounts can be at most {{max}}',
+      selectSplit: 'Select at least one person to split with',
+      enterPayments: 'Enter how much each person paid',
+      paidMismatch: "Paid amounts ({{paid}}) don't match the total ({{total}})",
+      enterSplits: 'Enter a share for at least one person',
+      splitMismatch: "Shares ({{split}}) don't match the total ({{total}})",
+      selectPayer: 'Select who paid',
+      addFailed: 'Could not add the expense. Please try again.',
+      updateFailed: 'Could not save your changes. Please try again.',
+    },
     
     // List
     paidBy: 'Paid by {{names}}',
     splitEqually: 'Split equally',
     splitBetween: 'Split between {{count}} people',
+    splitOnly: 'Only {{name}}',
     
     // Empty state
     emptyTitle: 'No expenses yet',
@@ -193,6 +227,10 @@ const en = {
   member: {
     addMember: 'Add',
     addMemberLabel: 'Add new member',
+    addMemberTitle: 'Add Member',
+    nameLabel: 'Name',
+    addedStatus: '{{name}} added',
+    addFailed: 'Could not add the member. Please try again.',
     addMembersFirst: 'Add Members First',
     addMembersFirstDescription: 'You need at least one member to create an expense',
     memberNamePlaceholder: 'Enter member name...',
@@ -205,6 +243,7 @@ const en = {
     // Empty state
     emptyTitle: 'No members yet',
     emptyDescriptionWithWrite: 'Add members to start splitting expenses',
+    emptyDescriptionFab: 'Tap + to add your first member',
     
     // Confirm delete
     confirmDelete: 'Are you sure you want to delete this member?',
@@ -231,6 +270,7 @@ const en = {
     settled: 'settled',
     allSettledUp: 'All settled up!',
     noPaymentsNeeded: 'No payments needed',
+    pays: 'pays',
     
     // Empty state
     emptyTitle: 'No balances yet',
@@ -316,12 +356,17 @@ const en = {
     backToHome: 'Back to home',
     themeToggle: 'Theme: {{mode}}',
     languageSelector: 'Select language',
+    mainNavigation: 'Group sections',
+    openActions: 'More actions',
+    closeDialog: 'Close dialog',
+    moreMenu: 'More',
   },
 
   // Footer links
   footer: {
     privacy: 'Privacy',
     imprint: 'Imprint',
+    legalNavigation: 'Legal',
   },
 } as const;
 

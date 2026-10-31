@@ -1,0 +1,144 @@
+/* ============================================
+   ADD MEMBER - inline field + button in one pill
+   ============================================ */
+.member-add {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  margin-bottom: var(--spacing-md);
+  padding: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  /* transition + focus-within ring: forms.css */
+}
+
+/* The pill carries the focus ring; the bare field inside stays flat */
+.member-add-input,
+.member-add-input:focus,
+.member-add-input:focus-visible {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: var(--tap-target);
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+}
+
+.member-add-button {
+  flex-shrink: 0;
+  height: var(--tap-target);
+  padding: 0 var(--spacing-lg);
+}
+
+/* Failed add: under the inline pill or the sheet field */
+.member-add-error {
+  margin-bottom: var(--spacing-md);
+}
+
+.member-sheet-form .member-add-error {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Phone sheet (FAB on the Members tab) */
+.member-sheet-form .input-group {
+  margin-bottom: var(--spacing-sm);
+}
+
+.member-sheet-status {
+  min-height: 1.5em;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+/* ============================================
+   MEMBER CARDS - avatar, name, balance, actions
+   ============================================ */
+.member-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--spacing-sm);
+  list-style: none;
+}
+
+.member-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 72px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.member-card.is-editing {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--focus-ring-soft);
+}
+
+.member-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.member-card-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+
+.member-card-balance {
+  font-size: var(--font-size-sm);
+  color: var(--text-3);
+}
+
+.member-card-balance.is-positive { color: var(--color-success); }
+.member-card-balance.is-negative { color: var(--color-danger); }
+
+.member-card-amount {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.member-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: -6px;
+}
+
+/* Editing: the field takes over the name and actions columns */
+.member-card-edit {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.member-card-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: var(--tap-target);
+  margin-right: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .member-card:hover:not(.is-editing) {
+    border-color: var(--color-border-strong);
+  }
+}

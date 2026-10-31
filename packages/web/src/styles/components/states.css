@@ -1,0 +1,245 @@
+/* ============================================
+   ROUTE LOADING - Suspense fallback
+   ============================================ */
+.route-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.route-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: routeSpin 0.8s linear infinite;
+}
+
+@keyframes routeSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   STATUS PAGE - Not found / invalid link / error
+   Centered card inside the regular app shell.
+   ============================================ */
+.status-page {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--spacing-xxl);
+  padding-bottom: var(--spacing-xxl);
+}
+
+/* ============================================
+   STATE CARD (EmptyState.tsx)
+   Illustrated icon + title + text + call to action.
+   page:   standalone card on status pages
+   inline: inside a panel (no members, no expenses, ...)
+   ============================================ */
+.state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Also a .card; this file loads after cards.css, so these win */
+.state-card-page {
+  width: 100%;
+  max-width: 440px;
+  margin: 0;
+  padding: var(--spacing-xxl) var(--spacing-xl);
+}
+
+.state-card-inline {
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.state-card-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-full);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 28px;
+}
+
+/* Soft halo ring makes the icon read as an illustration */
+.state-card-icon::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+  border: 1px dashed currentColor;
+  opacity: 0.25;
+}
+
+.state-card-page .state-card-icon {
+  margin-bottom: var(--spacing-lg);
+}
+
+.state-card-inline .state-card-icon {
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+}
+
+.state-card-icon-warning {
+  background: var(--clr-warning-a20);
+  color: var(--color-warning);
+}
+
+.state-card-icon-danger {
+  background: var(--clr-danger-a20);
+  color: var(--color-danger);
+}
+
+.state-card-icon-muted {
+  background: var(--color-surface);
+  color: var(--text-3);
+}
+
+.state-card-code {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.state-card-title {
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-xl);
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+
+.state-card-page .state-card-title {
+  font-size: var(--font-size-xxl);
+}
+
+.state-card-text {
+  max-width: 36ch;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.state-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.state-card-actions .btn {
+  min-height: var(--tap-target);
+}
+
+@media (max-width: 639.98px) {
+  .state-card-page {
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+}
+
+/* ============================================
+   SKELETON - Loading placeholders
+   ============================================ */
+:root {
+  --skeleton-highlight: rgba(255, 255, 255, 0.75);
+}
+
+[data-theme='dark'] {
+  --skeleton-highlight: rgba(255, 255, 255, 0.06);
+}
+
+.skeleton {
+  display: block;
+  height: 0.875rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-highlight) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-block {
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-circle {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+
+@keyframes skeletonShimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* On the brand hero the placeholders are glass, not surface */
+.group-hero .skeleton {
+  background-color: rgba(255, 255, 255, 0.18);
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.16) 50%, transparent 100%);
+}
+
+.skeleton-title { width: min(60%, 320px); height: 1.75rem; margin-bottom: 4px; }
+.skeleton-amount { width: 120px; height: 1.75rem; }
+.skeleton-w-label { width: 56px; height: 0.75rem; margin-bottom: 8px; }
+.skeleton-w-amount { flex-shrink: 0; width: 64px; }
+.skeleton-w-40 { width: 40%; }
+.skeleton-w-50 { width: 50%; }
+.skeleton-w-60 { width: 60%; }
+.skeleton-tabs { width: min(100%, 280px); height: 48px; margin-bottom: var(--spacing-lg); }
+.skeleton-stats { height: 72px; margin: var(--spacing-md) 0 var(--spacing-lg); }
+.skeleton-balance { height: 56px; margin-bottom: var(--spacing-sm); }
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.skeleton-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 639.98px) {
+  .group-hero .skeleton-amount { width: 96px; height: 1.5rem; }
+}

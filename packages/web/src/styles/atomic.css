@@ -1,0 +1,9 @@
+/* ============================================
+   ATOMIC HELPERS
+   Single-purpose classes (formerly at the end of theme/theme.css).
+   Imported last so they win over component rules of equal specificity.
+   Only helpers that are actually used are kept; prefer component classes.
+   ============================================ */
+
+/* Text colors */
+.text-secondary { color: var(--text-2); }

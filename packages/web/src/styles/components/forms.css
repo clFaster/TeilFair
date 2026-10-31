@@ -1,0 +1,379 @@
+/* ============================================
+   FORMS - fields, labels, selects
+   Inputs are 16px+ so iOS never zooms on focus.
+   ============================================ */
+.input,
+.select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-size: var(--font-size-md);
+  background: var(--surface-1);
+  color: var(--text-1);
+}
+
+.input::placeholder {
+  color: var(--text-3);
+}
+
+/* Field chrome shared with composite fields (amount hero, add-member pill) */
+.input,
+.select,
+.amount-hero-field,
+.member-add {
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input:focus,
+.select:focus,
+.amount-hero-field:focus-within,
+.member-add:focus-within {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--focus-ring-soft);
+}
+
+.input[type="date"]::-webkit-calendar-picker-indicator,
+.input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.select {
+  padding-right: 48px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364756f' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-md) center;
+}
+
+.input-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.input-group label,
+.amount-hero label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-family: var(--font-display);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.input-hint {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-3);
+}
+
+/* Date gets more room than time; both may shrink on 360px phones */
+.input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 12px;
+}
+
+.form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px var(--spacing-md);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--clr-danger-a20);
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.form-error svg {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* Two-option pill toggle */
+.segmented-control {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.segmented-button {
+  flex: 1;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font: 600 var(--font-size-xs) var(--font-body);
+  color: var(--text-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.segmented-button:hover {
+  color: var(--color-primary);
+}
+
+.segmented-button.active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Read-only link + copy button (share dialog) */
+.copy-group {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.copy-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   EXPENSE FORM (ExpenseForm.tsx)
+   ============================================ */
+.expense-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.expense-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.expense-form-body .input-group {
+  margin-bottom: 0;
+}
+
+/* Big amount: the one field every expense needs */
+.amount-hero-field {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  padding: 6px var(--spacing-md);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-1);
+}
+
+.amount-hero-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-1);
+  font: 700 var(--font-size-display) / 1.25 var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.amount-hero-input::placeholder {
+  color: var(--color-border-strong);
+}
+
+.amount-hero-unit,
+.amount-field-unit {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+/* Payer / split groups */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.form-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.form-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-md);
+}
+
+.count-badge {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+
+/* Equal split: real checkboxes, whole row is the label */
+.split-options,
+.amount-rows {
+  display: grid;
+  gap: var(--spacing-sm);
+  list-style: none;
+}
+
+.split-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.split-option:hover {
+  border-color: var(--color-border-strong);
+}
+
+.split-option:has(:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.split-option:has(:focus-visible) {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.split-option input:focus-visible {
+  outline: none;
+}
+
+.split-option input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.split-option-name,
+.amount-row-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.split-option-amount {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* Custom amounts: fluid rows, the field keeps a usable minimum width */
+.amount-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(7.5rem, 42%);
+  align-items: center;
+  gap: 12px;
+}
+
+.amount-field {
+  position: relative;
+}
+
+.amount-field .input {
+  padding-right: 3.25rem;
+  text-align: right;
+}
+
+.amount-field-unit {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--font-size-xs);
+  pointer-events: none;
+}
+
+/* Live remaining indicator */
+.amount-meter {
+  --meter: var(--color-warning);
+  display: grid;
+  gap: 6px;
+}
+
+.amount-meter.is-ok { --meter: var(--color-success); }
+.amount-meter.is-over { --meter: var(--color-danger); }
+
+.amount-meter-bar {
+  display: block;
+  width: 100%;
+  height: 4px;
+}
+
+.amount-meter-track { fill: var(--color-border); }
+.amount-meter-fill { fill: var(--meter); transition: width var(--transition-normal); }
+
+.amount-meter-text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--meter);
+}
+
+.amount-meter-sum {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.expense-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.expense-form-footer .btn {
+  min-height: var(--tap-target);
+}
+
+@media (max-width: 639.98px) {
+  .segmented-control {
+    width: 100%;
+  }
+
+  .segmented-button {
+    min-height: var(--tap-target);
+    padding: 0 10px;
+    white-space: normal;
+  }
+}

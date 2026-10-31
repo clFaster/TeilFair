@@ -1,0 +1,294 @@
+/* ============================================
+   LAYOUT
+   Breakpoints: mobile < 640, tablet 640-1023, desktop >= 1024, wide >= 1440
+   ============================================ */
+
+/* Shared content width + gutter (used by .container and .header-content so
+   the header never jumps when navigating between pages). */
+:root {
+  --container-max: 680px;
+  --container-gutter: var(--spacing-lg);
+  /* Inline padding for full-width rows: the gutter, or the notch inset if larger */
+  --gutter-x: max(var(--container-gutter), var(--safe-left)) max(var(--container-gutter), var(--safe-right));
+  /* Group page chrome below 1024px (tabbar.css) */
+  --tabbar-height: 64px;
+  --fab-size: 56px;
+}
+
+@media (max-width: 639.98px) {
+  :root {
+    --container-gutter: var(--spacing-md);
+  }
+}
+
+@media (min-width: 640px) {
+  :root {
+    --container-max: 720px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --container-max: 960px;
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --container-max: clamp(1180px, 72vw, 1320px);
+  }
+}
+
+/* Focus and anchor scrolling keep their target clear of the sticky header */
+html {
+  scroll-padding-top: calc(var(--header-height) + var(--safe-top) + var(--spacing-sm));
+}
+
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Homepage: normal document flow, the footer directly follows the content */
+.app-home .container {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-block: var(--container-gutter);
+  padding-inline: var(--gutter-x);
+}
+
+/* ============================================
+   GROUP PAGE SHELL
+   The document scrolls at every size (no nested scroll traps).
+   < 1024: one column; the fixed bottom tab bar + FAB are cleared by
+           bottom padding on .app-group, so they never cover content.
+           The footer is hidden (legal links: header "More" menu).
+   >= 1024: main column + sticky side panel; header, shell and footer
+           share a wider --container-max so wide screens use the space.
+   ============================================ */
+.group-shell {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-block: var(--spacing-lg);
+  padding-inline: var(--gutter-x);
+}
+
+.group-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+/* .card.* specificity: cards.css loads after this file */
+.card.group-panel {
+  margin-bottom: 0;
+}
+
+/* A large content panel should not "lift" on hover like a small card */
+.card.group-panel:hover {
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 1023.98px) {
+  /* ...and of the fixed bottom tab bar */
+  html:has(.app-group) {
+    scroll-padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + var(--spacing-sm));
+  }
+
+  .app-group {
+    padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom));
+  }
+
+  .app-group.has-fab {
+    /* FAB offset + FAB + the same gap again above it */
+    padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + var(--fab-size) + 2 * var(--spacing-md));
+  }
+
+  /* No footer band above the tab bar: legal links sit in the header "More" menu */
+  .app-group .footer {
+    display: none;
+  }
+
+  .skeleton-aside {
+    display: none;
+  }
+}
+
+@media (max-width: 639.98px) {
+  /* The hidden footer no longer pads for the home indicator (footer.css) */
+  .app:not(.app-group) {
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .group-shell {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+  }
+
+  .group-main {
+    gap: 12px;
+  }
+
+  .card.group-panel {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-group {
+    --container-max: 1240px;
+    --aside-top: calc(var(--header-height) + var(--safe-top) + var(--spacing-lg));
+  }
+
+  .group-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(340px, 34%, 420px);
+    align-items: start;
+    gap: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .group-aside {
+    position: sticky;
+    top: var(--aside-top);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-height: calc(100vh - var(--aside-top) - var(--spacing-lg));
+    max-height: calc(100dvh - var(--aside-top) - var(--spacing-lg));
+  }
+}
+
+/* Wide screens: grow fluidly with the viewport instead of a tiny column */
+@media (min-width: 1440px) {
+  .app-group {
+    --container-max: clamp(1320px, 88vw, 1760px);
+  }
+
+  .group-shell {
+    grid-template-columns: minmax(0, 1fr) clamp(400px, 30%, 520px);
+    gap: var(--spacing-xl);
+  }
+}
+
+/* ============================================
+   SIDE PANEL (desktop aside)
+   Card with a fixed header and an inner scroll area, so the sticky panel
+   never grows taller than the viewport.
+   ============================================ */
+.side-panel-card {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+  padding: var(--spacing-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.side-panel-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin-right: calc(-1 * var(--spacing-sm));
+  padding-right: var(--spacing-sm);
+}
+
+.side-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.side-panel-header h2,
+.side-panel-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-lg);
+}
+
+.side-panel-header h2:focus {
+  outline: none;
+}
+
+.side-panel-header h2:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+.side-panel-header-icon {
+  color: var(--color-primary);
+  font-size: 0.9em;
+}
+
+.side-panel-title {
+  margin-bottom: var(--spacing-md);
+}
+
+/* Summary stats: total (brand-tinted) + average per member */
+.summary-stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.summary-stat {
+  min-width: 0;
+  padding: 12px var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
+
+.summary-stat dt {
+  margin-bottom: 2px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-stat dd {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  font-variant-numeric: var(--font-numeric);
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-stat-primary {
+  background: var(--color-primary-soft);
+}
+
+.summary-stat-primary dd {
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+}

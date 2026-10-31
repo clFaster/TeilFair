@@ -1,0 +1,312 @@
+/* ============================================
+   EXPENSE LIST - Day sections with sticky date headers
+   The document scrolls, so headers stick just below the app header.
+   ============================================ */
+.expense-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.expense-day {
+  min-width: 0;
+}
+
+.expense-day-header {
+  position: sticky;
+  top: calc(var(--header-height) + var(--safe-top));
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-xs);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.expense-day-title {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.expense-day-total {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.expense-day-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  list-style: none;
+}
+
+/* ============================================
+   EXPENSE CARD
+   avatar | description + meta | amount
+   footer: split chip ............ actions
+   ============================================ */
+.expense-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'avatar main amount'
+    'foot   foot foot';
+  align-items: start;
+  gap: 10px 12px;
+  min-width: 0;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+/* Selected (details open in the side panel): teal edge + soft ring */
+.expense-card::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-primary);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.expense-card.is-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--focus-ring-soft);
+}
+
+.expense-card.is-selected::before {
+  opacity: 1;
+}
+
+.expense-card.is-deleting {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.expense-avatar {
+  grid-area: avatar;
+  position: relative;
+  display: inline-flex;
+}
+
+.expense-avatar-more {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border: 2px solid var(--surface-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--text-2);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.expense-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Long unbroken words wrap instead of widening the page (.line-clamp-2) */
+.expense-description {
+  font-size: var(--font-size-md);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+
+.expense-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-3);
+}
+
+.expense-payer {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.expense-meta time {
+  white-space: nowrap;
+  font-variant-numeric: var(--font-numeric);
+}
+
+.expense-amount {
+  grid-area: amount;
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.expense-footer {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs) var(--spacing-sm);
+  min-width: 0;
+}
+
+.expense-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--text-2);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expense-chip svg {
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+/* 44px targets would make the footer tall; let them overlap the padding */
+.expense-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: -10px -8px -10px auto;
+}
+
+@media (max-width: 639.98px) {
+  .expense-amount {
+    font-size: var(--font-size-md);
+  }
+}
+
+/* Tablet+: footer aligns with the text column */
+@media (min-width: 640px) {
+  .expense-card {
+    grid-template-areas:
+      'avatar main amount'
+      'avatar foot foot';
+    padding: 12px var(--spacing-md);
+  }
+}
+
+/* Precise pointers: quiet cards, actions appear on hover or keyboard focus.
+   Touch screens always show them (no hover to discover them with). */
+@media (hover: hover) and (pointer: fine) {
+  .expense-card:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .expense-actions {
+    margin-block: -6px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+  }
+
+  .expense-card:hover .expense-actions,
+  .expense-card:focus-within .expense-actions,
+  .expense-card.is-selected .expense-actions {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   EXPENSE DETAILS (modal + desktop side panel)
+   ============================================ */
+.expense-detail-list {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.expense-detail-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) 1fr;
+  gap: var(--spacing-md);
+  align-items: start;
+}
+
+.expense-detail-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-family: var(--font-display);
+}
+
+.expense-detail-value {
+  font-size: var(--font-size-sm);
+  color: var(--text-1);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.expense-detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--text-1);
+}
+
+.expense-detail-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  overflow-wrap: anywhere;
+}
+
+.expense-detail-amount {
+  font-family: var(--font-display);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Phones and the narrow side panel: label above value */
+@container (max-width: 480px) {
+  .expense-detail-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

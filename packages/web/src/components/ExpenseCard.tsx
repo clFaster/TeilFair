@@ -1,30 +1,43 @@
+import { useId } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClock, faEdit, faTrash, faUser, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faPen, faTrash, faEye, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { Avatar } from './Avatar';
 
 interface ExpenseCardProps {
-  animationDelay: number;
   formattedAmount: string;
-  dateTimeLabel: string;
+  /** Short time shown on the card; the day lives in the list's date header. */
+  timeLabel: string;
+  /** ISO timestamp for the `<time>` element. */
+  dateTime: string;
   description: string;
   paidByText: string;
+  /** First payer, shown as the avatar. */
+  payerName: string;
+  payerTone: number;
+  /** Number of payers beyond the first, shown as a "+n" badge. */
+  extraPayers: number;
   splitInfo: string;
   editLabel: string;
   deleteLabel: string;
   deletingLabel: string;
-  viewLabel?: string;
+  viewLabel: string;
   canEdit: boolean;
   isDeleting: boolean;
+  isSelected?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onView?: () => void;
 }
 
 export function ExpenseCard({
-  animationDelay,
   formattedAmount,
-  dateTimeLabel,
+  timeLabel,
+  dateTime,
   description,
   paidByText,
+  payerName,
+  payerTone,
+  extraPayers,
   splitInfo,
   editLabel,
   deleteLabel,
@@ -32,85 +45,86 @@ export function ExpenseCard({
   viewLabel,
   canEdit,
   isDeleting,
+  isSelected = false,
   onEdit,
   onDelete,
   onView,
 }: Readonly<ExpenseCardProps>) {
-  const showViewAction = Boolean(onView && viewLabel);
-  const showEditActions = canEdit;
-  const showActionGroup = showViewAction || showEditActions;
+  const classes = ['expense-card', isDeleting && 'is-deleting', isSelected && 'is-selected']
+    .filter(Boolean)
+    .join(' ');
+  const deleteText = isDeleting ? deletingLabel : deleteLabel;
+  // Actions keep short names ("Edit") and get the expense as their description.
+  const descriptionId = useId();
 
   return (
-    <div
-      className="expense-card"
-      data-testid="expense-card"
-      style={{
-        animationDelay: `${animationDelay}s`,
-        opacity: isDeleting ? 0.5 : 1,
-      }}
-    >
-      <div className="expense-header">
-        <div className="expense-main">
-          <div className="expense-description">{description}</div>
-          <div className="expense-date">
-            <FontAwesomeIcon icon={faClock} style={{ marginRight: '4px', opacity: 0.6 }} />
-            {dateTimeLabel}
-          </div>
-        </div>
-        <div className="expense-amount">{formattedAmount}</div>
+    <article className={classes} data-testid="expense-card" aria-busy={isDeleting || undefined}>
+      <span className="expense-avatar">
+        <Avatar name={payerName} tone={payerTone} />
+        {extraPayers > 0 && <span className="expense-avatar-more" aria-hidden="true">+{extraPayers}</span>}
+      </span>
+
+      <div className="expense-main">
+        <h4 className="expense-description line-clamp-2" id={descriptionId}>{description}</h4>
+        <p className="expense-meta">
+          <span className="expense-payer">{paidByText}</span>
+          <span className="expense-meta-sep" aria-hidden="true">·</span>
+          <time dateTime={dateTime}>{timeLabel}</time>
+        </p>
       </div>
 
-        <div className="expense-details">
-          <div className="expense-payer-row">
-            <FontAwesomeIcon icon={faUser} style={{ opacity: 0.5, fontSize: '12px' }} />
-            <span>{paidByText}</span>
-          </div>
-        </div>
+      <div className="expense-amount">{formattedAmount}</div>
 
-      <div className="expense-actions">
-        <div className="expense-details-split">{splitInfo}</div>
-        {showActionGroup && (
-          <div className="expense-action-group">
-            {showViewAction && (
+      <div className="expense-footer">
+        <span className="expense-chip">
+          <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
+          {splitInfo}
+        </span>
+
+        {(onView || canEdit) && (
+          <div className="expense-actions">
+            {onView && (
               <button
-                className="btn btn-sm btn-ghost expense-action-button"
+                type="button"
+                className="icon-action"
                 onClick={onView}
                 title={viewLabel}
                 aria-label={viewLabel}
+                aria-describedby={descriptionId}
               >
-                <FontAwesomeIcon icon={faEye} />
-                <span className="sr-only">{viewLabel}</span>
+                <FontAwesomeIcon icon={faEye} aria-hidden="true" />
               </button>
             )}
-            {showEditActions && (
+            {canEdit && (
               <>
                 <button
-                  className="btn btn-sm btn-ghost expense-action-button"
+                  type="button"
+                  className="icon-action"
                   onClick={onEdit}
                   disabled={isDeleting}
                   title={editLabel}
                   aria-label={editLabel}
+                  aria-describedby={descriptionId}
                 >
-                  <FontAwesomeIcon icon={faEdit} />
-                  <span className="sr-only">{editLabel}</span>
+                  <FontAwesomeIcon icon={faPen} aria-hidden="true" />
                 </button>
                 <button
-                  className="btn btn-sm btn-ghost expense-action-button"
+                  type="button"
+                  className="icon-action icon-action-danger"
                   data-testid="expense-delete-button"
                   onClick={onDelete}
                   disabled={isDeleting}
-                  title={deleteLabel}
-                  aria-label={isDeleting ? deletingLabel : deleteLabel}
-                  style={{ color: 'var(--color-danger)' }}
+                  title={deleteText}
+                  aria-label={deleteText}
+                  aria-describedby={descriptionId}
                 >
-                  <FontAwesomeIcon icon={faTrash} />
-                  <span className="sr-only">{isDeleting ? deletingLabel : deleteLabel}</span>
+                  <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
                 </button>
               </>
             )}
           </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }

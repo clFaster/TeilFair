@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { calculateSplitAmounts, type Expense } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
+import { Modal } from './Modal';
 
 interface ExpenseDetailsModalProps {
   expense: Expense;
@@ -99,24 +99,23 @@ export function ExpenseDetailsContent({ expense }: ExpenseDetailsContentProps) {
   );
 }
 
-export function ExpenseDetailsModal({ expense, onClose }: ExpenseDetailsModalProps) {
+export function ExpenseDetailsModal({ expense, onClose }: Readonly<ExpenseDetailsModalProps>) {
   const { t } = useTranslation();
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-expense" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>
-            <FontAwesomeIcon icon={faEye} style={{ marginRight: '10px', opacity: 0.7 }} />
-            {t('expense.viewExpense')}
-          </h2>
-          <button className="btn-close" onClick={onClose}>&times;</button>
-        </div>
-
-        <div className="modal-body">
-          <ExpenseDetailsContent expense={expense} />
-        </div>
-      </div>
-    </div>
+    <Modal
+      title={t('expense.viewExpense')}
+      icon={faEye}
+      onClose={onClose}
+      size="md"
+      className="modal-expense"
+      footer={(
+        <button type="button" className="btn btn-secondary" onClick={onClose}>
+          {t('common.close')}
+        </button>
+      )}
+    >
+      <ExpenseDetailsContent expense={expense} />
+    </Modal>
   );
 }

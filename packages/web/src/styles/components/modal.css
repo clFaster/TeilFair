@@ -1,0 +1,347 @@
+/* ============================================
+   MODAL - shared dialog primitive (components/Modal.tsx)
+   Phones (< 640px): bottom sheet with a drag handle, safe-area aware.
+   640px and up: centered card.
+   Header and footer stay put; only the body scrolls.
+   ============================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  padding-top: max(var(--spacing-lg), var(--safe-top));
+  padding-bottom: max(var(--spacing-lg), var(--safe-bottom));
+  background: var(--color-overlay);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  overscroll-behavior: contain;
+  animation: modal-fade 0.2s ease-out;
+}
+
+/* Header stays visible and interactive above the backdrop (z-index 50) */
+.modal-overlay.modal-overlay-below-header {
+  top: calc(var(--safe-top) + var(--header-height) + 1px);
+  z-index: 40;
+  padding-top: var(--spacing-lg);
+}
+
+.modal {
+  --modal-pad-x: var(--spacing-lg);
+  --modal-pad-y: var(--spacing-lg);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 540px;
+  max-height: 100%;
+  overflow: hidden;
+  background: var(--surface-1);
+  color: var(--text-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  animation: modal-pop 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+.modal:focus {
+  outline: none;
+}
+
+.modal-sm { max-width: 420px; }
+.modal-md { max-width: 540px; }
+.modal-lg { max-width: 640px; }
+
+/* Drag-handle look; only shown on the phone bottom sheet */
+.modal-handle {
+  display: none;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
+  padding: var(--spacing-md) var(--modal-pad-x);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: var(--font-size-xl);
+}
+
+.modal-title-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.modal-title-icon {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 15px;
+}
+
+.confirm-dialog-danger .modal-title-icon {
+  background: var(--clr-danger-a20);
+  color: var(--color-danger);
+}
+
+.modal-close {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  margin-right: calc(-1 * var(--spacing-sm));
+  font-size: 18px;
+  border-radius: var(--radius-full);
+}
+
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--modal-pad-y) var(--modal-pad-x);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+  padding: var(--spacing-md) var(--modal-pad-x);
+  border-top: 1px solid var(--color-border);
+  background: var(--surface-1);
+}
+
+.modal-footer .btn {
+  min-height: var(--tap-target);
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+}
+
+/* Confirm / alert dialogs: short message, no divider clutter */
+.confirm-dialog .modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.confirm-dialog .modal-footer {
+  border-top: none;
+  padding-top: 0;
+  padding-bottom: var(--modal-pad-y);
+}
+
+.confirm-dialog-message {
+  color: var(--text-2);
+  line-height: var(--line-height-normal);
+  overflow-wrap: anywhere;
+}
+
+/* Forms inside a modal: their own action row sticks to the bottom of the
+   scrolling body, so Save is always reachable. */
+.modal-form .modal-body {
+  padding-bottom: 0;
+}
+
+.modal-form .expense-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: var(--spacing-lg) calc(-1 * var(--modal-pad-x)) 0;
+  padding: var(--spacing-md) var(--modal-pad-x);
+  background: var(--surface-1);
+  border-top: 1px solid var(--color-border);
+}
+
+@keyframes modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes modal-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+/* Phones: bottom sheet */
+@media (max-width: 639.98px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    padding-top: calc(var(--safe-top) + var(--spacing-lg));
+  }
+
+  /* Source order beats the equal-specificity .modal-{size} widths */
+  .modal {
+    --modal-pad-x: var(--spacing-md);
+    --modal-pad-y: var(--spacing-md);
+
+    max-width: none;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    animation: modal-sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .modal-handle {
+    display: block;
+    flex-shrink: 0;
+    width: 40px;
+    height: 4px;
+    margin: var(--spacing-sm) auto 0;
+    border-radius: var(--radius-full);
+    background: var(--color-border-strong);
+  }
+
+  .modal-header {
+    padding-top: var(--spacing-sm);
+  }
+
+  .modal-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .modal-close {
+    width: var(--tap-target);
+    height: var(--tap-target);
+    min-width: var(--tap-target);
+  }
+
+  /* Whatever sits at the very bottom clears the home indicator */
+  .modal-body:last-child {
+    padding-bottom: calc(var(--modal-pad-y) + var(--safe-bottom));
+  }
+
+  .modal-footer,
+  .confirm-dialog .modal-footer {
+    padding-bottom: calc(var(--spacing-md) + var(--safe-bottom));
+  }
+
+  .modal-form .modal-body:last-child {
+    padding-bottom: 0;
+  }
+
+  .modal-form .expense-form-footer {
+    padding-bottom: calc(var(--spacing-md) + var(--safe-bottom));
+  }
+
+  /* Thumb-friendly: actions split the full width */
+  .modal-footer .btn,
+  .modal-form .expense-form-footer .btn {
+    flex: 1 1 0;
+    min-height: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal {
+    animation: none;
+  }
+}
+
+/* ============================================
+   SHARE DIALOG
+   ============================================ */
+.share-intro {
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-2);
+}
+
+.share-link-section {
+  --share-accent: var(--clr-info-a0);
+
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--share-accent);
+  border-radius: var(--radius-lg);
+}
+
+.share-link-write {
+  --share-accent: var(--clr-success-a0);
+}
+
+.share-link-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.share-link-icon {
+  color: var(--share-accent);
+}
+
+.share-link-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.share-link-description {
+  margin-bottom: 12px;
+  font-size: var(--font-size-sm);
+  color: var(--text-2);
+}
+
+.share-link-section .copy-input {
+  min-width: 0;
+  background: var(--surface-1);
+}
+
+.copy-button {
+  flex-shrink: 0;
+  min-height: var(--tap-target);
+}
+
+.share-security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  font-size: var(--font-size-sm);
+  color: var(--text-3);
+}
+
+.share-security-note strong {
+  color: var(--text-2);
+}
+
+.share-security-icon {
+  margin-top: 3px;
+  color: var(--text-3);
+}

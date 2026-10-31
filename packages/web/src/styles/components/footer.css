@@ -1,0 +1,96 @@
+/* ============================================
+    FOOTER - Quiet, in normal page flow
+    Sits at the bottom of short pages via margin-top: auto (the .app
+    shell is a flex column). Never sticky, so it can't cover
+    content at any width.
+    ============================================ */
+.footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  color: var(--text-3);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-header-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  /* Home-indicator support */
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Width + gutter follow .container (see layout.css) */
+.footer-inner {
+  max-width: var(--container-max);
+  min-height: 48px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs) var(--spacing-md);
+  padding-block: var(--spacing-xs);
+  padding-inline: var(--gutter-x);
+}
+
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 var(--spacing-xs);
+  min-width: 0;
+}
+
+.footer-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.footer-separator {
+  opacity: 0.5;
+}
+
+.footer-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-right: calc(-1 * var(--spacing-sm));
+}
+
+/* ============================================
+    FOOTER LINKS
+    ============================================ */
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--spacing-sm);
+  color: var(--text-2);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.footer-link:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.footer-link:active {
+  transform: translateY(1px);
+}
+
+/* Phones: the legal links live in the header "More" menu (header.css).
+   The group page also hides it below 1024px (layout.css). */
+@media (max-width: 639.98px) {
+  .footer {
+    display: none;
+  }
+}
+
+/* Touch-sized links wherever the layout is not desktop */
+@media (max-width: 1023.98px) {
+  .footer-link {
+    min-height: var(--tap-target);
+  }
+}

@@ -1,35 +1,36 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExclamationTriangle, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faCompass, faHome } from '@fortawesome/free-solid-svg-icons';
+import { AppHeader } from '../components/AppHeader';
+import { AppFooter } from '../components/AppFooter';
+import { EmptyState } from '../components/EmptyState';
 
 export function NotFoundPage() {
   const { t } = useTranslation();
 
   return (
     <div className="app">
-      <div
-        className="container"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <div className="card text-center" style={{ maxWidth: '400px' }}>
-          <FontAwesomeIcon
-            icon={faExclamationTriangle}
-            style={{ fontSize: '48px', color: 'var(--color-text-muted)', marginBottom: '16px' }}
-          />
-          <h2 style={{ marginBottom: '8px' }}>{t('notFound.title')}</h2>
-          <p className="text-secondary mb-4">{t('notFound.description')}</p>
-          <Link to="/" className="btn btn-primary">
-            <FontAwesomeIcon icon={faHome} style={{ marginRight: '8px' }} />
-            {t('common.goHome')}
-          </Link>
-        </div>
-      </div>
+      <AppHeader />
+
+      <main className="container status-page">
+        <EmptyState
+          variant="page"
+          titleAs="h1"
+          code="404"
+          icon={faCompass}
+          title={t('notFound.title')}
+          description={t('notFound.description')}
+          action={(
+            <Link to="/" className="btn btn-primary">
+              <FontAwesomeIcon icon={faHome} aria-hidden="true" />
+              {t('common.goHome')}
+            </Link>
+          )}
+        />
+      </main>
+
+      <AppFooter />
     </div>
   );
 }

@@ -1,33 +1,44 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faCircleExclamation, faLink, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
-import { useTheme } from '../theme/ThemeContext';
-import { LogoIcon } from '../components/LogoIcon';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
-import { ThemeToggleButton } from '../components/ThemeToggleButton';
 import { HomeHero } from '../components/HomeHero';
 import { HomeRecentGroups } from '../components/HomeRecentGroups';
 import { HomeHowItWorks } from '../components/HomeHowItWorks';
+import { Modal } from '../components/Modal';
+
+const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK'] as const;
+
+type Dialog = 'create' | 'join' | null;
 
 export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
-  const { mode, setThemePreference } = useTheme();
-  
-  const [showCreate, setShowCreate] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
+
+  const [dialog, setDialog] = useState<Dialog>(null);
   const [groupName, setGroupName] = useState('');
   const [currency, setCurrency] = useState('EUR');
   const [joinLink, setJoinLink] = useState('');
   const [error, setError] = useState('');
 
-  const handleCreateGroup = async (e: React.FormEvent) => {
+  const openDialog = (next: Dialog) => {
+    setDialog(next);
+    setError('');
+  };
+
+  const closeDialog = () => {
+    setDialog(null);
+    setError('');
+    setGroupName('');
+    setJoinLink('');
+  };
+
+  const handleCreateGroup = async (e: FormEvent) => {
     e.preventDefault();
     if (!groupName.trim()) return;
     setError('');
@@ -35,29 +46,27 @@ export function HomePage() {
     try {
       const group = await createGroup(groupName.trim(), currency);
       navigate(`/g/${group.id}?t=${group.writeToken}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('error.failedToCreate'));
+    } catch {
+      setError(t('error.failedToCreate'));
     }
   };
 
-  const handleJoinGroup = async (e: React.FormEvent) => {
+  const handleJoinGroup = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     try {
-      const url = new URL(joinLink);
+      const url = new URL(joinLink.trim());
       const pathMatch = url.pathname.match(/\/g\/([a-f0-9-]+)/i);
       const token = url.searchParams.get('t');
-      
+
       if (!pathMatch || !token) {
         setError(t('error.invalidLink'));
         return;
       }
-      
+
       const groupId = pathMatch[1];
-      const success = await loadGroup(groupId, token);
-      
-      if (success) {
+      if (await loadGroup(groupId, token)) {
         navigate(`/g/${groupId}?t=${token}`);
       } else {
         setError(t('error.failedToJoin'));
@@ -68,8 +77,7 @@ export function HomePage() {
   };
 
   const handleOpenRecent = async (groupId: string, token: string) => {
-    const success = await loadGroup(groupId, token);
-    if (success) {
+    if (await loadGroup(groupId, token)) {
       navigate(`/g/${groupId}?t=${token}`);
     } else {
       removeFromRecent(groupId);
@@ -77,174 +85,121 @@ export function HomePage() {
     }
   };
 
-  const cycleTheme = () => {
-    setThemePreference(mode === 'light' ? 'dark' : 'light');
-  };
+  const formError = error && (
+    <p className="form-error" role="alert">
+      <FontAwesomeIcon icon={faCircleExclamation} aria-hidden="true" />
+      <span>{error}</span>
+    </p>
+  );
 
-  const closeModals = () => {
-    setShowCreate(false);
-    setShowJoin(false);
-    setError('');
-    setGroupName('');
-    setJoinLink('');
-  };
+  const footer = (formId: string, busyLabel: string, label: string, disabled: boolean) => (
+    <>
+      <button type="button" className="btn btn-secondary" onClick={closeDialog}>
+        {t('common.cancel')}
+      </button>
+      <button type="submit" form={formId} className="btn btn-primary" disabled={loading || disabled}>
+        <span>{loading ? busyLabel : label}</span>
+        <FontAwesomeIcon icon={loading ? faSpinner : faArrowRight} spin={loading} aria-hidden="true" />
+      </button>
+    </>
+  );
 
   return (
     <div className="app app-home">
-        <AppHeader
-          left={(
-              <Link to="/" className="logo">
-                <LogoIcon size={32} />
-                <span>{t('common.appName')}</span>
-              </Link>
-          )}
-        right={(
-          <>
-            <LanguageSwitcher />
-            <ThemeToggleButton
-              mode={mode}
-              onToggle={cycleTheme}
-              title={t('accessibility.themeToggle', { mode })}
-            />
-          </>
+      <AppHeader />
+
+      <main className="container home">
+        <HomeHero onCreate={() => openDialog('create')} onJoin={() => openDialog('join')} />
+
+        {!dialog && error && (
+          <div className="home-alert">{formError}</div>
         )}
-      />
-      
-      <main className="container">
-        <HomeHero
-          onCreate={() => {
-            setShowCreate(true);
-            setShowJoin(false);
-            setError('');
-          }}
-          onJoin={() => {
-            setShowJoin(true);
-            setShowCreate(false);
-            setError('');
-          }}
+
+        <HomeRecentGroups
+          groups={recentGroups}
+          loading={loading}
+          onOpen={handleOpenRecent}
+          onRemove={removeFromRecent}
         />
 
-        {/* Create Group Form */}
-        {showCreate && (
-          <div className="card animate-in">
-            <h2 className="card-title mb-4">{t('home.createFormTitle')}</h2>
-            <form onSubmit={handleCreateGroup}>
-              <div className="input-group">
-                <label htmlFor="groupName">{t('home.groupNameLabel')}</label>
-                <input
-                  id="groupName"
-                  type="text"
-                  className="input"
-                  placeholder={t('home.groupNamePlaceholder')}
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              
-              <div className="input-group">
-                <label htmlFor="currency">{t('home.currencyLabel')}</label>
-                <select 
-                  id="currency"
-                  className="select"
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                >
-                  <option value="EUR">{t('currency.EUR')}</option>
-                  <option value="USD">{t('currency.USD')}</option>
-                  <option value="GBP">{t('currency.GBP')}</option>
-                  <option value="CHF">{t('currency.CHF')}</option>
-                  <option value="JPY">{t('currency.JPY')}</option>
-                  <option value="CAD">{t('currency.CAD')}</option>
-                  <option value="AUD">{t('currency.AUD')}</option>
-                  <option value="SEK">{t('currency.SEK')}</option>
-                  <option value="NOK">{t('currency.NOK')}</option>
-                  <option value="DKK">{t('currency.DKK')}</option>
-                  <option value="PLN">{t('currency.PLN')}</option>
-                  <option value="CZK">{t('currency.CZK')}</option>
-                </select>
-              </div>
-              
-              {error && <p className="text-danger text-sm mb-3">{error}</p>}
-              
-              <div className="flex gap-3">
-                <button type="submit" className="btn btn-primary btn-lg" disabled={loading || !groupName.trim()}>
-                  {loading ? t('home.creating') : t('home.createButton')}
-                  {!loading && <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '4px' }} />}
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary btn-lg"
-                  onClick={closeModals}
-                >
-                  {t('common.cancel')}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Join Group Form */}
-        {showJoin && (
-          <div className="card animate-in">
-            <h2 className="card-title mb-4">{t('home.joinFormTitle')}</h2>
-            <form onSubmit={handleJoinGroup}>
-              <div className="input-group">
-                <label htmlFor="joinLink">{t('home.linkLabel')}</label>
-                <input
-                  id="joinLink"
-                  type="text"
-                  className="input"
-                  placeholder={t('home.linkPlaceholder')}
-                  value={joinLink}
-                  onChange={(e) => setJoinLink(e.target.value)}
-                  autoFocus
-                />
-                <p className="text-sm text-muted mt-2">
-                  {t('home.linkHint')}
-                </p>
-              </div>
-              
-              {error && <p className="text-danger text-sm mb-3">{error}</p>}
-              
-              <div className="flex gap-3">
-                <button type="submit" className="btn btn-primary btn-lg" disabled={loading || !joinLink.trim()}>
-                  {loading ? t('home.joining') : t('home.joinButton')}
-                  {!loading && <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '4px' }} />}
-                </button>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary btn-lg"
-                  onClick={closeModals}
-                >
-                  {t('common.cancel')}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Recent Groups */}
-        {!showCreate && !showJoin && (
-          <HomeRecentGroups
-            groups={recentGroups}
-            loading={loading}
-            onOpen={handleOpenRecent}
-            onRemove={removeFromRecent}
-          />
-        )}
-
-        {/* How it Works - Feature Cards */}
-        {!showCreate && !showJoin && <HomeHowItWorks />}
-
-        {error && !showCreate && !showJoin && (
-          <div className="card animate-in" style={{ background: 'var(--clr-danger-a20)', borderColor: 'var(--clr-danger-a10)' }}>
-            <p className="text-danger">{error}</p>
-          </div>
-        )}
+        <HomeHowItWorks />
       </main>
-      
+
       <AppFooter />
+
+      {dialog === 'create' && (
+        <Modal
+          title={t('home.createFormTitle')}
+          icon={faPlus}
+          onClose={closeDialog}
+          size="sm"
+          belowHeader
+          footer={footer('create-group-form', t('home.creating'), t('home.createButton'), !groupName.trim())}
+        >
+          <form id="create-group-form" className="home-dialog-form" onSubmit={handleCreateGroup} noValidate>
+            <div className="input-group">
+              <label htmlFor="groupName">{t('home.groupNameLabel')}</label>
+              <input
+                id="groupName"
+                type="text"
+                className="input"
+                placeholder={t('home.groupNamePlaceholder')}
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                enterKeyHint="go"
+                autoComplete="off"
+                autoFocus
+              />
+            </div>
+
+            <div className="input-group">
+              <label htmlFor="currency">{t('home.currencyLabel')}</label>
+              <select id="currency" className="select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                {CURRENCIES.map((code) => (
+                  <option key={code} value={code}>{t(`currency.${code}`)}</option>
+                ))}
+              </select>
+            </div>
+
+            {formError}
+          </form>
+        </Modal>
+      )}
+
+      {dialog === 'join' && (
+        <Modal
+          title={t('home.joinFormTitle')}
+          icon={faLink}
+          onClose={closeDialog}
+          size="sm"
+          belowHeader
+          footer={footer('join-group-form', t('home.joining'), t('home.joinButton'), !joinLink.trim())}
+        >
+          <form id="join-group-form" className="home-dialog-form" onSubmit={handleJoinGroup} noValidate>
+            <div className="input-group">
+              <label htmlFor="joinLink">{t('home.linkLabel')}</label>
+              <input
+                id="joinLink"
+                type="url"
+                inputMode="url"
+                className="input"
+                placeholder={t('home.linkPlaceholder')}
+                value={joinLink}
+                onChange={(e) => setJoinLink(e.target.value)}
+                aria-describedby="joinLinkHint"
+                enterKeyHint="go"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                autoFocus
+              />
+              <p id="joinLinkHint" className="input-hint">{t('home.linkHint')}</p>
+            </div>
+
+            {formError}
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

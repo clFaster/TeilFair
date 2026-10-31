@@ -1,0 +1,257 @@
+/* ============================================
+   HEADER - Compact sticky glass bar
+   56px tall on phones, 64px from 640px; the status-bar inset sits on top.
+   ============================================ */
+@media (min-width: 640px) {
+  :root {
+    --header-height: 64px;
+  }
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+  /* Notch support: never let the header slide under the status bar */
+  padding-top: var(--safe-top);
+  background: var(--color-header-bg);
+  border-bottom: 1px solid var(--color-border);
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+}
+
+/* Width + gutter follow .container (see layout.css) */
+.header-content {
+  position: relative;
+  max-width: var(--container-max);
+  min-height: var(--header-height);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-inline: var(--gutter-x);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.header-back {
+  margin-left: calc(-1 * var(--spacing-sm));
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: var(--tap-target);
+  padding-right: var(--spacing-xs);
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  letter-spacing: -0.03em;
+  border-radius: var(--radius-md);
+}
+
+.logo:hover {
+  color: var(--color-primary-hover);
+}
+
+.logo img {
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+}
+
+.logo-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 639.98px) {
+  .logo {
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+  }
+
+  .logo img {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* ============================================
+   THEME TOGGLE - Refined
+   ============================================ */
+.theme-toggle {
+  display: inline-flex;
+}
+
+.theme-toggle-icon {
+  display: inline-block;
+  animation: theme-icon-swap 0.4s ease;
+}
+
+@keyframes theme-icon-swap {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle-icon {
+    animation: none;
+  }
+}
+
+/* ============================================
+    LANGUAGE SWITCHER - Single-click toggle (pill: globe + code)
+    Base sizing comes from .app-header-icon (buttons.css).
+    ============================================ */
+.app-header-icon.language-switcher-button {
+  gap: 6px;
+  padding: 0 12px;
+  border-color: var(--color-border);
+}
+
+.language-switcher-icon {
+  font-size: 15px;
+}
+
+.language-switcher-label {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 639.98px) {
+  .app-header-icon.language-switcher-button {
+    padding: 0 10px;
+  }
+}
+
+/* ============================================
+   MORE MENU - legal links where the footer is hidden
+   Phones (< 640) on every page; the group page wherever its bottom tab
+   bar shows (< 1024). Same conditions hide .footer (footer.css, layout.css).
+   ============================================ */
+.header-more {
+  display: none;
+}
+
+@media (max-width: 639.98px) {
+  .header-more {
+    display: flex;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  .app-group .header-more {
+    display: flex;
+  }
+}
+
+.header-more-button[aria-expanded='true'] {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+/* Anchored to .header-content, right-aligned to the content gutter */
+.header-menu {
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  right: max(var(--container-gutter), var(--safe-right));
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: calc(100vw - 2 * var(--container-gutter));
+  padding: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top right;
+  animation: header-menu-in 0.16s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.header-menu[hidden] {
+  display: none;
+}
+
+.header-menu-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.header-menu-link {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  padding: 0 12px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-1);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.header-menu-link:hover,
+.header-menu-link[aria-current='page'] {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.header-menu-link[aria-current='page'] {
+  font-weight: 600;
+}
+
+.header-menu-caption {
+  margin: 6px 0 0;
+  padding: 10px 12px 6px;
+  font-size: var(--font-size-xs);
+  color: var(--text-3);
+  border-top: 1px solid var(--color-border);
+}
+
+@keyframes header-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-menu {
+    animation: none;
+  }
+}

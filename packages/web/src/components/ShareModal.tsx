@@ -1,12 +1,54 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck, faLink, faEye, faEdit, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faCheck, faLink, faEye, faEdit, faShieldAlt, type IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
 import { createGroupUrls } from '@teilfair/shared';
+import { Modal } from './Modal';
 
 interface ShareModalProps {
   onClose: () => void;
+}
+
+interface ShareLinkSectionProps {
+  variant: 'read' | 'write';
+  icon: IconDefinition;
+  label: string;
+  badge: string;
+  description: string;
+  url: string;
+  copied: boolean;
+  onCopy: () => void;
+}
+
+function ShareLinkSection({ variant, icon, label, badge, description, url, copied, onCopy }: Readonly<ShareLinkSectionProps>) {
+  const { t } = useTranslation();
+  const inputId = useId();
+
+  return (
+    <div className={`share-link-section share-link-${variant}`}>
+      <div className="share-link-heading">
+        <FontAwesomeIcon icon={icon} className="share-link-icon" aria-hidden="true" />
+        <label htmlFor={inputId} className="share-link-label">{label}</label>
+        <span className={`badge badge-${variant}`}>{badge}</span>
+      </div>
+      <p className="share-link-description">{description}</p>
+      <div className="copy-group">
+        <input
+          id={inputId}
+          type="text"
+          className="input copy-input"
+          value={url}
+          readOnly
+          onFocus={(e) => e.target.select()}
+        />
+        <button type="button" className="btn btn-primary copy-button" onClick={onCopy}>
+          <FontAwesomeIcon icon={copied ? faCheck : faCopy} />
+          <span aria-live="polite">{copied ? t('common.copied') : t('common.copy')}</span>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function ShareModal({ onClose }: Readonly<ShareModalProps>) {
@@ -22,8 +64,6 @@ export function ShareModal({ onClose }: Readonly<ShareModalProps>) {
   const copyToClipboard = async (url: string, type: 'read' | 'write') => {
     try {
       await navigator.clipboard.writeText(url);
-      setCopied(type);
-      setTimeout(() => setCopied(null), 2000);
     } catch {
       // Fallback for older browsers
       const input = document.createElement('input');
@@ -31,127 +71,61 @@ export function ShareModal({ onClose }: Readonly<ShareModalProps>) {
       document.body.appendChild(input);
       input.select();
       document.execCommand('copy');
-      document.body.removeChild(input);
-      setCopied(type);
-      setTimeout(() => setCopied(null), 2000);
+      input.remove();
     }
+    setCopied(type);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const canShareWrite = permission === 'write';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>
-            <FontAwesomeIcon icon={faLink} style={{ marginRight: '10px', opacity: 0.7 }} />
-            {t('share.title')}
-          </h2>
-          <button className="btn-close" onClick={onClose}>&times;</button>
-        </div>
-        
-        <div className="modal-body">
-          <p className="text-muted text-sm mb-4">
-            {t('share.description', { groupName: group.name })}
-          </p>
-          
-          {/* View-only Link */}
-          <div className="share-link-section share-link-read">
-            <div className="flex items-center gap-2 mb-2">
-              <FontAwesomeIcon icon={faEye} className="share-link-icon" />
-              <label className="share-link-label">{t('share.viewOnlyLinkLabel')}</label>
-              <span className="badge badge-read">{t('share.viewOnlyBadge')}</span>
-            </div>
-            <p className="text-sm mb-3 share-link-description">
-              {t('share.viewOnlyDescription')}
-            </p>
-            <div className="copy-group">
-              <input
-                type="text"
-                className="input copy-input"
-                value={urls.readUrl}
-                readOnly
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <button
-                className="btn btn-primary"
-                onClick={() => copyToClipboard(urls.readUrl, 'read')}
-              >
-                {copied === 'read' ? (
-                  <>
-                    <FontAwesomeIcon icon={faCheck} />
-                    <span>{t('common.copied')}</span>
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faCopy} />
-                    <span>{t('common.copy')}</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-          
-          {/* Full Access Link */}
-          {canShareWrite && (
-            <div className="share-link-section share-link-write">
-              <div className="flex items-center gap-2 mb-2">
-                <FontAwesomeIcon icon={faEdit} className="share-link-icon" />
-                <label className="share-link-label">{t('share.fullAccessLinkLabel')}</label>
-                <span className="badge badge-write">{t('share.fullAccessBadge')}</span>
-              </div>
-              <p className="text-sm mb-3 share-link-description">
-                {t('share.fullAccessDescription')}
-              </p>
-              <div className="copy-group">
-                <input
-                  type="text"
-                  className="input copy-input"
-                  value={urls.writeUrl}
-                  readOnly
-                  onClick={(e) => (e.target as HTMLInputElement).select()}
-                />
-                <button
-                  className="btn btn-primary"
-                  onClick={() => copyToClipboard(urls.writeUrl, 'write')}
-                >
-                  {copied === 'write' ? (
-                    <>
-                      <FontAwesomeIcon icon={faCheck} />
-                      <span>{t('common.copied')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faCopy} />
-                      <span>{t('common.copy')}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Security Note */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'flex-start', 
-            gap: '12px',
-            padding: '16px',
-            background: 'var(--color-surface)',
-            borderRadius: 'var(--radius-lg)'
-          }}>
-            <FontAwesomeIcon icon={faShieldAlt} style={{ color: 'var(--color-text-muted)', marginTop: '2px' }} />
-            <div className="text-sm text-muted">
-              <strong style={{ color: 'var(--color-text-secondary)' }}>{t('share.securityNoteTitle')}</strong> {t('share.securityNoteDescription')}
-              {canShareWrite && ' ' + t('share.securityWriteWarning')}
-            </div>
-          </div>
-        </div>
-        
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>{t('common.close')}</button>
-        </div>
+    <Modal
+      title={t('share.title')}
+      icon={faLink}
+      onClose={onClose}
+      size="md"
+      footer={(
+        <button type="button" className="btn btn-secondary" onClick={onClose}>
+          {t('common.close')}
+        </button>
+      )}
+    >
+      <p className="share-intro">
+        {t('share.description', { groupName: group.name })}
+      </p>
+
+      <ShareLinkSection
+        variant="read"
+        icon={faEye}
+        label={t('share.viewOnlyLinkLabel')}
+        badge={t('share.viewOnlyBadge')}
+        description={t('share.viewOnlyDescription')}
+        url={urls.readUrl}
+        copied={copied === 'read'}
+        onCopy={() => copyToClipboard(urls.readUrl, 'read')}
+      />
+
+      {canShareWrite && (
+        <ShareLinkSection
+          variant="write"
+          icon={faEdit}
+          label={t('share.fullAccessLinkLabel')}
+          badge={t('share.fullAccessBadge')}
+          description={t('share.fullAccessDescription')}
+          url={urls.writeUrl}
+          copied={copied === 'write'}
+          onCopy={() => copyToClipboard(urls.writeUrl, 'write')}
+        />
+      )}
+
+      <div className="share-security-note">
+        <FontAwesomeIcon icon={faShieldAlt} className="share-security-icon" aria-hidden="true" />
+        <p>
+          <strong>{t('share.securityNoteTitle')}</strong> {t('share.securityNoteDescription')}
+          {canShareWrite && ' ' + t('share.securityWriteWarning')}
+        </p>
       </div>
-    </div>
+    </Modal>
   );
 }

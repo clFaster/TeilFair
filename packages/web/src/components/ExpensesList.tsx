@@ -1,19 +1,64 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClock } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faReceipt } from '@fortawesome/free-solid-svg-icons';
 import type { Expense } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { ExpenseCard } from './ExpenseCard';
 import { ConfirmDialog } from './ConfirmDialog';
+import { EmptyState } from './EmptyState';
+import { memberTone } from './avatarTone';
 
 interface ExpensesListProps {
   canEdit: boolean;
   onEditExpense?: (expense: Expense) => void;
   onViewExpense?: (expense: Expense) => void;
+  /** Call to action of the empty state (writers only). */
+  onAddExpense?: () => void;
+  /** Highlights the expense currently shown in the details panel. */
+  selectedExpenseId?: string;
 }
 
-export function ExpensesList({ canEdit, onEditExpense, onViewExpense }: Readonly<ExpensesListProps>) {
+interface ExpenseDay {
+  key: string;
+  date: Date;
+  total: number;
+  expenses: Expense[];
+}
+
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+
+/** Newest first, bucketed by local calendar day. */
+function groupByDay(expenses: Expense[]): ExpenseDay[] {
+  const sorted = [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const days: ExpenseDay[] = [];
+
+  for (const expense of sorted) {
+    const date = new Date(expense.date);
+    const key = dayKey(date);
+    const current = days[days.length - 1];
+    if (current?.key === key) {
+      current.expenses.push(expense);
+      current.total += expense.totalAmount;
+    } else {
+      days.push({ key, date: startOfDay(date), total: expense.totalAmount, expenses: [expense] });
+    }
+  }
+
+  return days;
+}
+
+export function ExpensesList({
+  canEdit,
+  onEditExpense,
+  onViewExpense,
+  onAddExpense,
+  selectedExpenseId,
+}: Readonly<ExpensesListProps>) {
   const { t } = useTranslation();
   const { expenses, members, group, deleteExpense } = useGroupStore();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -23,26 +68,23 @@ export function ExpensesList({ canEdit, onEditExpense, onViewExpense }: Readonly
     return members.find(m => m.id === memberId)?.name || t('common.unknown');
   };
 
-  const formatDate = (date: Date) => {
-    const d = new Date(date);
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+  const formatDay = (date: Date) => {
+    const today = startOfDay(new Date());
+    const days = Math.round((today.getTime() - date.getTime()) / DAY_MS);
+
     if (days === 0) return t('common.today');
     if (days === 1) return t('common.yesterday');
-    if (days < 7) return t('common.daysAgo', { count: days });
-    
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
+
+    return date.toLocaleDateString(undefined, {
+      weekday: 'short',
       day: 'numeric',
+      month: 'short',
+      ...(date.getFullYear() === today.getFullYear() ? {} : { year: 'numeric' }),
     });
   };
 
   const formatTime = (date: Date) => {
-    const d = new Date(date);
-    return d.toLocaleTimeString(undefined, {
+    return new Date(date).toLocaleTimeString(undefined, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -64,73 +106,79 @@ export function ExpensesList({ canEdit, onEditExpense, onViewExpense }: Readonly
     }
   };
 
-  const handleEditClick = (expense: Expense) => {
-    if (onEditExpense) {
-      onEditExpense(expense);
-    }
-  };
-
   if (expenses.length === 0) {
     return (
-      <div className="empty-state">
-        <div style={{ 
-          width: '64px', 
-          height: '64px', 
-          borderRadius: '50%', 
-          background: 'var(--color-surface)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          margin: '0 auto 16px',
-          fontSize: '24px',
-          color: 'var(--color-text-muted)'
-        }}>
-          <FontAwesomeIcon icon={faClock} />
-        </div>
-        <p>{t('expense.emptyTitle')}</p>
-        <p className="text-sm">{t('expense.emptyDescription')}</p>
-      </div>
+      <EmptyState
+        icon={faReceipt}
+        titleAs="h3"
+        title={t('expense.emptyTitle')}
+        description={canEdit ? t('expense.emptyDescriptionWithWrite') : t('expense.emptyDescriptionReadOnly')}
+        action={canEdit && onAddExpense ? (
+          <button type="button" className="btn btn-primary" onClick={onAddExpense}>
+            <FontAwesomeIcon icon={faPlus} aria-hidden="true" />
+            {t('expense.addExpense')}
+          </button>
+        ) : undefined}
+      />
     );
   }
 
-  // Sort expenses by date (newest first)
-  const sortedExpenses = [...expenses].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-
   return (
-    <div>
-      {sortedExpenses.map((expense, index) => {
-        const payerNames = expense.payers.length === 1
-          ? getMemberName(expense.payers[0].memberId)
-          : expense.payers.map(p => getMemberName(p.memberId)).join(' & ');
-
-        const splitInfo = expense.splits.length === members.length
-          ? t('expense.splitEqually')
-          : t('expense.splitBetween', { count: expense.splits.length });
-
-        const isDeleting = deletingId === expense.id;
-        const viewLabel = t('expense.viewDetails');
+    <div className="expense-list">
+      {groupByDay(expenses).map((day) => {
+        const headingId = `expense-day-${day.key}`;
 
         return (
-          <ExpenseCard
-            key={expense.id}
-            animationDelay={index * 0.05}
-            formattedAmount={formatCurrency(expense.totalAmount)}
-            dateTimeLabel={`${formatDate(expense.date)} ${t('common.at')} ${formatTime(expense.date)}`}
-            description={expense.description || t('expense.defaultDescription')}
-            paidByText={t('expense.paidBy', { names: payerNames })}
-            splitInfo={splitInfo}
-            editLabel={t('common.edit')}
-            deleteLabel={t('common.delete')}
-            deletingLabel={t('expense.deleting')}
-            viewLabel={!canEdit ? viewLabel : undefined}
-            canEdit={canEdit}
-            isDeleting={isDeleting}
-            onEdit={() => handleEditClick(expense)}
-            onDelete={() => setPendingDeleteId(expense.id)}
-            onView={!canEdit ? () => onViewExpense?.(expense) : undefined}
-          />
+          <section key={day.key} className="expense-day" aria-labelledby={headingId}>
+            <header className="expense-day-header">
+              <h3 id={headingId} className="expense-day-title">{formatDay(day.date)}</h3>
+              <span className="expense-day-total">
+                <span className="sr-only">{t('common.total')}: </span>
+                {formatCurrency(day.total)}
+              </span>
+            </header>
+
+            <ul className="expense-day-items">
+              {day.expenses.map((expense) => {
+                const payerIds = expense.payers.map(p => p.memberId);
+                const payerNames = payerIds.map(getMemberName).join(' & ');
+                const firstPayerId = payerIds[0] ?? '';
+
+                let splitInfo = t('expense.splitBetween', { count: expense.splits.length });
+                if (expense.splits.length === members.length) {
+                  splitInfo = t('expense.splitEqually');
+                } else if (expense.splits.length === 1) {
+                  splitInfo = t('expense.splitOnly', { name: getMemberName(expense.splits[0].memberId) });
+                }
+
+                return (
+                  <li key={expense.id}>
+                    <ExpenseCard
+                      formattedAmount={formatCurrency(expense.totalAmount)}
+                      timeLabel={formatTime(expense.date)}
+                      dateTime={new Date(expense.date).toISOString()}
+                      description={expense.description || t('expense.defaultDescription')}
+                      paidByText={t('expense.paidBy', { names: payerNames })}
+                      payerName={firstPayerId ? getMemberName(firstPayerId) : '?'}
+                      payerTone={memberTone(members, firstPayerId)}
+                      extraPayers={Math.max(0, payerIds.length - 1)}
+                      splitInfo={splitInfo}
+                      editLabel={t('common.edit')}
+                      deleteLabel={t('common.delete')}
+                      deletingLabel={t('expense.deleting')}
+                      viewLabel={t('expense.viewDetails')}
+                      canEdit={canEdit}
+                      isDeleting={deletingId === expense.id}
+                      isSelected={selectedExpenseId === expense.id}
+                      onEdit={() => onEditExpense?.(expense)}
+                      onDelete={() => setPendingDeleteId(expense.id)}
+                      onView={onViewExpense ? () => onViewExpense(expense) : undefined}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         );
       })}
 

@@ -23,13 +23,14 @@ export function LanguageSwitcher() {
 
   return (
     <button
+      type="button"
       className="language-switcher-button app-header-icon"
       onClick={handleClick}
       title={t('accessibility.languageSelector')}
       aria-label={t('accessibility.languageSelector')}
     >
-      <FontAwesomeIcon icon={faEarthEurope} style={{ fontSize: '16px' }} />
-      <span className="language-switcher-label">{current.label}</span>
+      <FontAwesomeIcon icon={faEarthEurope} className="language-switcher-icon" aria-hidden="true" />
+      <span className="language-switcher-label" aria-hidden="true">{current.label}</span>
     </button>
   );
 }

@@ -8,9 +8,15 @@ interface ThemeToggleButtonProps {
   size?: number;
 }
 
-export function ThemeToggleButton({ mode, onToggle, title, size = 18 }: Readonly<ThemeToggleButtonProps>) {
+export function ThemeToggleButton({ mode, onToggle, title, size = 17 }: Readonly<ThemeToggleButtonProps>) {
   return (
-    <button className="theme-toggle app-header-icon" onClick={onToggle} title={title}>
+    <button
+      type="button"
+      className="theme-toggle app-header-icon"
+      onClick={onToggle}
+      title={title}
+      aria-label={title}
+    >
       {/* key={mode} forces remount so the icon-swap CSS animation replays on every toggle */}
       <FontAwesomeIcon
         key={mode}

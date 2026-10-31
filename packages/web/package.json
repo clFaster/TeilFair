@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:smoke": "playwright test --config playwright.smoke.config.ts",
+    "test:smoke:report": "node scripts/smoke-report.mjs",
     "test:system": "playwright test",
     "test:system:headed": "playwright test --headed",
     "test:system:ui": "playwright test --ui"
