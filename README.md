@@ -120,12 +120,29 @@ for upgraded versions, compatibility constraints, and remaining audit findings.
 
 1. Create a new project at [supabase.com](https://supabase.com) (free tier is fine)
 2. Navigate to the SQL Editor
-3. Run migrations `001` through `004` from `supabase/migrations/` in order in the SQL Editor.
+3. Run migrations `001` through `006` from `supabase/migrations/` in order in the SQL Editor.
 4. For an existing database, run only migrations you have not applied. See [the security rollout instructions](docs/security-rollout.md); no database recreation is needed.
 5. In Settings > API, copy:
    - **Project URL**: `https://[project-id].supabase.co`
    - **Anon Public Key**: The public API key
    - **Service Role Key**: Keep this safe, only for backend use
+
+Migration `005_index_member_foreign_keys.sql` adds the missing `member_id` indexes
+on expense payers and splits, supporting foreign-key checks and member-deletion
+cascades. Run it during low traffic because index creation temporarily blocks
+writes to those tables. It retains the expense-date and group-token indexes:
+Supabase's unused-index notices alone do not establish that they are unnecessary.
+Review representative query plans and the statistics collection period before
+removing them.
+
+Migration `006_private_access_helper.sql` moves the internal access check into
+the `private` schema and updates the RLS policies. Keep `private` out of the
+Supabase Data API's exposed schemas. Clients continue to call `public.get_group`.
+The two SECURITY DEFINER execution warnings for `get_group` are intentional:
+capability links work without login, and this function checks the supplied group
+token before returning data, hiding the write token from readers. Revoking its
+execution privilege or making it SECURITY INVOKER would break that access path.
+If reapplying migration `004` for policy recovery, reapply `006` afterward.
 
 ### 3. Configure Environment Variables
 

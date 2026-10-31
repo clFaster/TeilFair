@@ -35,6 +35,10 @@ try {
     INSERT INTO public.expense_splits(expense_id,member_id,share,share_type) VALUES
     ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001',1,'ratio');`);
   sql(migration('004_harden_capability_access.sql'));
+  sql(migration('005_index_member_foreign_keys.sql'));
+  sql(migration('005_index_member_foreign_keys.sql')); // Safe to reapply.
+  sql(migration('006_private_access_helper.sql'));
+  sql(migration('006_private_access_helper.sql')); // Safe to reapply.
   const assertions = readFileSync(new URL('../supabase/tests/capability_access.sql', import.meta.url), 'utf8');
   sql(assertions);
   // Reproduce an interrupted old reset: policies removed and RLS disabled.
@@ -50,6 +54,7 @@ try {
     ALTER TABLE public.expense_splits DISABLE ROW LEVEL SECURITY;`);
   sql(migration('004_harden_capability_access.sql'));
   sql(migration('004_harden_capability_access.sql')); // Safe to reapply.
+  sql(migration('006_private_access_helper.sql'));
   sql(assertions);
   console.log('Database security assertions passed, including reset recovery and reapplication.');
 } finally {

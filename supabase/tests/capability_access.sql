@@ -7,6 +7,12 @@ DO $$ BEGIN
         AND relname IN ('groups','members','expenses','expense_payers','expense_splits') AND relrowsecurity);
     ASSERT (SELECT count(*) = 1 FROM public.groups WHERE name = 'Existing group');
     ASSERT (SELECT count(*) = 1 FROM public.members WHERE name = 'Existing member');
+    ASSERT to_regprocedure('public.check_group_access(uuid,boolean)') IS NULL;
+    ASSERT to_regprocedure('private.check_group_access(uuid,boolean)') IS NOT NULL;
+    ASSERT NOT has_schema_privilege('anon', 'private', 'CREATE');
+    ASSERT NOT has_schema_privilege('authenticated', 'private', 'CREATE');
+    ASSERT (SELECT prosecdef AND proconfig @> ARRAY['search_path=""']
+        FROM pg_proc WHERE oid = 'private.check_group_access(uuid,boolean)'::regprocedure);
 END $$;
 
 SET LOCAL ROLE anon;
@@ -14,7 +20,7 @@ SET LOCAL request.headers = '{}';
 DO $$ BEGIN
     ASSERT (SELECT count(*) = 0 FROM public.groups);
     ASSERT (SELECT count(*) = 0 FROM public.get_group('00000000-0000-4000-8000-000000000001'));
-    ASSERT NOT public.check_group_access('00000000-0000-4000-8000-000000000001');
+    ASSERT NOT private.check_group_access('00000000-0000-4000-8000-000000000001');
     ASSERT (SELECT count(*) = 0 FROM public.members);
     ASSERT (SELECT count(*) = 0 FROM public.expenses);
     ASSERT (SELECT count(*) = 0 FROM public.expense_payers);
@@ -40,8 +46,8 @@ DO $$ DECLARE n integer; BEGIN
     ASSERT (SELECT write_token = '' AND read_token = repeat('r',32)
         FROM public.get_group('00000000-0000-4000-8000-000000000001'));
     ASSERT (SELECT count(*) = 0 FROM public.get_group('00000000-0000-4000-8000-000000000002'));
-    ASSERT public.check_group_access('00000000-0000-4000-8000-000000000001');
-    ASSERT NOT public.check_group_access('00000000-0000-4000-8000-000000000001', true);
+    ASSERT private.check_group_access('00000000-0000-4000-8000-000000000001');
+    ASSERT NOT private.check_group_access('00000000-0000-4000-8000-000000000001', true);
     ASSERT (SELECT count(*) = 1 FROM public.members);
     ASSERT (SELECT count(*) = 1 FROM public.expenses);
     ASSERT (SELECT count(*) = 1 FROM public.expense_payers);
@@ -68,7 +74,7 @@ SET LOCAL request.headers = '{"x-group-token":"wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
 DO $$ DECLARE n integer; BEGIN
     ASSERT (SELECT write_token = repeat('w',32) AND read_token = repeat('r',32)
         FROM public.get_group('00000000-0000-4000-8000-000000000001'));
-    ASSERT public.check_group_access('00000000-0000-4000-8000-000000000001', true);
+    ASSERT private.check_group_access('00000000-0000-4000-8000-000000000001', true);
     UPDATE public.groups SET name = 'Authorized' WHERE id = '00000000-0000-4000-8000-000000000001';
     GET DIAGNOSTICS n = ROW_COUNT;
     ASSERT n = 1;
@@ -93,9 +99,32 @@ DO $$ BEGIN
 END $$;
 
 SET LOCAL ROLE authenticated;
+SET LOCAL request.headers = '{}';
+DO $$ BEGIN
+    ASSERT (SELECT count(*) = 0 FROM public.get_group('00000000-0000-4000-8000-000000000001'));
+    ASSERT (SELECT count(*) = 0 FROM public.members);
+END $$;
+SET LOCAL request.headers = '{"x-group-token":"invalid"}';
+DO $$ BEGIN
+    ASSERT (SELECT count(*) = 0 FROM public.get_group('00000000-0000-4000-8000-000000000001'));
+END $$;
 SET LOCAL request.headers = '{"x-group-token":"rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"}';
 DO $$ BEGIN
     ASSERT NOT has_column_privilege(current_user, 'public.groups', 'write_token', 'SELECT');
     ASSERT (SELECT write_token = '' FROM public.get_group('00000000-0000-4000-8000-000000000001'));
+    ASSERT (SELECT count(*) = 0 FROM public.get_group('00000000-0000-4000-8000-000000000002'));
+    -- The anon writer above added a second member in this transaction.
+    ASSERT (SELECT count(*) = 2 FROM public.members);
+    ASSERT NOT private.check_group_access('00000000-0000-4000-8000-000000000001', true);
+END $$;
+SET LOCAL request.headers = '{"x-group-token":"wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"}';
+DO $$ DECLARE n integer; BEGIN
+    ASSERT (SELECT write_token = repeat('w',32) AND read_token = repeat('r',32)
+        FROM public.get_group('00000000-0000-4000-8000-000000000001'));
+    ASSERT (SELECT count(*) = 0 FROM public.get_group('00000000-0000-4000-8000-000000000002'));
+    UPDATE public.members SET name = 'Authenticated writer'
+        WHERE id = '10000000-0000-4000-8000-000000000001';
+    GET DIAGNOSTICS n = ROW_COUNT;
+    ASSERT n = 1;
 END $$;
 ROLLBACK;
