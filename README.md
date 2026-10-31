@@ -22,7 +22,7 @@ An open-source expense splitting application that helps groups fairly divide sha
 ### Tech Stack
 
 **Shared Library** (`@teilfair/shared`):
-- TypeScript
+- TypeScript 7 compiler (TypeScript 6 API compatibility for tooling)
 - Vitest (testing framework)
 - Focuses on calculation logic and data validation
 
