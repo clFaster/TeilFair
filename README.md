@@ -28,7 +28,7 @@ An open-source expense splitting application that helps groups fairly divide sha
 
 **Web Application** (`@teilfair/web`):
 - React 19
-- Vite 7 (build tool)
+- Vite 8 (build tool)
 - React Router 7 (routing)
 - Zustand (state management)
 - Supabase JS client
@@ -36,8 +36,8 @@ An open-source expense splitting application that helps groups fairly divide sha
 - Vercel Analytics & Speed Insights
 
 **Mobile Application** (`@teilfair/mobile`):
-- React Native 0.83
-- Expo 54
+- React Native 0.88
+- Expo SDK 58
 - Zustand (state management)
 - React Navigation (native stack navigation)
 - Async Storage (local persistence)
@@ -98,10 +98,10 @@ TeilFair uses **capability-based security** instead of user accounts:
 
 ### Prerequisites
 
-- Node.js 24 or higher
-- pnpm 10.4+
+- Node.js 26 (used in CI), or the Node.js 24 line starting at 24.3
+- pnpm 12.16.1 (pinned in `package.json`)
 - A Supabase project (free tier works)
-- For mobile development: Expo CLI
+- For mobile development: the project-local Expo CLI (`pnpm mobile`)
 - For iOS development: Xcode
 - For Android development: Android Studio
 
@@ -112,6 +112,9 @@ git clone https://github.com/your-username/teilfair.git
 cd teilfair
 pnpm install
 ```
+
+See [the October 2026 dependency migration notes](docs/dependency-migration-2026-10.md)
+for upgraded versions, compatibility constraints, and remaining audit findings.
 
 ### 2. Set Up Supabase
 
@@ -152,19 +155,36 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 **Web** (recommended to start here):
 ```bash
 pnpm web
-# Opens at http://localhost:5173
+# Opens at http://127.0.0.1:3000
 ```
 
-**Mobile** (requires Expo Go app on your phone):
+**Mobile** (requires an Expo Go version supporting SDK 58, or a new development build):
 ```bash
 pnpm mobile
 # Scan the QR code with Expo Go app
 ```
 
+The root mobile commands build the shared library first. After upgrading from SDK 57,
+rebuild any development clients; an existing native binary cannot load the SDK 58 runtime.
+
 **Run Tests**:
 ```bash
 pnpm test
 ```
+
+**Run Local Migration Checks**:
+```bash
+pnpm lint
+pnpm typecheck:mobile
+pnpm --filter @teilfair/web exec playwright install chromium
+pnpm test:smoke
+pnpm export:mobile --platform all
+```
+
+The smoke tests build into `packages/web/dist-smoke`, use placeholder Supabase settings,
+and block external network requests. They check production startup, routing, forms,
+language, and theme persistence without accessing a database. Mobile export validates
+JavaScript/Hermes bundles for Android, iOS, and web; device builds are a separate check.
 
 **Run Web System Tests (Playwright)**:
 ```bash
@@ -185,14 +205,14 @@ pnpm build
 ### Troubleshooting
 
 **`pnpm install` fails or missing dependencies**
-- Delete `pnpm-lock.yaml` and `node_modules/`
-- Clear pnpm store: `pnpm store prune`
-- Run `pnpm install` again
+- Confirm the Node.js version and use the pnpm version pinned in `package.json`
+- Run `pnpm install --frozen-lockfile` from the repository root
+- Keep the committed lockfile so dependency resolution remains reproducible
 
 **Web dev server won't start**
 - Ensure `.env` file exists in `packages/web/` with valid Supabase credentials
-- Check that port 5173 is not in use
-- Try: `pnpm web -- --port 3000` to use a different port
+- Check that port 3000 is not in use
+- Try: `pnpm --filter @teilfair/web run dev --port 3001` to use a different port
 
 **Mobile app won't connect to backend**
 - Verify `.env` in `packages/mobile/` has correct Supabase URL and key

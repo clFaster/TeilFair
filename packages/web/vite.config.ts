@@ -11,22 +11,27 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@teilfair/shared": path.resolve(__dirname, "../shared/src"),
+      "@teilfair/shared": path.resolve(import.meta.dirname, "../shared/src"),
     },
   },
   optimizeDeps: {
     include: ["@teilfair/shared"],
   },
   build: {
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id: string) {
-          if (!id.includes("node_modules")) return undefined;
-          if (/react|react-dom|react-router-dom/.test(id)) return "react";
-          if (id.includes("@supabase")) return "supabase";
-          if (/i18next|react-i18next/.test(id)) return "i18n";
-          if (id.includes("@fortawesome")) return "fontawesome";
-          return "vendor";
+        codeSplitting: {
+          groups: [{
+            debugName: 'vendor-packages',
+            name(id: string) {
+              if (!id.includes("node_modules")) return undefined;
+              if (/react|react-dom|react-router-dom/.test(id)) return "react";
+              if (id.includes("@supabase")) return "supabase";
+              if (/i18next|react-i18next/.test(id)) return "i18n";
+              if (id.includes("@fortawesome")) return "fontawesome";
+              return "vendor";
+            },
+          }],
         },
       },
     },

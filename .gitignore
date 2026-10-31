@@ -15,3 +15,8 @@ packages/mobile/ios/
 # Build outputs
 packages/web/dist/
 packages/shared/dist/
+
+# Playwright
+packages/web/playwright-report/
+packages/web/test-results/
+packages/web/dist-smoke/

@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '26'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
@@ -33,8 +33,26 @@ jobs:
       - name: Run tests
         run: pnpm run test
 
+      - name: Lint web package
+        run: pnpm run lint
+
+      - name: Typecheck mobile package
+        run: pnpm run typecheck:mobile
+
       - name: Build web package
         run: pnpm run build:web
+
+      - name: Install Playwright browser
+        run: pnpm --filter @teilfair/web exec playwright install --with-deps chromium
+
+      - name: Smoke test production web build
+        run: pnpm run test:smoke
+
+      - name: Export mobile bundles
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://smoke-test.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: smoke-test-anon-key
+        run: pnpm run export:mobile --platform all
 
       - name: Upload web build artifacts
         uses: actions/upload-artifact@v7

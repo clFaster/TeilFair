@@ -2,17 +2,23 @@
   "name": "teilfair",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "^24.3.0 || ^26.0.0 || >=27.0.0"
+  },
   "packageManager": "pnpm@12.16.1+sha512.091d1dee7927575661b25dab3c2ae31cafc1c54d6b71ed6a6600cf0c1cb10434a447eae14015f1b23e2e6bedeed79df94a932e2164d2832280dce3fb32f656d1",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "web": "pnpm --filter @teilfair/web run dev",
-    "mobile": "pnpm --filter @teilfair/mobile run start",
+    "mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run start",
     "build:shared": "pnpm --filter @teilfair/shared run build",
     "build:web": "pnpm --filter @teilfair/web run build",
     "test": "pnpm --filter @teilfair/shared run test",
     "lint": "pnpm --filter @teilfair/web run lint",
+    "typecheck:mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run typecheck",
+    "export:mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run export",
+    "test:smoke": "pnpm --filter @teilfair/web run test:smoke",
     "build": "pnpm --filter @teilfair/shared run build && pnpm --filter @teilfair/web run build"
   },
   "devDependencies": {
