@@ -146,10 +146,12 @@ export function calculatePairwiseBalances(expenses: Expense[]): Map<string, numb
  */
 export function calculateSettlements(memberBalances: MemberBalance[]): Settlement[] {
   const settlements: Settlement[] = [];
+  // Include one-cent debts, allowing for floating-point subtraction noise.
+  const minimumAmount = 0.01 - 1e-9;
   
   // Create mutable copies of net balances
   const balances = memberBalances
-    .filter(b => Math.abs(b.netBalance) > 0.01) // Filter out zero balances
+    .filter(b => Math.abs(b.netBalance) >= minimumAmount)
     .map(b => ({ memberId: b.memberId, balance: b.netBalance }));
 
   // Sort: debtors (negative) first, then creditors (positive)
@@ -162,18 +164,18 @@ export function calculateSettlements(memberBalances: MemberBalance[]): Settlemen
     const debtor = balances[debtorIndex];
     const creditor = balances[creditorIndex];
 
-    if (debtor.balance >= -0.01) {
+    if (debtor.balance > -minimumAmount) {
       debtorIndex++;
       continue;
     }
-    if (creditor.balance <= 0.01) {
+    if (creditor.balance < minimumAmount) {
       creditorIndex--;
       continue;
     }
 
     const amount = Math.min(-debtor.balance, creditor.balance);
     
-    if (amount > 0.01) {
+    if (amount >= minimumAmount) {
       settlements.push({
         fromMemberId: debtor.memberId,
         toMemberId: creditor.memberId,
@@ -184,8 +186,8 @@ export function calculateSettlements(memberBalances: MemberBalance[]): Settlemen
     debtor.balance += amount;
     creditor.balance -= amount;
 
-    if (Math.abs(debtor.balance) < 0.01) debtorIndex++;
-    if (Math.abs(creditor.balance) < 0.01) creditorIndex--;
+    if (Math.abs(debtor.balance) < minimumAmount) debtorIndex++;
+    if (Math.abs(creditor.balance) < minimumAmount) creditorIndex--;
   }
 
   return settlements;
@@ -222,9 +224,17 @@ export function validateExpenseSplits(
   splits: Array<{ share: number; shareType: 'ratio' | 'fixed' | 'percentage' }>,
   totalAmount: number
 ): { valid: boolean; error?: string } {
+  if (splits.some(s => !Number.isFinite(s.share) || s.share < 0)) {
+    return { valid: false, error: 'Split shares must be finite non-negative numbers' };
+  }
+
   const percentageSplits = splits.filter(s => s.shareType === 'percentage');
   const fixedSplits = splits.filter(s => s.shareType === 'fixed');
   const ratioSplits = splits.filter(s => s.shareType === 'ratio');
+
+  if (ratioSplits.length > 0 && ratioSplits.reduce((sum, s) => sum + s.share, 0) === 0) {
+    return { valid: false, error: 'Ratio splits must have a positive total weight' };
+  }
 
   // Check percentages sum to <= 100
   const totalPercentage = percentageSplits.reduce((sum, s) => sum + s.share, 0);
@@ -238,9 +248,13 @@ export function validateExpenseSplits(
     return { valid: false, error: 'Fixed splits cannot exceed total amount' };
   }
 
+  const covered = totalFixed + (totalAmount * totalPercentage / 100);
+  if (covered - totalAmount > 0.01) {
+    return { valid: false, error: 'Fixed and percentage splits cannot exceed total amount' };
+  }
+
   // If no ratio splits, percentages + fixed must cover everything
   if (ratioSplits.length === 0) {
-    const covered = totalFixed + (totalAmount * totalPercentage / 100);
     if (Math.abs(covered - totalAmount) > 0.01) {
       return { valid: false, error: 'Splits must cover the entire amount when no ratio splits are used' };
     }

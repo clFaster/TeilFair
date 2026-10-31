@@ -30,8 +30,20 @@ jobs:
       - name: Build shared package
         run: pnpm run build:shared
 
-      - name: Run tests
-        run: pnpm run test
+      - name: Typecheck shared code and tests
+        run: pnpm run typecheck:shared
+
+      - name: Run unit tests with coverage thresholds
+        run: pnpm run test:coverage
+
+      - name: Upload unit test coverage
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: shared-coverage
+          path: packages/shared/coverage
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Lint web package
         run: pnpm run lint
