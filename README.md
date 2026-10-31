@@ -170,7 +170,22 @@ rebuild any development clients; an existing native binary cannot load the SDK 5
 **Run Tests**:
 ```bash
 pnpm test
+pnpm test:coverage
+pnpm typecheck:shared
 ```
+
+The shared unit suite checks split calculations, pairwise debts, settlements, capability
+tokens, database conversion, and group-store success and failure paths. It uses deterministic
+fixtures and mocked API boundaries, with real calculation logic; no database credentials
+are needed. The accounting checks verify money conservation and each member's remaining
+balance after applying settlements, including one-cent debts and fractional splits.
+
+`pnpm test:coverage` writes HTML, LCOV, and JSON reports to `packages/shared/coverage/`.
+Open `packages/shared/coverage/index.html` for the annotated report. CI enforces coverage
+for each shared business-logic file: 95% statements and lines, 90% branches, and 100%
+functions. Static theme/locale data, type declarations, and barrel exports are excluded;
+these figures do not measure web/mobile UI or database RLS coverage. CI also typechecks
+the tests and uploads the coverage report even when a test fails.
 
 **Run Local Migration Checks**:
 ```bash

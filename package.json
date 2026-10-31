@@ -15,6 +15,8 @@
     "build:shared": "pnpm --filter @teilfair/shared run build",
     "build:web": "pnpm --filter @teilfair/web run build",
     "test": "pnpm --filter @teilfair/shared run test",
+    "test:coverage": "pnpm --filter @teilfair/shared run test:coverage",
+    "typecheck:shared": "pnpm --filter @teilfair/shared run typecheck",
     "lint": "pnpm --filter @teilfair/web run lint",
     "typecheck:mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run typecheck",
     "export:mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run export",

@@ -6,6 +6,7 @@ dist/
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
+coverage/
 
 # Expo
 packages/mobile/.expo/
