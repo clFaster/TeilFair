@@ -45,7 +45,7 @@ export function HomeRecentGroups({ groups, loading, onOpen, onRemove }: Readonly
   useEffect(() => () => window.clearTimeout(resetTimer.current), []);
 
   const handleShare = async (group: RecentGroup) => {
-    await copyText(`${globalThis.location.origin}/g/${group.id}?t=${group.token}`);
+    await copyText(`${globalThis.location.origin}/g/${group.id}#t=${encodeURIComponent(group.token)}`);
     setCopiedGroupId(group.id);
     window.clearTimeout(resetTimer.current);
     resetTimer.current = window.setTimeout(() => setCopiedGroupId(null), 2000);

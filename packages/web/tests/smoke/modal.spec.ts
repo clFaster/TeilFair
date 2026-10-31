@@ -114,7 +114,7 @@ test.describe('desktop', { tag: '@desktop' }, () => {
     await page.getByRole('button', { name: 'Share', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Share Group' });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel('View-only Link')).toHaveValue(/\/g\/.+\?t=smoke-read-token$/);
+    await expect(dialog.getByLabel('View-only Link')).toHaveValue(/\/g\/.+#t=smoke-read-token$/);
 
     await dialog.locator('.modal-footer').getByRole('button', { name: 'Close' }).click();
     await expect(dialog).toHaveCount(0);

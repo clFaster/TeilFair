@@ -36,6 +36,15 @@ jobs:
       - name: Run unit tests with coverage thresholds
         run: pnpm run test:coverage
 
+      - name: Verify capability storage migration
+        run: pnpm run test:security:storage
+
+      - name: Verify system reports omit capabilities
+        run: pnpm run test:security:reports
+
+      - name: Verify database authorization and migration
+        run: pnpm run test:security:db
+
       - name: Upload unit test coverage
         if: always()
         uses: actions/upload-artifact@v7

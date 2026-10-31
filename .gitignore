@@ -21,3 +21,6 @@ packages/shared/dist/
 packages/web/playwright-report/
 packages/web/test-results/
 packages/web/dist-smoke/
+
+# Local Supabase CLI linkage and project metadata
+supabase/.temp/

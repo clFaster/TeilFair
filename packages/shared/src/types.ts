@@ -5,6 +5,7 @@ export interface Group {
   name: string;
   currency: string;
   readToken: string;
+  /** Empty for read-only access; only writers receive this capability. */
   writeToken: string;
   createdAt: Date;
 }

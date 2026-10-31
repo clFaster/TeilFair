@@ -92,7 +92,7 @@ export function manyMembers(count: number) {
   return [...memberRows, ...extra].slice(0, count);
 }
 
-/** Seeds the persisted store with two recent groups (opened today and yesterday). */
+/** Seeds persisted recent groups using the existing browser storage format. */
 export async function seedRecentGroups(page: Page) {
   const now = Date.now();
   const recentGroups = [
@@ -151,7 +151,11 @@ type Row = Record<string, unknown>;
 function writeResult(write: BackendWrite, rows: unknown[], seq: number): Row[] {
   if (write.method === 'POST') {
     const items = (Array.isArray(write.body) ? write.body : [write.body]) as Row[];
-    return items.map((item, index) => ({ id: `${write.table}-new-${seq}-${index}`, ...item }));
+    return items.map((item, index) => ({
+      id: `${write.table}-new-${seq}-${index}`,
+      ...(write.table === 'groups' ? { created_at: '2026-10-01T10:00:00.000Z' } : {}),
+      ...item,
+    }));
   }
   const matches = (rows as Row[]).filter((row) =>
     Object.entries(write.query).every(([column, filter]) => !filter.startsWith('eq.') || String(row[column]) === filter.slice(3))
@@ -166,7 +170,8 @@ async function fulfillSupabase(route: Route, options: BackendOptions, writes: Ba
   }
 
   const url = new URL(request.url());
-  const table = url.pathname.replace(/^\/rest\/v1\//, '').split('/')[0];
+  const isGroupRpc = url.pathname === '/rest/v1/rpc/get_group';
+  const table = isGroupRpc ? 'groups' : url.pathname.replace(/^\/rest\/v1\//, '').split('/')[0];
   if (options.failTables?.includes(table)) {
     return route.fulfill({
       status: 500,
@@ -176,7 +181,19 @@ async function fulfillSupabase(route: Route, options: BackendOptions, writes: Ba
   }
 
   let rows = { ...TABLES, ...options.tables }[table] ?? [];
-  if (request.method() !== 'GET' && request.method() !== 'HEAD') {
+  if (isGroupRpc) {
+    const requestedId = request.postDataJSON().requested_group_id;
+    for (const [index, write] of writes.entries()) {
+      if (write.table === 'groups' && write.method === 'POST') {
+        const created = writeResult(write, [], index + 1).find(row => row.id === requestedId);
+        if (created) rows = [created];
+      }
+    }
+  }
+  if (isGroupRpc && request.headers()['x-group-token'] === READ_TOKEN) {
+    rows = (rows as Row[]).map(row => ({ ...row, write_token: '' }));
+  }
+  if (!isGroupRpc && request.method() !== 'GET' && request.method() !== 'HEAD') {
     const write: BackendWrite = {
       method: request.method(),
       table,
@@ -230,4 +247,4 @@ export async function failWrites(page: Page, table: string, method: string, time
   });
 }
 
-export const groupUrl = (token: string = WRITE_TOKEN) => `/g/${GROUP_ID}?t=${token}`;
+export const groupUrl = (token: string = WRITE_TOKEN) => `/g/${GROUP_ID}#t=${token}`;

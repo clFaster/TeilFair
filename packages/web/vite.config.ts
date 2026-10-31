@@ -3,6 +3,14 @@ import react from '@vitejs/plugin-react';
 import { readFileSync } from 'fs';
 import path from 'path';
 
+// Exercise the deployment's security headers when testing the production build.
+const deployment = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../vercel.json'), 'utf8')) as {
+  headers: { source: string; headers: { key: string; value: string }[] }[];
+};
+const previewHeaders = Object.fromEntries(
+  deployment.headers.find(entry => entry.source === '/(.*)')!.headers.map(({ key, value }) => [key, value])
+);
+
 /**
  * Build-only minification of CSS custom property names: the descriptive design
  * tokens (`--color-primary-soft`, `--font-size-sm`, ...) are a quarter of the
@@ -58,6 +66,7 @@ function shortCssCustomProperties(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), shortCssCustomProperties()],
+  preview: { headers: previewHeaders },
   server: {
     host: "127.0.0.1",
     port: 3000,

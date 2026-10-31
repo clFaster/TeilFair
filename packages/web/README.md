@@ -21,7 +21,7 @@ Web client for TeilFair. This package is a React + Vite frontend that creates an
 
 ### Request and data flow
 
-1. Entry route `/g/:groupId?t=<token>` is parsed in `src/pages/GroupPage.tsx`.
+1. Entry route `/g/:groupId#t=<token>` is parsed in `src/pages/GroupPage.tsx`. Legacy `?t=` links are upgraded by `public/bootstrap.js` before React loads.
 2. `useGroupStore().loadGroup(groupId, token)` starts the load sequence.
 3. Store actions come from `createGroupStoreState(...)` in `@teilfair/shared`.
 4. Web-specific API functions in `src/lib/api.ts` perform Supabase calls.
@@ -51,9 +51,10 @@ packages/web/
 ### Security model in the web app
 
 - Access is capability-token based (no user accounts in this package).
-- The `t` query parameter is treated as the group capability token.
+- The `t` fragment parameter is treated as the group capability token. Legacy query links are replaced before React and telemetry load.
 - Read/write permission is derived via `getTokenPermission` before mutating operations.
-- Recent groups are persisted in browser storage through Zustand persist (`teilfair-storage`) and include the token for quick reopen; treat local browser profiles as sensitive.
+- Recent groups and their capability tokens persist in localStorage (`teilfair-storage`) so opening a group once keeps it available after reloads and browser restarts. This preserves the existing storage format. Only recent-group entries are persisted, not the full group data.
+- Database grants restrict direct group queries to metadata. The `get_group` RPC checks the capability and returns a write token only to writers. Apply migration `004` before using the updated clients.
 
 ## Runbook
 
@@ -119,6 +120,7 @@ Notes:
 
 - If `SYSTEM_TEST_BASE_URL` is not set, Playwright starts a local dev server on `127.0.0.1:4173`.
 - If `SYSTEM_TEST_BASE_URL` is set, tests run against that URL and skip local server startup.
+- Tests using live capabilities emit only counts, statuses, and static titles. They do not record traces, screenshots, videos, or upload raw reports. Use mocked smoke tests for browser diagnostics.
 
 ### 6) Smoke-check checklist before merge
 
@@ -145,7 +147,7 @@ Actions:
 
 Actions:
 
-1. Confirm URL includes `?t=<token>`.
+1. Confirm URL includes `#t=<token>` (legacy `?t=` links are upgraded automatically).
 2. Verify `groupId` and token belong to the same group.
 3. Check Supabase RLS/migration state if valid tokens still fail.
 
@@ -164,4 +166,4 @@ Symptom: recent group cards point to groups that no longer exist or are no longe
 Actions:
 
 1. Remove the card from the UI (supported in home page).
-2. If needed, clear browser storage for `teilfair-storage`.
+2. If needed, clear browser storage for `teilfair-storage`, then reopen a saved share link.

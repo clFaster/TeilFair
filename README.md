@@ -120,8 +120,8 @@ for upgraded versions, compatibility constraints, and remaining audit findings.
 
 1. Create a new project at [supabase.com](https://supabase.com) (free tier is fine)
 2. Navigate to the SQL Editor
-3. Create a new query and copy the contents of `supabase/migrations/001_initial_schema.sql`
-4. Paste and execute the SQL
+3. Run migrations `001` through `004` from `supabase/migrations/` in order in the SQL Editor.
+4. For an existing database, run only migrations you have not applied. See [the security rollout instructions](docs/security-rollout.md); no database recreation is needed.
 5. In Settings > API, copy:
    - **Project URL**: `https://[project-id].supabase.co`
    - **Anon Public Key**: The public API key

@@ -10,6 +10,7 @@ import { HomeHero } from '../components/HomeHero';
 import { HomeRecentGroups } from '../components/HomeRecentGroups';
 import { HomeHowItWorks } from '../components/HomeHowItWorks';
 import { Modal } from '../components/Modal';
+import { createCapabilityPath, parseCapabilityUrl } from '@teilfair/shared';
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK'] as const;
 
@@ -45,7 +46,7 @@ export function HomePage() {
 
     try {
       const group = await createGroup(groupName.trim(), currency);
-      navigate(`/g/${group.id}?t=${group.writeToken}`);
+      navigate(createCapabilityPath(group.id, group.writeToken));
     } catch {
       setError(t('error.failedToCreate'));
     }
@@ -56,18 +57,17 @@ export function HomePage() {
     setError('');
 
     try {
-      const url = new URL(joinLink.trim());
-      const pathMatch = url.pathname.match(/\/g\/([a-f0-9-]+)/i);
-      const token = url.searchParams.get('t');
+      // Validate URL syntax separately so malformed input keeps its useful error.
+      const parsed = parseCapabilityUrl(new URL(joinLink.trim()).href);
 
-      if (!pathMatch || !token) {
+      if (!parsed) {
         setError(t('error.invalidLink'));
         return;
       }
 
-      const groupId = pathMatch[1];
+      const { groupId, token } = parsed;
       if (await loadGroup(groupId, token)) {
-        navigate(`/g/${groupId}?t=${token}`);
+        navigate(createCapabilityPath(groupId, token));
       } else {
         setError(t('error.failedToJoin'));
       }
@@ -78,7 +78,7 @@ export function HomePage() {
 
   const handleOpenRecent = async (groupId: string, token: string) => {
     if (await loadGroup(groupId, token)) {
-      navigate(`/g/${groupId}?t=${token}`);
+      navigate(createCapabilityPath(groupId, token));
     } else {
       removeFromRecent(groupId);
       setError(t('error.groupNoLongerAccessible'));

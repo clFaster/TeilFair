@@ -13,23 +13,7 @@
       first paint so there is no flash of the wrong theme. Mirrors
       src/theme/preference.ts (storage key, browser bar colors) - keep in sync.
     -->
-    <script>
-      (function () {
-        var KEY = 'teilfair-theme-preference';
-        var COLORS = { light: '#ffffff', dark: '#0a1110' };
-        var mode = null;
-        try {
-          var stored = window.localStorage.getItem(KEY);
-          if (stored === 'light' || stored === 'dark') mode = stored;
-        } catch (e) {}
-        if (!mode) {
-          mode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        document.documentElement.setAttribute('data-theme', mode);
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', COLORS[mode]);
-      })();
-    </script>
+    <script src="/bootstrap.js"></script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="TeilFair" />

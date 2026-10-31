@@ -11,15 +11,23 @@ const TOKEN_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456
  * Works in browser (crypto.getRandomValues) and React Native (with react-native-get-random-values polyfill)
  */
 export function generateToken(length: number = TOKEN_LENGTH): string {
+  if (!Number.isSafeInteger(length) || length < 1 || length > 65536) {
+    throw new Error('Token length must be an integer between 1 and 65536');
+  }
   let result = '';
   
   // Browser/React Native environment with crypto polyfill
   if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
     try {
       const array = new Uint8Array(length);
-      crypto.getRandomValues(array);
-      for (let i = 0; i < length; i++) {
-        result += TOKEN_CHARS[array[i] % TOKEN_CHARS.length];
+      // Reject 248-255 so each alphabet character has exactly four byte values.
+      const limit = 256 - (256 % TOKEN_CHARS.length);
+      while (result.length < length) {
+        crypto.getRandomValues(array);
+        for (const byte of array) {
+          if (byte < limit) result += TOKEN_CHARS[byte % TOKEN_CHARS.length];
+          if (result.length === length) break;
+        }
       }
     } catch (error) {
       throw new Error(`Failed to generate random token: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -104,9 +112,14 @@ export function createGroupUrls(
   writeToken: string
 ): GroupUrls {
   return {
-    readUrl: `${baseUrl}/g/${groupId}?t=${readToken}`,
-    writeUrl: `${baseUrl}/g/${groupId}?t=${writeToken}`,
+    readUrl: createCapabilityPath(groupId, readToken, baseUrl),
+    writeUrl: writeToken ? createCapabilityPath(groupId, writeToken, baseUrl) : '',
   };
+}
+
+/** Fragments are not sent to the web host in HTTP requests. */
+export function createCapabilityPath(groupId: string, token: string, baseUrl = ''): string {
+  return `${baseUrl.replace(/\/$/, '')}/g/${groupId}#t=${encodeURIComponent(token)}`;
 }
 
 /**
@@ -120,8 +133,9 @@ export interface ParsedCapabilityUrl {
 export function parseCapabilityUrl(url: string): ParsedCapabilityUrl | null {
   try {
     const urlObj = new URL(url);
-    const pathMatch = urlObj.pathname.match(/\/g\/([a-f0-9-]+)/i);
-    const token = urlObj.searchParams.get('t');
+    const pathMatch = urlObj.pathname.match(/^\/g\/([a-f0-9-]+)\/?$/i);
+    // Legacy query links continue to work while newly shared links use fragments.
+    const token = new URLSearchParams(urlObj.hash.slice(1)).get('t') || urlObj.searchParams.get('t');
     
     if (pathMatch && token) {
       return {

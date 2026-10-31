@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RecentGroup } from '@teilfair/shared';
+import { createCapabilityPath, parseCapabilityUrl } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
@@ -59,16 +60,14 @@ export function HomeScreen() {
 
   const handleJoinGroup = async () => {
     try {
-      const url = new URL(joinLink);
-      const pathMatch = url.pathname.match(/\/g\/([a-f0-9-]+)/i);
-      const token = url.searchParams.get('t');
+      const parsed = parseCapabilityUrl(joinLink.trim());
 
-      if (!pathMatch || !token) {
+      if (!parsed) {
         Alert.alert(t('common.error'), t('error.invalidLink'));
         return;
       }
 
-      const groupId = pathMatch[1];
+      const { groupId, token } = parsed;
       const success = await loadGroup(groupId, token);
 
       if (success) {
@@ -107,7 +106,7 @@ export function HomeScreen() {
   };
 
   const handleShareRecent = (item: RecentGroup) => {
-    const url = `https://teilfair.app/g/${item.id}?t=${item.token}`;
+    const url = createCapabilityPath(item.id, item.token, 'https://teilfair.app');
     const message = t('share.shareMessageDefault', { groupName: item.name, url });
 
     Alert.alert(t('share.sharePromptTitle'), url, [

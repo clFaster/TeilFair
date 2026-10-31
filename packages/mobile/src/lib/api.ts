@@ -17,7 +17,7 @@ import {
   memberFromRow,
   expenseFromRow,
 } from '@teilfair/shared';
-import { supabase, createGroupClient } from './supabase';
+import { createGroupClient } from './supabase';
 
 /**
  * Create a new group
@@ -26,7 +26,7 @@ export async function createGroup(name: string, currency: string = 'EUR'): Promi
   const readToken = generateToken();
   const writeToken = generateToken();
 
-  const { data, error } = await supabase
+  const { data, error } = await createGroupClient(writeToken)
     .from('groups')
     .insert({
       name,
@@ -34,11 +34,11 @@ export async function createGroup(name: string, currency: string = 'EUR'): Promi
       read_token: readToken,
       write_token: writeToken,
     })
-    .select()
+    .select('id, name, currency, created_at')
     .single();
 
   if (error) throw error;
-  return groupFromRow(data as GroupRow);
+  return groupFromRow({ ...data, read_token: readToken, write_token: writeToken } as GroupRow);
 }
 
 /**
@@ -48,9 +48,7 @@ export async function getGroup(groupId: string, token: string): Promise<Group | 
   const client = createGroupClient(token);
   
   const { data, error } = await client
-    .from('groups')
-    .select('*')
-    .eq('id', groupId)
+    .rpc('get_group', { requested_group_id: groupId })
     .single();
 
   if (error) {
@@ -67,18 +65,10 @@ export async function getTokenPermission(
   groupId: string,
   token: string
 ): Promise<TokenPermission | null> {
-  const client = createGroupClient(token);
-  
-  const { data, error } = await client
-    .from('groups')
-    .select('read_token, write_token')
-    .eq('id', groupId)
-    .single();
-
-  if (error || !data) return null;
-  
-  if (token === data.write_token) return 'write';
-  if (token === data.read_token) return 'read';
+  const group = await getGroup(groupId, token);
+  if (!group) return null;
+  if (token === group.writeToken) return 'write';
+  if (token === group.readToken) return 'read';
   return null;
 }
 
@@ -92,15 +82,17 @@ export async function updateGroup(
 ): Promise<Group> {
   const client = createGroupClient(token);
   
-  const { data, error } = await client
+  const { error } = await client
     .from('groups')
     .update(updates)
     .eq('id', groupId)
-    .select()
+    .select('id, name, currency, created_at')
     .single();
 
   if (error) throw error;
-  return groupFromRow(data as GroupRow);
+  const group = await getGroup(groupId, token);
+  if (!group) throw new Error('Group not found or access denied');
+  return group;
 }
 
 /**

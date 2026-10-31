@@ -128,8 +128,7 @@ CREATE POLICY "Anyone can create groups" ON groups
 -- Can only read a group with valid token
 CREATE POLICY "Read groups with valid token" ON groups
     FOR SELECT USING (
-        (get_token() = read_token OR get_token() = write_token)
-        OR get_token() IS NULL -- Allow for now during testing, should be removed in production
+        get_token() = read_token OR get_token() = write_token
     );
 
 -- Can only update a group with write token

@@ -346,7 +346,7 @@ test.describe('phone', () => {
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    await page.route('**/rest/v1/groups*', async (route) => {
+    await page.route('**/rest/v1/rpc/get_group', async (route) => {
       await gate;
       await route.fallback();
     });

@@ -6,6 +6,18 @@ import {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('capability tokens', () => {
+  it('rejects the biased tail bytes and retries until enough symbols are available', () => {
+    const getRandomValues = vi.fn((bytes: Uint8Array) => {
+      return getRandomValues.mock.calls.length === 1 ? bytes.fill(255) : bytes.fill(247);
+    });
+    vi.stubGlobal('crypto', { getRandomValues });
+    expect(generateToken(4)).toBe('9999');
+    expect(getRandomValues).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([0, -1, 1.5, NaN, Infinity, 65537])('rejects invalid token length %s', length => {
+    expect(() => generateToken(length)).toThrow('Token length must be an integer');
+  });
   it('generates valid default tokens and honors a custom length', () => {
     expect(isValidToken(generateToken())).toBe(true);
     expect(generateToken(64)).toMatch(/^[A-Za-z0-9]{64}$/);
@@ -85,8 +97,8 @@ describe('capability links', () => {
   it('creates separate read/write URLs that round-trip through the parser', () => {
     const urls = createGroupUrls('https://teilfair.example', groupId, 'ReadToken', 'WriteToken');
     expect(urls).toEqual({
-      readUrl: `https://teilfair.example/g/${groupId}?t=ReadToken`,
-      writeUrl: `https://teilfair.example/g/${groupId}?t=WriteToken`,
+      readUrl: `https://teilfair.example/g/${groupId}#t=ReadToken`,
+      writeUrl: `https://teilfair.example/g/${groupId}#t=WriteToken`,
     });
     expect(parseCapabilityUrl(urls.readUrl)).toEqual({ groupId, token: 'ReadToken' });
     expect(parseCapabilityUrl(urls.writeUrl)).toEqual({ groupId, token: 'WriteToken' });
@@ -95,6 +107,15 @@ describe('capability links', () => {
   it('reads tokens alongside unrelated query parameters and fragments', () => {
     expect(parseCapabilityUrl(`https://teilfair.example/g/${groupId}?lang=de&t=AbC012#balances`))
       .toEqual({ groupId, token: 'AbC012' });
+  });
+
+  it('prefers fragments over legacy query tokens and encodes reserved characters', () => {
+    expect(parseCapabilityUrl(`https://teilfair.example/g/${groupId}?t=old#t=new`))
+      .toEqual({ groupId, token: 'new' });
+    const urls = createGroupUrls('https://teilfair.example/', groupId, 'a+b&c', '');
+    expect(urls.writeUrl).toBe('');
+    expect(new URL(urls.readUrl).search).toBe('');
+    expect(parseCapabilityUrl(urls.readUrl)).toEqual({ groupId, token: 'a+b&c' });
   });
 
   it.each([

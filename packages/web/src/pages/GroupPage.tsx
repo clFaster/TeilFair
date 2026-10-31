@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -58,8 +58,8 @@ function GroupStatus({ children }: Readonly<GroupStatusProps>) {
 export function GroupPage() {
   const { t } = useTranslation();
   const { groupId } = useParams<{ groupId: string }>();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('t');
+  const location = useLocation();
+  const token = new URLSearchParams(location.hash.slice(1)).get('t');
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const {

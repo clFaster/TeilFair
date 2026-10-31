@@ -134,13 +134,4 @@ jobs:
           fs.appendFileSync(summaryFile, `${lines.join('\n')}\n`);
           EOF
 
-      - name: Upload Playwright artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-system-test-report
-          path: |
-            packages/web/playwright-report
-            packages/web/test-results
-          if-no-files-found: ignore
-          retention-days: 14
+      # Never upload raw Playwright results: they can contain live capabilities.

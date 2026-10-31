@@ -89,7 +89,7 @@ export function PrivacyPage() {
           <h2>Zugriff über Token-Links</h2>
           <p>
             TeilFair arbeitet ohne Benutzerkonten. Der Zugriff erfolgt über
-            Links mit Token (Parameter <code>t</code>), die Lese- oder Schreibrechte
+            Links mit Token (Fragment <code>#t=…</code>), die Lese- oder Schreibrechte
             verbriefen. Bitte behandeln Sie diese Links wie ein Passwort und teilen
             Sie sie nur mit Personen, denen Sie Zugriff geben möchten.
           </p>

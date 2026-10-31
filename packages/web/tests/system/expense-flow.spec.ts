@@ -14,7 +14,7 @@ test('add and remove expense for configured group', async ({ page }) => {
   const createdMemberName = `System test member ${Date.now()}`;
   let createdMember = false;
 
-  await page.goto(`/g/${groupId}?t=${token}`);
+  await page.goto(`/g/${groupId}#t=${token}`);
 
   const addExpenseButton = page.getByTestId('add-expense-button');
   await expect(addExpenseButton).toBeVisible({ timeout: 30_000 });
@@ -66,7 +66,7 @@ test('member-in-use dialog is fully visible and not clipped by scroll containers
   const description = `System test expense ${Date.now()}`;
   const memberName = `System test in-use member ${Date.now()}`;
 
-  await page.goto(`/g/${groupId}?t=${token}`);
+  await page.goto(`/g/${groupId}#t=${token}`);
 
   await page.getByTestId('members-tab-button').click();
   await page.getByTestId('member-name-input').fill(memberName);
