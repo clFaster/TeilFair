@@ -1,0 +1,39 @@
+{
+  "formatVersion": 1,
+  "redactSecrets": true,
+  "scope": "database",
+  "loadOrder": [
+    "private/schema.sql",
+    "public/schema.sql",
+    "public/adp_wipes.sql",
+    "_cluster/extensions/pgcrypto.sql",
+    "_cluster/extensions/uuid-ossp.sql",
+    "public/tables/expense_payers.sql",
+    "public/tables/expense_splits.sql",
+    "public/tables/expenses.sql",
+    "public/tables/groups.sql",
+    "public/tables/members.sql",
+    "private/functions/check_group_access.sql",
+    "public/functions/get_group.sql",
+    "public/functions/get_token.sql",
+    "public/default_privileges.sql"
+  ],
+  "profile": "supabase",
+  "defaultOwner": "postgres",
+  "files": [
+    "_cluster/extensions/pgcrypto.sql",
+    "_cluster/extensions/uuid-ossp.sql",
+    "private/functions/check_group_access.sql",
+    "private/schema.sql",
+    "public/adp_wipes.sql",
+    "public/default_privileges.sql",
+    "public/functions/get_group.sql",
+    "public/functions/get_token.sql",
+    "public/schema.sql",
+    "public/tables/expense_payers.sql",
+    "public/tables/expense_splits.sql",
+    "public/tables/expenses.sql",
+    "public/tables/groups.sql",
+    "public/tables/members.sql"
+  ]
+}

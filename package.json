@@ -10,6 +10,11 @@
     "packages/*"
   ],
   "scripts": {
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset --local",
+    "db:diff": "supabase db schema declarative sync --schema public,private --no-apply",
+    "db:check": "node scripts/check-db-schema.mjs",
     "web": "pnpm --filter @teilfair/web run dev",
     "mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run start",
     "build:shared": "pnpm --filter @teilfair/shared run build",
@@ -28,7 +33,7 @@
   },
   "devDependencies": {
     "@typescript/native": "npm:typescript@^7.0.2",
-    "supabase": "^2.122.0",
+    "supabase": "2.122.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

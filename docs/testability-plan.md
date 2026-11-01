@@ -56,7 +56,9 @@ Git identity.
 ## Progress
 
 - [x] Inspect existing tests, migrations, workflows, and tooling; agree staged scope.
-- [ ] Stage 1: declarative database and local Supabase.
+- [x] Stage 1: declarative database and local Supabase. Exported from local migration
+  replay; `pnpm db:check` reports no differences, and existing database security,
+  upgrade, recovery, and reapplication checks pass.
 - [ ] Stage 2: repeatable local test environment.
 - [ ] Stage 3: integration and browser tests.
 - [ ] Stage 4: TypeScript Aspire orchestration.

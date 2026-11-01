@@ -170,7 +170,7 @@ importers:
         specifier: npm:typescript@^7.0.2
         version: typescript@7.0.2
       supabase:
-        specifier: ^2.122.0
+        specifier: 2.122.0
         version: 2.122.0
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
