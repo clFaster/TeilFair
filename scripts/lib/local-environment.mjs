@@ -2,6 +2,23 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { root, supabase } from './commands.mjs';
 
+export function localEndpoints() {
+  const config = readFileSync(join(root, 'supabase/config.toml'), 'utf8');
+  const port = section => {
+    const body = config.match(new RegExp(`\\[${section}\\]([\\s\\S]*?)(?=\\n\\[|$)`))?.[1];
+    const value = Number(body?.match(/^\s*port\s*=\s*(\d+)\s*$/m)?.[1]);
+    if (!Number.isInteger(value) || value < 1 || value > 65535) {
+      throw new Error(`Missing or invalid local Supabase ${section} port.`);
+    }
+    return value;
+  };
+  return {
+    api: `http://127.0.0.1:${port('api')}`,
+    studio: `http://127.0.0.1:${port('studio')}`,
+    database: `tcp://127.0.0.1:${port('db')}`,
+  };
+}
+
 export function assertLocalUrl(value) {
   const url = new URL(value);
   if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname)
@@ -15,8 +32,7 @@ export function localEnvironment() {
   // Read only local status; never fall back to .env files or hosted credentials.
   const status = JSON.parse(supabase(['status', '--workdir', root, '--output', 'json'], { stdio: 'pipe' }));
   const url = assertLocalUrl(status.API_URL);
-  const config = readFileSync(join(root, 'supabase/config.toml'), 'utf8');
-  const apiPort = config.match(/\[api\][\s\S]*?\bport\s*=\s*(\d+)/)?.[1];
+  const apiPort = new URL(localEndpoints().api).port;
   if (new URL(url).port !== apiPort || !status.ANON_KEY) {
     throw new Error('Local Supabase status does not match the configured API port or has no public key.');
   }

@@ -15,10 +15,21 @@ installation, hosted Supabase project, production credentials, or application
 The AppHost's generated SDK is ignored by Git and restored by the CLI.
 
 Open the authenticated dashboard link printed by `aspire:start`, then follow the
-`web` resource's HTTP endpoint. Its port is assigned by Aspire. `supabase` is an
-intentional one-shot initialization resource: **Finished, exit code 0** means the
-CLI-managed stack started, pending local migrations applied, and the capability
-RPC passed a readiness probe. `web` should be **Running / Healthy**.
+`web` resource's HTTP endpoint. Its port is assigned by Aspire. The dashboard lists:
+
+- `supabase-db`: PostgreSQL's TCP endpoint, with a live connectivity check.
+- `supabase-api`: the API endpoint, with an HTTP RPC check that exercises PostgREST
+  and its database connection.
+- `supabase-studio`: a clickable Studio link and HTTP health check.
+- `supabase-init`: the one-shot startup/migration task. **Finished, exit code 0**
+  means initialization succeeded; it does not mean the database stopped.
+- `web`: the frontend, which waits for initialization and backend health.
+
+The database, API, Studio, and frontend should show **Running / Healthy** after
+startup. TCP connectivity does not by itself verify SQL queries or migrations;
+the API and startup RPC checks cover those separately. Backend services are
+external resources monitored by Aspire; manage their containers through the
+Supabase CLI or Docker. `pnpm local:stop` stops the whole local environment.
 
 The dashboard captures launcher/frontend logs. The Supabase CLI owns the backend
 containers; individual backend logs remain available through Docker and Studio at

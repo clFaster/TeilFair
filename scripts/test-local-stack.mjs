@@ -7,10 +7,16 @@ import { assertLocalUrl } from './lib/local-environment.mjs';
 try {
   aspire(['start'], { env: { ...process.env, LOCAL_WEB_MODE: 'build-preview' } });
   aspire(['wait', 'web', '--timeout', '180']);
+  aspire(['wait', 'supabase-studio', '--timeout', '60']);
   const resources = describe().resources;
-  const backend = resources.find(resource => resource.displayName === 'supabase');
+  const backend = resources.find(resource => resource.displayName === 'supabase-init');
   if (backend?.state !== 'Finished' || backend.exitCode !== 0) {
     throw new Error('Supabase initialization did not complete successfully.');
+  }
+  for (const name of ['supabase-db', 'supabase-api', 'supabase-studio']) {
+    if (resources.find(resource => resource.displayName === name)?.healthStatus !== 'Healthy') {
+      throw new Error(`Local resource ${name} is not healthy.`);
+    }
   }
   const web = resources.find(resource => resource.displayName === 'web');
   if (web?.healthStatus !== 'Healthy') throw new Error('Local web resource is not healthy.');
@@ -25,7 +31,7 @@ try {
   for (const [name, args] of [
     ['resources.json', ['describe', '--format', 'Json']],
     ['web.log', ['logs', 'web']],
-    ['supabase.log', ['logs', 'supabase']],
+    ['supabase.log', ['logs', 'supabase-init']],
   ]) {
     try { writeFileSync(join(directory, name), aspire(args, { stdio: 'pipe' })); }
     catch (diagnosticError) { writeFileSync(join(directory, name), diagnosticError.message); }
