@@ -59,7 +59,9 @@ Git identity.
 - [x] Stage 1: declarative database and local Supabase. Exported from local migration
   replay; `pnpm db:check` reports no differences, and existing database security,
   upgrade, recovery, and reapplication checks pass.
-- [ ] Stage 2: repeatable local test environment.
+- [x] Stage 2: repeatable local test environment. Local RPC readiness and target
+  guards pass; the web production build serves successfully with local settings.
+  Independent API/browser fixtures are delivered with the tests in stage 3.
 - [ ] Stage 3: integration and browser tests.
 - [ ] Stage 4: TypeScript Aspire orchestration.
 - [ ] Stage 5: CI and documentation.

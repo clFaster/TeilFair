@@ -10,6 +10,10 @@
     "packages/*"
   ],
   "scripts": {
+    "local:web": "node scripts/local-web.mjs dev",
+    "local:preview": "node scripts/local-web.mjs build-preview",
+    "local:check": "node scripts/check-local-environment.mjs",
+    "test:local:targets": "node --test scripts/test-local-targets.mjs",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset --local",
