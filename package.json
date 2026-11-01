@@ -10,6 +10,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test:local": "pnpm --filter @teilfair/web run test:local",
     "local:web": "node scripts/local-web.mjs dev",
     "local:preview": "node scripts/local-web.mjs build-preview",
     "local:check": "node scripts/check-local-environment.mjs",

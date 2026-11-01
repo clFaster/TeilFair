@@ -5,6 +5,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "test:local": "playwright test --config playwright.local.config.ts",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

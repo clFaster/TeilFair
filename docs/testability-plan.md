@@ -62,6 +62,8 @@ Git identity.
 - [x] Stage 2: repeatable local test environment. Local RPC readiness and target
   guards pass; the web production build serves successfully with local settings.
   Independent API/browser fixtures are delivered with the tests in stage 3.
-- [ ] Stage 3: integration and browser tests.
+- [x] Stage 3: integration and browser tests. All 22 API/desktop/mobile checks pass
+  against real Supabase and the production build; web lint and TypeScript checks
+  pass. The local launcher adjusts preview CSP for its validated loopback API.
 - [ ] Stage 4: TypeScript Aspire orchestration.
 - [ ] Stage 5: CI and documentation.

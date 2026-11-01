@@ -6,7 +6,7 @@ const mode = process.argv[2] ?? 'dev';
 if (!['dev', 'preview', 'build-preview'].includes(mode)) throw new Error(`Unknown local web mode: ${mode}`);
 const local = localEnvironment();
 await checkLocalBackend(local);
-const env = { ...process.env, ...local };
+const env = { ...process.env, ...local, TEILFAIR_LOCAL_PREVIEW: '1' };
 const web = join(root, 'packages/web');
 const vite = join(web, 'node_modules/vite/bin/vite.js');
 const tsc = join(root, 'node_modules/@typescript/native/bin/tsc');
