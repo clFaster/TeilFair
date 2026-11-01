@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { aspire, describe } from './lib/aspire.mjs';
 import { command, root, supabase } from './lib/commands.mjs';
 import { assertLocalUrl } from './lib/local-environment.mjs';
@@ -18,6 +19,18 @@ try {
     'test', '--config', 'playwright.local.config.ts', ...process.argv.slice(2)], {
     cwd: join(root, 'packages/web'), env: { ...process.env, LOCAL_TEST_BASE_URL: url },
   });
+} catch (error) {
+  const directory = join(root, '.local/test-diagnostics');
+  mkdirSync(directory, { recursive: true });
+  for (const [name, args] of [
+    ['resources.json', ['describe', '--format', 'Json']],
+    ['web.log', ['logs', 'web']],
+    ['supabase.log', ['logs', 'supabase']],
+  ]) {
+    try { writeFileSync(join(directory, name), aspire(args, { stdio: 'pipe' })); }
+    catch (diagnosticError) { writeFileSync(join(directory, name), diagnosticError.message); }
+  }
+  throw error;
 } finally {
   try { aspire(['stop']); } finally { supabase(['stop']); }
 }

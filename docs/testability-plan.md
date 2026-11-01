@@ -68,4 +68,9 @@ Git identity.
 - [x] Stage 4: TypeScript Aspire orchestration. Pinned CLI and generated SDK restore,
   AppHost typecheck/lint, dependency ordering, dynamic endpoint discovery, all 22
   tests with CI settings, and explicit AppHost/container cleanup are validated.
-- [ ] Stage 5: CI and documentation.
+- [x] Stage 5: CI and documentation. Added the independent full-stack CI job and
+  local diagnostics, preserved the production schedule, and verified explicit
+  production-target validation. Validated workflow YAML, all 120 unit tests with
+  coverage thresholds, all 202 existing smoke checks, schema drift rejection,
+  target/report guards, lint/types, and diagnostic capture plus cleanup on an
+  intentional local runner failure. The GitHub-hosted workflow awaits a push.

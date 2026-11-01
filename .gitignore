@@ -30,3 +30,4 @@ supabase/.temp/
 
 # Aspire generated SDK, logs, and local runtime state
 .aspire/
+.local/

@@ -100,7 +100,8 @@ TeilFair uses **capability-based security** instead of user accounts:
 
 - Node.js 26 (used in CI), or the Node.js 24 line starting at 24.3
 - pnpm 12.16.1 (pinned in `package.json`)
-- A Supabase project (free tier works)
+- Docker Desktop (Linux containers) for local Supabase and full-stack tests
+- A hosted Supabase project only when working against a deployed backend
 - For mobile development: the project-local Expo CLI (`pnpm mobile`)
 - For iOS development: Xcode
 - For Android development: Android Studio
@@ -118,10 +119,24 @@ for upgraded versions, compatibility constraints, and remaining audit findings.
 
 ### 2. Set Up Supabase
 
+For local development, no hosted project or credentials are required:
+
+```bash
+pnpm aspire:start
+```
+
+Open the printed dashboard link and follow the `web` resource endpoint. This
+starts local Supabase, applies migrations, and injects its public settings into
+Vite. Run `pnpm test:stack` for the full-stack API and desktop/mobile browser suite.
+See [local development and testing](docs/local-testing.md) for setup and cleanup,
+and [schema-first database development](docs/database-workflow.md) for DB changes.
+
+The following instructions apply when configuring a hosted project:
+
 1. Create a new project at [supabase.com](https://supabase.com) (free tier is fine)
 2. Navigate to the SQL Editor
 3. Run migrations `001` through `006` from `supabase/migrations/` in order in the SQL Editor.
-4. For an existing database, run only migrations you have not applied. See [the security rollout instructions](docs/security-rollout.md); no database recreation is needed.
+4. For an existing database, run only migrations you have not applied; no database recreation is needed. Future changes start in `supabase/schemas/` and generate incremental migrations as described in [the database workflow](docs/database-workflow.md).
 5. In Settings > API, copy:
    - **Project URL**: `https://[project-id].supabase.co`
    - **Anon Public Key**: The public API key
@@ -219,6 +234,10 @@ language, and theme persistence without accessing a database. Mobile export vali
 JavaScript/Hermes bundles for Android, iOS, and web; device builds are a separate check.
 
 **Run Web System Tests (Playwright)**:
+
+For comprehensive disposable local tests, use `pnpm test:stack`. The suite below
+is the separate production monitoring suite; its scheduled workflow still targets
+the production `BASE_URL` repository variable.
 ```bash
 pnpm --filter @teilfair/web exec playwright install
 pnpm --filter @teilfair/web run test:system

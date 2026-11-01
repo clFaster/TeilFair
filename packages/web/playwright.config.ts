@@ -1,5 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
+import { productionTarget } from '../../scripts/lib/production-target.mjs';
+
+// Validate workflow-provided configuration before loading developer .env files.
+if (process.env.SYSTEM_TEST_REQUIRE_PRODUCTION === '1') {
+  process.env.SYSTEM_TEST_BASE_URL = productionTarget(process.env.SYSTEM_TEST_BASE_URL);
+}
 
 loadEnv({ path: '.env.systemtest.local', override: false, quiet: true });
 loadEnv({ path: '.env.systemtest', override: false, quiet: true });

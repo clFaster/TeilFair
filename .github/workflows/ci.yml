@@ -7,6 +7,73 @@ on:
     branches: [main, develop]
 
 jobs:
+  full-stack-tests:
+    name: Local Supabase and Aspire E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+        with:
+          cache: true
+
+      - name: Install dependencies including pinned Aspire and Supabase CLIs
+        run: pnpm install --frozen-lockfile
+
+      - name: Install locked AppHost tooling
+        run: pnpm --dir aspire-apphost install --frozen-lockfile
+
+      - name: Verify local and production target guards
+        run: pnpm test:local:targets
+
+      - name: Verify declarative schemas match migration history
+        run: pnpm db:check
+
+      - name: Restore generated Aspire SDK
+        run: pnpm aspire:restore
+
+      - name: Typecheck AppHost
+        run: pnpm aspire:build
+
+      - name: Lint AppHost
+        run: pnpm --dir aspire-apphost run lint
+
+      - name: Install Playwright browser
+        run: pnpm --filter @teilfair/web exec playwright install --with-deps chromium
+
+      # Creates only disposable local capabilities; no hosted secrets are provided.
+      - name: Run real API and desktop/mobile E2E tests
+        run: pnpm test:stack
+
+      - name: Upload local test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: local-full-stack-diagnostics
+          path: |
+            packages/web/playwright-report-local
+            packages/web/test-results-local
+            .local/test-diagnostics
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Ensure local resources are stopped
+        if: always()
+        continue-on-error: true
+        run: pnpm local:stop
+
   build-and-test:
     runs-on: ubuntu-latest
 
