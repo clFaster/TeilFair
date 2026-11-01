@@ -27,3 +27,6 @@ packages/web/playwright-report-local/
 
 # Local Supabase CLI linkage and project metadata
 supabase/.temp/
+
+# Aspire generated SDK, logs, and local runtime state
+.aspire/

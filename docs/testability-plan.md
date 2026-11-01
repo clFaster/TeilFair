@@ -65,5 +65,7 @@ Git identity.
 - [x] Stage 3: integration and browser tests. All 22 API/desktop/mobile checks pass
   against real Supabase and the production build; web lint and TypeScript checks
   pass. The local launcher adjusts preview CSP for its validated loopback API.
-- [ ] Stage 4: TypeScript Aspire orchestration.
+- [x] Stage 4: TypeScript Aspire orchestration. Pinned CLI and generated SDK restore,
+  AppHost typecheck/lint, dependency ordering, dynamic endpoint discovery, all 22
+  tests with CI settings, and explicit AppHost/container cleanup are validated.
 - [ ] Stage 5: CI and documentation.
