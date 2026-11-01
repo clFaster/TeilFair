@@ -45,7 +45,7 @@ for (const access of ['missing', 'wrong', 'other-group', 'reader'] as const) {
   });
 }
 
-test('writer CRUD persists and expense deletion cascades to payers and splits', async ({ backend, group, members }) => {
+test('writer CRUD persists and deleted expense data is no longer visible', async ({ backend, group, members }) => {
   const expense = await backend.expense(group, members);
   const [updated] = await backend.rows('PATCH', `expenses?id=eq.${expense.id}`, group.writeToken,
     { description: 'Updated dinner', total_amount: 40 });
@@ -53,6 +53,7 @@ test('writer CRUD persists and expense deletion cascades to payers and splits', 
   await backend.rows('PATCH', `expense_payers?id=eq.${expense.payers[0].id}`, group.writeToken, { amount: 40 });
   expect(await backend.rows('GET', `expenses?id=eq.${expense.id}`, group.readToken)).toHaveLength(1);
   await backend.rows('DELETE', `expenses?id=eq.${expense.id}`, group.writeToken);
+  // Physical cascade deletion is checked without RLS in supabase/tests/expense_cascade.sql.
   for (const table of ['expense_payers', 'expense_splits']) {
     expect(await backend.rows('GET', `${table}?expense_id=eq.${expense.id}`, group.writeToken)).toEqual([]);
   }

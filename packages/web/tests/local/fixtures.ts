@@ -72,9 +72,15 @@ export class LocalBackend {
   }
 
   async dispose() {
+    const errors: unknown[] = [];
     for (const group of this.groups) {
-      await this.rows('DELETE', `groups?id=eq.${group.id}&select=id`, group.writeToken);
+      try {
+        await this.rows('DELETE', `groups?id=eq.${group.id}&select=id`, group.writeToken);
+      } catch (error) {
+        errors.push(error);
+      }
     }
+    if (errors.length) throw new AggregateError(errors, 'Failed to clean up local test groups.');
   }
 }
 
