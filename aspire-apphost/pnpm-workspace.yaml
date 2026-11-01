@@ -1,0 +1,6 @@
+# Aspire installs its TypeScript host with --ignore-workspace. Keep its lockfile
+# and build permission local to this tooling package.
+packages:
+  - '.'
+allowBuilds:
+  esbuild: true

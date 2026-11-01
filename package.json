@@ -10,6 +10,18 @@
     "packages/*"
   ],
   "scripts": {
+    "test:stack": "node scripts/test-local-stack.mjs",
+    "local:stop": "node scripts/stop-local.mjs",
+    "test:local": "pnpm --filter @teilfair/web run test:local",
+    "local:web": "node scripts/local-web.mjs dev",
+    "local:preview": "node scripts/local-web.mjs build-preview",
+    "local:check": "node scripts/check-local-environment.mjs",
+    "test:local:targets": "node --test --test-isolation=none scripts/test-local-targets.mjs",
+    "db:start": "node scripts/start-local-backend.mjs",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset --local",
+    "db:diff": "supabase db schema declarative sync --schema public,private --no-apply",
+    "db:check": "node scripts/check-db-schema.mjs",
     "web": "pnpm --filter @teilfair/web run dev",
     "mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run start",
     "build:shared": "pnpm --filter @teilfair/shared run build",
@@ -24,11 +36,16 @@
     "typecheck:mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run typecheck",
     "export:mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run export",
     "test:smoke": "pnpm --filter @teilfair/web run test:smoke",
-    "build": "pnpm --filter @teilfair/shared run build && pnpm --filter @teilfair/web run build"
+    "build": "pnpm --filter @teilfair/shared run build && pnpm --filter @teilfair/web run build",
+    "aspire:start": "node scripts/aspire.mjs start",
+    "aspire:restore": "node scripts/aspire.mjs restore",
+    "aspire:build": "pnpm --dir aspire-apphost run aspire:build",
+    "aspire:dev": "pnpm --dir aspire-apphost run aspire:dev"
   },
   "devDependencies": {
+    "@microsoft/aspire-cli": "13.6.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "supabase": "^2.122.0",
+    "supabase": "2.122.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

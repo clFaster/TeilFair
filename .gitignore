@@ -21,6 +21,13 @@ packages/shared/dist/
 packages/web/playwright-report/
 packages/web/test-results/
 packages/web/dist-smoke/
+packages/web/dist-local/
+packages/web/test-results-local/
+packages/web/playwright-report-local/
 
 # Local Supabase CLI linkage and project metadata
 supabase/.temp/
+
+# Aspire generated SDK, logs, and local runtime state
+.aspire/
+.local/

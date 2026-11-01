@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { assertLocalUrl } from '../../scripts/lib/local-environment.mjs';
 
 // Exercise the deployment's security headers when testing the production build.
 const deployment = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../vercel.json'), 'utf8')) as {
@@ -10,6 +11,15 @@ const deployment = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '..
 const previewHeaders = Object.fromEntries(
   deployment.headers.find(entry => entry.source === '/(.*)')!.headers.map(({ key, value }) => [key, value])
 );
+
+// Local production-build tests need to connect to the CLI-managed HTTP backend.
+// Only the local launcher sets this flag; hosted deployment headers stay in vercel.json.
+if (process.env.TEILFAIR_LOCAL_PREVIEW === '1') {
+  const backend = assertLocalUrl(process.env.VITE_SUPABASE_URL ?? '');
+  previewHeaders['Content-Security-Policy'] = previewHeaders['Content-Security-Policy']
+    .replace("connect-src 'self'", `connect-src 'self' ${backend}`)
+    .replace('; upgrade-insecure-requests', '');
+}
 
 /**
  * Build-only minification of CSS custom property names: the descriptive design

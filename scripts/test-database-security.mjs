@@ -40,7 +40,9 @@ try {
   sql(migration('006_private_access_helper.sql'));
   sql(migration('006_private_access_helper.sql')); // Safe to reapply.
   const assertions = readFileSync(new URL('../supabase/tests/capability_access.sql', import.meta.url), 'utf8');
+  const cascadeAssertions = readFileSync(new URL('../supabase/tests/expense_cascade.sql', import.meta.url), 'utf8');
   sql(assertions);
+  sql(cascadeAssertions);
   // Reproduce an interrupted old reset: policies removed and RLS disabled.
   sql(`DO $$ DECLARE p record; BEGIN
     FOR p IN SELECT tablename,policyname FROM pg_policies WHERE schemaname='public' LOOP
@@ -56,7 +58,8 @@ try {
   sql(migration('004_harden_capability_access.sql')); // Safe to reapply.
   sql(migration('006_private_access_helper.sql'));
   sql(assertions);
-  console.log('Database security assertions passed, including reset recovery and reapplication.');
+  sql(cascadeAssertions);
+  console.log('Database security assertions passed, including cascades, reset recovery and reapplication.');
 } finally {
   docker(['rm', '--force', container], undefined, true);
 }
