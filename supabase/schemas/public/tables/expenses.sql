@@ -17,6 +17,10 @@ CREATE INDEX idx_expenses_date ON public.expenses USING btree (expense_date);
 
 CREATE INDEX idx_expenses_group_id ON public.expenses USING btree (group_id);
 
+CREATE TRIGGER prevent_group_reassignment
+BEFORE UPDATE ON public.expenses
+FOR EACH ROW EXECUTE FUNCTION private.prevent_group_reassignment();
+
 CREATE POLICY "Delete expenses with write token" ON "public"."expenses"
   FOR DELETE
   TO PUBLIC

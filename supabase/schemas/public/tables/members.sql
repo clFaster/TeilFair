@@ -12,6 +12,10 @@ ALTER TABLE "public"."members"
 
 CREATE INDEX idx_members_group_id ON public.members USING btree (group_id);
 
+CREATE TRIGGER prevent_group_reassignment
+BEFORE UPDATE ON public.members
+FOR EACH ROW EXECUTE FUNCTION private.prevent_group_reassignment();
+
 CREATE POLICY "Delete members with write token" ON "public"."members"
   FOR DELETE
   TO PUBLIC

@@ -63,13 +63,30 @@ test('writer CRUD persists and deleted expense data is no longer visible', async
   expect(await backend.rows('GET', `members?id=eq.${members[0].id}`, group.writeToken)).toEqual([]);
 });
 
-test('moving a member into another group is denied by RLS', async ({ backend, group, members }) => {
+test('moving a member into another group is denied', async ({ backend, group, members }) => {
   const other = await backend.createGroup();
   const result = await backend.send('PATCH', `members?id=eq.${members[0].id}`, group.writeToken, { group_id: other.id });
-  expect(result.status()).toBe(401);
-  expect(await result.json()).toMatchObject({ code: '42501' });
+  expect(result.status()).toBe(400);
+  expect(await result.json()).toMatchObject({ code: '23514' });
   const [member] = await backend.rows('GET', `members?id=eq.${members[0].id}`, group.writeToken);
   expect(member.group_id).toBe(group.id);
+});
+
+test('expense participants must belong to the expense group', async ({ backend, group, members }) => {
+  const expense = await backend.expense(group, members);
+  const other = await backend.createGroup();
+  const [foreign] = await backend.members(other);
+  for (const table of ['expense_payers', 'expense_splits']) {
+    const values = table === 'expense_payers' ? { amount: 10 } : { share: 1, share_type: 'ratio' };
+    const response = await backend.send('POST', table, group.writeToken,
+      { expense_id: expense.id, member_id: foreign.id, ...values });
+    expect(response.status()).toBe(400);
+    expect(await response.json()).toMatchObject({ code: '23514' });
+    const update = await backend.send('PATCH', `${table}?expense_id=eq.${expense.id}`, group.writeToken,
+      { member_id: foreign.id });
+    expect(update.status()).toBe(400);
+    expect(await update.json()).toMatchObject({ code: '23514' });
+  }
 });
 
 test('invalid group tokens and expense amounts fail database constraints', async ({ backend, group }) => {

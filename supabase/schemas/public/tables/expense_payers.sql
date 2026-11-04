@@ -17,6 +17,10 @@ CREATE INDEX idx_expense_payers_expense_id ON public.expense_payers USING btree 
 
 CREATE INDEX idx_expense_payers_member_id ON public.expense_payers USING btree (member_id);
 
+CREATE TRIGGER enforce_expense_member_group
+BEFORE INSERT OR UPDATE ON public.expense_payers
+FOR EACH ROW EXECUTE FUNCTION private.enforce_expense_member_group();
+
 CREATE POLICY "Delete expense_payers with write token" ON "public"."expense_payers"
   FOR DELETE
   TO PUBLIC
