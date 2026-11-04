@@ -104,23 +104,23 @@ export function createGroupStoreState(
     return { ...state, group: state.group, token: state.token,
       isCurrent: () => currentGeneration === generation };
   };
-  const updateRecentGroupStats = (groupId: string, overrides?: {
+  const updateRecentGroupStats = (groupId: string, overrides: {
     members?: Member[];
     expenses?: Expense[];
     name?: string;
     currency?: string;
   }) => {
     const state = get();
-    const members = overrides?.members ?? state.members;
-    const expenses = overrides?.expenses ?? state.expenses;
+    const members = overrides.members ?? state.members;
+    const expenses = overrides.expenses ?? state.expenses;
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
 
     const recentGroups = state.recentGroups.map((group) =>
       group.id === groupId
         ? {
             ...group,
-            name: overrides?.name ?? group.name,
-            currency: overrides?.currency ?? group.currency,
+            name: overrides.name ?? group.name,
+            currency: overrides.currency ?? group.currency,
             memberCount: members.length,
             expenseCount: expenses.length,
             totalExpenses,
@@ -307,9 +307,7 @@ export function createGroupStoreState(
       set({
         members: updatedMembers,
       });
-      if (group) {
-        updateRecentGroupStats(group.id, { members: updatedMembers });
-      }
+      updateRecentGroupStats(group.id, { members: updatedMembers });
     },
 
     addExpense: async (input) => {
@@ -347,9 +345,7 @@ export function createGroupStoreState(
         settlements,
       });
 
-      if (group) {
-        updateRecentGroupStats(group.id, { expenses: newExpenses });
-      }
+      updateRecentGroupStats(group.id, { expenses: newExpenses });
     },
 
     deleteExpense: async (expenseId) => {
@@ -366,9 +362,7 @@ export function createGroupStoreState(
         settlements,
       });
 
-      if (group) {
-        updateRecentGroupStats(group.id, { expenses: newExpenses });
-      }
+      updateRecentGroupStats(group.id, { expenses: newExpenses });
     },
 
     clearGroup: () => {

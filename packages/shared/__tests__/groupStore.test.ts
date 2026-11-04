@@ -7,8 +7,9 @@ import { expense, expenseInput, group, members } from './fixtures';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(complete => { resolve = complete; });
-  return { promise, resolve };
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((complete, fail) => { resolve = complete; reject = fail; });
+  return { promise, resolve, reject };
 }
 
 function setup() {
@@ -107,6 +108,38 @@ describe('loading groups', () => {
     expect(get()).toMatchObject({ group: null, loading: false, error: 'Group not found', recentGroups: [] });
   });
 
+  it('ignores a permission lookup superseded by a newer load', async () => {
+    const { api, get } = setup();
+    const permission = deferred<'read' | 'write' | null>();
+    api.getTokenPermission.mockReturnValueOnce(permission.promise);
+    const staleLoad = get().loadGroup('old-group', 'old-token');
+    await vi.waitFor(() => expect(api.getTokenPermission).toHaveBeenCalledOnce());
+
+    api.getGroup.mockResolvedValue({ ...group, id: 'new-group' });
+    expect(await get().loadGroup('new-group', 'new-token')).toBe(true);
+    const currentState = snapshot(get());
+    permission.resolve('write');
+
+    expect(await staleLoad).toBe(false);
+    expect(snapshot(get())).toEqual(currentState);
+  });
+
+  it('ignores a permission lookup failure after a newer load supersedes it', async () => {
+    const { api, get } = setup();
+    const permission = deferred<'read' | 'write' | null>();
+    api.getTokenPermission.mockReturnValueOnce(permission.promise);
+    const staleLoad = get().loadGroup('old-group', 'old-token');
+    await vi.waitFor(() => expect(api.getTokenPermission).toHaveBeenCalledOnce());
+
+    api.getGroup.mockResolvedValue({ ...group, id: 'new-group' });
+    expect(await get().loadGroup('new-group', 'new-token')).toBe(true);
+    const currentState = snapshot(get());
+    permission.reject(new Error('Stale permission lookup failed'));
+
+    expect(await staleLoad).toBe(false);
+    expect(snapshot(get())).toEqual(currentState);
+  });
+
   it.each(['getTokenPermission', 'getGroup', 'getMembers', 'getExpenses'] as const)('handles %s failure without partially installing data', async method => {
     const { api, get } = setup();
     api[method].mockRejectedValue(new Error('Network unavailable'));
@@ -144,6 +177,40 @@ describe('creating and maintaining groups', () => {
     await expect(get().createGroup('Trip')).rejects.toBe(failure);
     expect(get()).toMatchObject({ loading: false, group: null, recentGroups: [],
       error: failure instanceof Error ? failure.message : 'Failed to create group' });
+  });
+
+  it('retains a created group in recent history when creation is superseded', async () => {
+    const { api, get } = setup();
+    const pending = deferred<typeof group>();
+    const created = { ...group, id: 'new-group', name: 'New group' };
+    api.createGroup.mockReturnValueOnce(pending.promise);
+    const creation = get().createGroup('New group');
+    await vi.waitFor(() => expect(api.createGroup).toHaveBeenCalledOnce());
+    get().clearGroup();
+    const clearedState = snapshot(get());
+
+    pending.resolve(created);
+
+    expect(await creation).toEqual(created);
+    expect(get()).toMatchObject({ group: null, members: [], expenses: [], permission: null, token: null,
+      loading: false, recentGroups: [expect.objectContaining({ id: created.id, token: created.writeToken })] });
+    expect(snapshot(get())).not.toEqual(clearedState);
+  });
+
+  it('does not set an error when superseded creation fails', async () => {
+    const { api, get } = setup();
+    const pending = deferred<typeof group>();
+    const failure = new Error('Creation failed after cancellation');
+    api.createGroup.mockReturnValueOnce(pending.promise);
+    const creation = get().createGroup('New group');
+    await vi.waitFor(() => expect(api.createGroup).toHaveBeenCalledOnce());
+    get().clearGroup();
+    const clearedState = snapshot(get());
+
+    pending.reject(failure);
+
+    await expect(creation).rejects.toBe(failure);
+    expect(snapshot(get())).toEqual(clearedState);
   });
 
   it('updates group details and recent statistics while retaining other history', async () => {
@@ -234,6 +301,14 @@ describe('mutation failure handling', () => {
     expect(api[method]).not.toHaveBeenCalled();
   });
 
+  it.each(mutations)('$action rejects while group state is loading', async ({ method, run }) => {
+    const { api, get, set } = setup();
+    await get().loadGroup(group.id, group.writeToken);
+    set({ loading: true });
+    await expect(run(get())).rejects.toThrow('Write access required');
+    expect(api[method]).not.toHaveBeenCalled();
+  });
+
   it.each(mutations)('$action preserves state if its API request fails', async ({ method, run }) => {
     const { api, get } = setup();
     await get().loadGroup(group.id, group.writeToken);
@@ -295,6 +370,31 @@ describe('authorization transitions', () => {
     pending.resolve({ ...members[0], id: 'late-member' });
     await mutation;
     expect(snapshot(get())).toEqual(before);
+  });
+
+  it.each(mutations)('$action cannot update state after the group is cleared', async ({ method, run }) => {
+    const { api, get } = setup();
+    await get().loadGroup(group.id, group.writeToken);
+    const pending = deferred<unknown>();
+    api[method].mockReturnValueOnce(pending.promise as never);
+    const mutation = run(get());
+    await vi.waitFor(() => expect(api[method]).toHaveBeenCalledOnce());
+    get().clearGroup();
+    const clearedState = snapshot(get());
+
+    pending.resolve(undefined);
+    await mutation;
+
+    expect(snapshot(get())).toEqual(clearedState);
+  });
+
+  it('rejects updating an expense that is not in the loaded group', async () => {
+    const { api, get } = setup();
+    await get().loadGroup(group.id, group.writeToken);
+
+    await expect(get().updateExpense('missing-expense', expenseInput(expense())))
+      .rejects.toThrow('Expense not found');
+    expect(api.updateExpense).not.toHaveBeenCalled();
   });
 });
 
