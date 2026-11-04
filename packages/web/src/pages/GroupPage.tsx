@@ -63,14 +63,17 @@ export function GroupPage() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const {
-    group,
+    group: loadedGroup,
+    token: loadedToken,
     members,
     expenses,
     permission,
     loading,
     error,
-    loadGroup
+    loadGroup,
+    clearGroup,
   } = useGroupStore();
+  const group = loadedGroup?.id === groupId && loadedToken === token ? loadedGroup : null;
 
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const [showAddExpense, setShowAddExpense] = useState(false);
@@ -97,8 +100,11 @@ export function GroupPage() {
   useEffect(() => {
     if (groupId && token) {
       loadGroup(groupId, token);
+    } else {
+      clearGroup();
     }
-  }, [groupId, token, loadGroup]);
+    return clearGroup;
+  }, [groupId, token, loadGroup, clearGroup]);
 
   // The empty-state CTA unmounts its own button, so hand focus to the Members tab instead.
   useEffect(() => {

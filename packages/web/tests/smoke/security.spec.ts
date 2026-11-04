@@ -4,6 +4,21 @@ import { GROUP_ID, READ_TOKEN, WRITE_TOKEN, groupUrl, mockBackend } from './fixt
 
 test.beforeEach(async ({ page }) => { await mockBackend(page); });
 
+test('invalid navigation clears active data without deleting the saved capability', async ({ page }) => {
+  await page.goto(groupUrl());
+  await expect(page.getByTestId('expense-card').first()).toBeVisible();
+  await page.evaluate(() => { location.hash = 't=invalid-token'; });
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByTestId('expense-card')).toHaveCount(0);
+  await expect(page.getByTestId('add-expense-button')).toHaveCount(0);
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('teilfair-storage')!));
+  expect(stored.state.recentGroups[0].token).toBe(WRITE_TOKEN);
+  await page.locator('a.logo').click();
+  await page.reload();
+  await page.locator('.recent-card-open').click();
+  await expect(page.getByTestId('expense-card').first()).toBeVisible();
+});
+
 test('creates a group with its write capability header and only selects metadata', async ({ page }) => {
   const creation = page.waitForRequest(request => request.method() === 'POST' && new URL(request.url()).pathname === '/rest/v1/groups');
   await page.goto('/');

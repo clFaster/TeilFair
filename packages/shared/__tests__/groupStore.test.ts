@@ -5,6 +5,12 @@ import {
 } from '../src/store/groupStore';
 import { expense, expenseInput, group, members } from './fixtures';
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(complete => { resolve = complete; });
+  return { promise, resolve };
+}
+
 function setup() {
   const api = {
     createGroup: vi.fn<GroupStoreApi['createGroup']>().mockResolvedValue(group),
@@ -215,6 +221,13 @@ const mutations = [
 ] as const;
 
 describe('mutation failure handling', () => {
+  it.each(mutations)('$action rejects read-only access before calling the API', async ({ method, run }) => {
+    const { api, get } = setup();
+    api.getTokenPermission.mockResolvedValue('read');
+    await get().loadGroup(group.id, group.readToken);
+    await expect(run(get())).rejects.toThrow('Write access required');
+    expect(api[method]).not.toHaveBeenCalled();
+  });
   it.each(mutations)('$action requires a loaded group before calling the API', async ({ method, run }) => {
     const { api, get } = setup();
     await expect(run(get())).rejects.toThrow('No group loaded');
@@ -227,6 +240,60 @@ describe('mutation failure handling', () => {
     const before = snapshot(get());
     api[method].mockRejectedValue(new Error('Write rejected'));
     await expect(run(get())).rejects.toThrow('Write rejected');
+    expect(snapshot(get())).toEqual(before);
+  });
+});
+
+describe('authorization transitions', () => {
+  it('clears active authority immediately and retains saved links after a failed load', async () => {
+    const { api, get } = setup();
+    await get().loadGroup(group.id, group.writeToken);
+    const history = structuredClone(get().recentGroups);
+    api.getTokenPermission.mockResolvedValue(null);
+    const loading = get().loadGroup('other', 'invalid');
+    expect(get()).toMatchObject({ group: null, token: null, permission: null, members: [], expenses: [], loading: true });
+    await expect(get().addMember('Wrong group')).rejects.toThrow('No group loaded');
+    expect(await loading).toBe(false);
+    expect(get().recentGroups).toEqual(history);
+    expect(api.addMember).not.toHaveBeenCalled();
+  });
+
+  it('discards a late writer load after a newer reader load', async () => {
+    const { api, get } = setup();
+    const old = deferred<typeof group | null>();
+    api.getGroup.mockReturnValueOnce(old.promise);
+    const first = get().loadGroup(group.id, group.writeToken);
+    await vi.waitFor(() => expect(api.getGroup).toHaveBeenCalledTimes(1));
+    api.getTokenPermission.mockResolvedValue('read');
+    await get().loadGroup(group.id, group.readToken);
+    old.resolve(group);
+    expect(await first).toBe(false);
+    expect(get()).toMatchObject({ permission: 'read', token: group.readToken });
+  });
+
+  it('forgetting a pending group prevents it from being restored by a late response', async () => {
+    const { api, get } = setup();
+    const pending = deferred<typeof group | null>();
+    api.getGroup.mockReturnValue(pending.promise);
+    const loading = get().loadGroup(group.id, group.writeToken);
+    await vi.waitFor(() => expect(api.getGroup).toHaveBeenCalled());
+    get().removeFromRecent(group.id);
+    pending.resolve(group);
+    expect(await loading).toBe(false);
+    expect(get()).toMatchObject({ group: null, token: null, recentGroups: [], loading: false });
+  });
+
+  it('a late mutation cannot add data to a newly loaded group', async () => {
+    const { api, get } = setup();
+    await get().loadGroup(group.id, group.writeToken);
+    const pending = deferred<typeof members[number]>();
+    api.addMember.mockReturnValue(pending.promise);
+    const mutation = get().addMember('Old group');
+    api.getGroup.mockResolvedValue({ ...group, id: 'new-group' });
+    await get().loadGroup('new-group', 'new-token');
+    const before = snapshot(get());
+    pending.resolve({ ...members[0], id: 'late-member' });
+    await mutation;
     expect(snapshot(get())).toEqual(before);
   });
 });

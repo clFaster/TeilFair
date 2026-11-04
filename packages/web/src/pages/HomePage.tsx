@@ -80,7 +80,6 @@ export function HomePage() {
     if (await loadGroup(groupId, token)) {
       navigate(createCapabilityPath(groupId, token));
     } else {
-      removeFromRecent(groupId);
       setError(t('error.groupNoLongerAccessible'));
     }
   };

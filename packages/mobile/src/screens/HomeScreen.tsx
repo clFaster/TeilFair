@@ -85,7 +85,6 @@ export function HomeScreen() {
     if (success) {
       navigation.navigate('Group', { groupId, token });
     } else {
-      removeFromRecent(groupId);
       Alert.alert(t('common.error'), t('error.groupNoLongerAccessible'));
     }
   };

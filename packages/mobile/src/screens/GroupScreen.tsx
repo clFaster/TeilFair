@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Clipboard from 'expo-clipboard';
@@ -37,7 +37,8 @@ export function GroupScreen() {
   const insets = useSafeAreaInsets();
   
   const {
-    group,
+    group: loadedGroup,
+    token: loadedToken,
     members,
     expenses,
     memberBalances,
@@ -46,11 +47,13 @@ export function GroupScreen() {
     loading,
     error,
     loadGroup,
+    clearGroup,
     addMember,
     updateMember,
     deleteMember,
     deleteExpense,
   } = useGroupStore();
+  const group = loadedGroup?.id === groupId && loadedToken === token ? loadedGroup : null;
   
   const [activeTab, setActiveTab] = useState<Tab>('expenses');
   const [newMemberName, setNewMemberName] = useState('');
@@ -58,11 +61,15 @@ export function GroupScreen() {
   const [editingMemberName, setEditingMemberName] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (token) {
       loadGroup(groupId, token);
+    } else {
+      clearGroup();
     }
-  }, [groupId, token]);
+    // Screens above this one (e.g. AddExpense) still use the current store.
+    // A later group load invalidates this load through the store generation.
+  }, [groupId, token, loadGroup, clearGroup]));
 
   const canWrite = permission === 'write';
 

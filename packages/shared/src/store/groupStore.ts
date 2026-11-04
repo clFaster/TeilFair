@@ -90,6 +90,20 @@ export function createGroupStoreState(
   set: (partial: Partial<GroupState> | ((state: GroupState) => Partial<GroupState>)) => void,
   get: () => GroupState
 ): GroupState {
+  let generation = 0;
+  let requestedGroupId: string | null = null;
+  const emptyActiveState = () => ({
+    group: null, members: [], expenses: [], permission: null, token: null,
+    memberBalances: [], settlements: [], loading: false, error: null,
+  });
+  const requireWriter = () => {
+    const state = get();
+    if (!state.group || !state.token) throw new Error('No group loaded');
+    if (state.loading || state.permission !== 'write') throw new Error('Write access required');
+    const currentGeneration = generation;
+    return { ...state, group: state.group, token: state.token,
+      isCurrent: () => currentGeneration === generation };
+  };
   const updateRecentGroupStats = (groupId: string, overrides?: {
     members?: Member[];
     expenses?: Expense[];
@@ -130,11 +144,14 @@ export function createGroupStoreState(
     recentGroups: [],
 
     loadGroup: async (groupId: string, token: string) => {
-      set({ loading: true, error: null });
+      const currentGeneration = ++generation;
+      requestedGroupId = groupId;
+      set({ ...emptyActiveState(), loading: true });
       
       try {
         // Get permission level first
         const permission = await api.getTokenPermission(groupId, token);
+        if (currentGeneration !== generation) return false;
         if (!permission) {
           set({ loading: false, error: 'Invalid token or group not found' });
           return false;
@@ -146,6 +163,7 @@ export function createGroupStoreState(
           api.getMembers(groupId, token),
           api.getExpenses(groupId, token),
         ]);
+        if (currentGeneration !== generation) return false;
         
         if (!group) {
           set({ loading: false, error: 'Group not found' });
@@ -188,6 +206,7 @@ export function createGroupStoreState(
         
         return true;
       } catch (error) {
+        if (currentGeneration !== generation) return false;
         set({ 
           loading: false, 
           error: error instanceof Error ? error.message : 'Failed to load group' 
@@ -197,13 +216,15 @@ export function createGroupStoreState(
     },
 
     createGroup: async (name: string, currency: string = 'EUR') => {
-      set({ loading: true, error: null });
+      const currentGeneration = ++generation;
+      requestedGroupId = null;
+      set({ ...emptyActiveState(), loading: true });
       
       try {
         const group = await api.createGroup(name, currency);
         
         // Add to recent groups with write permission
-        const recentGroups = get().recentGroups;
+        const recentGroups = get().recentGroups.filter(recent => recent.id !== group.id);
         recentGroups.unshift({
           id: group.id,
           name: group.name,
@@ -215,6 +236,12 @@ export function createGroupStoreState(
           totalExpenses: 0,
           currency: group.currency,
         });
+        // Even if navigation changed, retain the newly created capability.
+        if (currentGeneration !== generation) {
+          set({ recentGroups });
+          return group;
+        }
+        requestedGroupId = group.id;
         
         set({
           group,
@@ -230,6 +257,7 @@ export function createGroupStoreState(
         
         return group;
       } catch (error) {
+        if (currentGeneration !== generation) throw error;
         set({ 
           loading: false, 
           error: error instanceof Error ? error.message : 'Failed to create group' 
@@ -239,10 +267,10 @@ export function createGroupStoreState(
     },
 
     updateGroup: async (updates) => {
-      const { group, token } = get();
-      if (!group || !token) throw new Error('No group loaded');
+      const { group, token, isCurrent } = requireWriter();
       
       const updated = await api.updateGroup(group.id, token, updates);
+      if (!isCurrent()) return;
       set({ group: updated });
       
       // Update recent groups
@@ -250,10 +278,10 @@ export function createGroupStoreState(
     },
 
     addMember: async (name: string) => {
-      const { group, token } = get();
-      if (!group || !token) throw new Error('No group loaded');
+      const { group, token, isCurrent } = requireWriter();
       
       const member = await api.addMember(group.id, token, name);
+      if (!isCurrent()) return member;
       const updatedMembers = [...get().members, member];
       set({ members: updatedMembers });
       updateRecentGroupStats(group.id, { members: updatedMembers });
@@ -261,21 +289,21 @@ export function createGroupStoreState(
     },
 
     updateMember: async (memberId: string, name: string) => {
-      const { token, members } = get();
-      if (!token) throw new Error('No group loaded');
+      const { token, isCurrent } = requireWriter();
       
       const updated = await api.updateMember(memberId, token, name);
+      if (!isCurrent()) return;
       set({
-        members: members.map(m => m.id === memberId ? updated : m),
+        members: get().members.map(m => m.id === memberId ? updated : m),
       });
     },
 
     deleteMember: async (memberId: string) => {
-      const { token, members, group } = get();
-      if (!token) throw new Error('No group loaded');
+      const { token, group, isCurrent } = requireWriter();
       
       await api.deleteMember(memberId, token);
-      const updatedMembers = members.filter(m => m.id !== memberId);
+      if (!isCurrent()) return;
+      const updatedMembers = get().members.filter(m => m.id !== memberId);
       set({
         members: updatedMembers,
       });
@@ -285,11 +313,11 @@ export function createGroupStoreState(
     },
 
     addExpense: async (input) => {
-      const { group, token, expenses } = get();
-      if (!group || !token) throw new Error('No group loaded');
+      const { group, token, isCurrent } = requireWriter();
       
       const expense = await api.createExpense(group.id, token, input);
-      const newExpenses = [expense, ...expenses];
+      if (!isCurrent()) return expense;
+      const newExpenses = [expense, ...get().expenses];
       const { memberBalances, settlements } = calculateGroupBalances(newExpenses);
       
       set({
@@ -304,11 +332,11 @@ export function createGroupStoreState(
     },
 
     updateExpense: async (expenseId, input) => {
-      const { token, expenses, group } = get();
-      if (!token) throw new Error('No group loaded');
+      const { token, group, isCurrent } = requireWriter();
       
       const updated = await api.updateExpense(expenseId, token, input);
-      const newExpenses = expenses.map(e => e.id === expenseId ? updated : e);
+      if (!isCurrent()) return;
+      const newExpenses = get().expenses.map(e => e.id === expenseId ? updated : e);
       const { memberBalances, settlements } = calculateGroupBalances(newExpenses);
       
       set({
@@ -323,11 +351,11 @@ export function createGroupStoreState(
     },
 
     deleteExpense: async (expenseId) => {
-      const { token, expenses, group } = get();
-      if (!token) throw new Error('No group loaded');
+      const { token, group, isCurrent } = requireWriter();
       
       await api.deleteExpense(expenseId, token);
-      const newExpenses = expenses.filter(e => e.id !== expenseId);
+      if (!isCurrent()) return;
+      const newExpenses = get().expenses.filter(e => e.id !== expenseId);
       const { memberBalances, settlements } = calculateGroupBalances(newExpenses);
       
       set({
@@ -342,19 +370,13 @@ export function createGroupStoreState(
     },
 
     clearGroup: () => {
-      set({
-        group: null,
-        members: [],
-        expenses: [],
-        permission: null,
-        token: null,
-        memberBalances: [],
-        settlements: [],
-        error: null,
-      });
+      generation++;
+      requestedGroupId = null;
+      set(emptyActiveState());
     },
 
     removeFromRecent: (groupId: string) => {
+      if (requestedGroupId === groupId || get().group?.id === groupId) get().clearGroup();
       set({
         recentGroups: get().recentGroups.filter(g => g.id !== groupId),
       });

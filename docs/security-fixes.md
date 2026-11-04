@@ -25,3 +25,15 @@ regressions are included in the local Playwright suite.
 The CLI's comma-separated schema filter silently missed these changes. Generation
 and consistency checks now inspect the complete declaration tree without that
 filter; the generated migration was inspected before use.
+
+## F3 Active group authorization
+
+Every group load clears active data and write authority, while preserving saved
+links. Superseded requests and mutations cannot reinstall an earlier group's
+state. Both clients render only the group/token matching the current route, and
+the store rejects writes while loading or in read-only mode. Forgetting an active
+or pending group invalidates that load. A failed attempt to reopen a recent group
+no longer deletes its saved token, including during network outages.
+
+Validation includes failed navigation, out-of-order loads, late mutation results,
+reader write attempts, deliberate forgetting, and persistence after reload.
