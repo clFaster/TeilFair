@@ -36,7 +36,9 @@ CREATE POLICY "Update members with write token" ON "public"."members"
   TO PUBLIC
   USING (private.check_group_access(group_id, true));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."members" TO "anon", "authenticated";
+GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE "public"."members" TO "anon", "authenticated";
+
+REVOKE MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE "public"."members" FROM "anon", "authenticated";
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."members" TO "service_role";
 

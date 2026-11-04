@@ -52,7 +52,7 @@ CREATE POLICY "Update expense_splits with write token" ON "public"."expense_spli
   WHERE ((e.id = expense_splits.expense_id) AND private.check_group_access(e.group_id, true)))));
 
 GRANT SELECT ON TABLE "public"."expense_splits" TO "anon", "authenticated";
-REVOKE INSERT, UPDATE, DELETE ON TABLE public.expense_splits FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE public.expense_splits FROM anon, authenticated;
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_splits" TO "service_role";
 

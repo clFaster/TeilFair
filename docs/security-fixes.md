@@ -58,3 +58,15 @@ Validation: `expense_writes.sql` covers invalid totals, the one-cent split bound
 atomic rollback after a failed replacement, revision conflicts, and denied direct
 writes for both API roles. Local API and browser tests exercise the RPC payload and
 the clients' revision handling.
+
+## F5 Least-privilege table and function defaults
+
+The `anon` and `authenticated` roles no longer have `TRUNCATE`, `REFERENCES`,
+`TRIGGER`, or `MAINTAIN` on any application table. Existing CRUD grants and
+restricted group-token column access remain in place. Broad automatic table and
+function grants have been removed at both global and `public` schema default levels;
+new RPCs must receive explicit execution grants.
+
+Validation: `privileges.sql` asserts the four forbidden privileges are absent on
+all five application tables, and that newly created tables and functions receive
+no access for either API role.

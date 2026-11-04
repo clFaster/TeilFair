@@ -63,7 +63,9 @@ REVOKE ALL ("name") ON TABLE "public"."groups" FROM "anon";
 
 GRANT SELECT ("name") ON TABLE "public"."groups" TO "anon";
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."groups" TO "anon";
+GRANT DELETE, INSERT, UPDATE ON TABLE "public"."groups" TO "anon";
+
+REVOKE MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE "public"."groups" FROM "anon";
 
 REVOKE ALL ("created_at") ON TABLE "public"."groups" FROM "authenticated";
 
@@ -81,7 +83,9 @@ REVOKE ALL ("name") ON TABLE "public"."groups" FROM "authenticated";
 
 GRANT SELECT ("name") ON TABLE "public"."groups" TO "authenticated";
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."groups" TO "authenticated";
+GRANT DELETE, INSERT, UPDATE ON TABLE "public"."groups" TO "authenticated";
+
+REVOKE MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE "public"."groups" FROM "authenticated";
 
 REVOKE ALL ON TABLE "public"."groups" FROM "postgres";
 

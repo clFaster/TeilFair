@@ -44,7 +44,7 @@ CREATE POLICY "Update expenses with write token" ON "public"."expenses"
   USING (private.check_group_access(group_id, true));
 
 GRANT DELETE, SELECT ON TABLE "public"."expenses" TO "anon", "authenticated";
-REVOKE INSERT, UPDATE ON TABLE public.expenses FROM anon, authenticated;
+REVOKE INSERT, UPDATE, MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE public.expenses FROM anon, authenticated;
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expenses" TO "service_role";
 
