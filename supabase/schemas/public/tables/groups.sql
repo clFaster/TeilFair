@@ -6,9 +6,10 @@ CREATE TABLE "public"."groups" (
   "write_token" text                     NOT NULL,
   "created_at"  timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT "groups_pkey" PRIMARY KEY (id),
-  CONSTRAINT "read_token_length" CHECK ((length(read_token) >= 32)),
+  CONSTRAINT "groups_name_length" CHECK ((char_length(btrim(name)) BETWEEN 1 AND 100)),
+  CONSTRAINT "read_token_length" CHECK ((char_length(read_token) BETWEEN 32 AND 128)),
   CONSTRAINT "tokens_different" CHECK ((read_token <> write_token)),
-  CONSTRAINT "write_token_length" CHECK ((length(write_token) >= 32))
+  CONSTRAINT "write_token_length" CHECK ((char_length(write_token) BETWEEN 32 AND 128))
 );
 
 ALTER TABLE "public"."groups"

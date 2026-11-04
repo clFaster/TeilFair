@@ -67,6 +67,7 @@ try {
   sql(readFileSync(new URL('../supabase/tests/group_boundaries.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/expense_writes.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/privileges.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/length_limits.sql', import.meta.url), 'utf8'));
   sql(assertions);
   console.log('Database security assertions passed, including cascades, reset recovery and reapplication.');
 } finally {

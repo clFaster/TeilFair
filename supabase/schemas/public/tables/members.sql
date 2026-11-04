@@ -4,7 +4,8 @@ CREATE TABLE "public"."members" (
   "name"       text                     NOT NULL,
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT "members_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE,
-  CONSTRAINT "members_pkey" PRIMARY KEY (id)
+  CONSTRAINT "members_pkey" PRIMARY KEY (id),
+  CONSTRAINT "members_name_length" CHECK ((char_length(btrim(name)) BETWEEN 1 AND 100))
 );
 
 ALTER TABLE "public"."members"

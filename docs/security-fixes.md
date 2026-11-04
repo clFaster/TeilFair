@@ -70,3 +70,13 @@ new RPCs must receive explicit execution grants.
 Validation: `privileges.sql` asserts the four forbidden privileges are absent on
 all five application tables, and that newly created tables and functions receive
 no access for either API role.
+
+## F6 Server-side text length limits
+
+Database constraints now limit group and member names to 1–100 non-whitespace
+characters, expense descriptions to 1–1000, and read/write tokens to 32–128
+characters. The existing `save_expense` RPC continues to cap payer and split
+batches at 200 items each; the new checks also cover direct database writes.
+
+Validation: `length_limits.sql` accepts values at each upper boundary and rejects
+oversized or blank names/descriptions and oversized tokens.
