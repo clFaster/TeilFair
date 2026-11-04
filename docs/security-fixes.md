@@ -80,3 +80,32 @@ batches at 200 items each; the new checks also cover direct database writes.
 
 Validation: `length_limits.sql` accepts values at each upper boundary and rejects
 oversized or blank names/descriptions and oversized tokens.
+
+## F8 Dependency advisories
+
+Expo SDK 58 packages were moved to the patch releases expected by `expo install
+--check` (`expo` 58.0.23 and matching runtime, splash screen, safe-area, and
+`react-dom` versions). The updated `@expo/cli` no longer depends on `zod` 3 or
+`deepmerge`, which resolves the high `zod` and low `deepmerge` advisories without
+overrides.
+
+Two moderate advisories remain as temporary exceptions:
+
+| Dependency | Advisory | Why not fixed now |
+| --- | --- | --- |
+| `glob@13.0.6` | [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4), fixed in 14.0.2 | The latest `@expo/fingerprint` and `@expo/cli` still require `glob ^13`. |
+| `minimatch@10.2.6` | [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), fixed in 11.0.1 | Required as `^10` by Expo tooling and ESLint's `@eslint/config-array`. |
+
+Both are reached only by developer and build tooling (Expo config/fingerprinting
+and ESLint) with patterns from the repository, not by the web bundle, native
+bundles, or any group request. Forcing the next major versions through overrides
+was not applied, following the review's guidance against incompatible overrides.
+Owner: the repository maintainer. Review again by 4 February 2027 or when
+Dependabot offers Expo/ESLint releases that accept the fixed versions.
+
+CI now runs `pnpm audit --audit-level high`, so any new high or critical advisory
+fails the build while these documented moderate exceptions remain visible in the
+audit output.
+
+Validation: `pnpm audit` reports only the two moderate advisories above, and
+`expo install --check` reports no outdated SDK packages.

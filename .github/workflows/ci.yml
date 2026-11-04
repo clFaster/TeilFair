@@ -94,6 +94,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Moderate glob/minimatch exceptions are documented in docs/security-fixes.md (F8).
+      - name: Check dependency advisories
+        run: pnpm audit --audit-level high
+
       - name: Build shared package
         run: pnpm run build:shared
 
