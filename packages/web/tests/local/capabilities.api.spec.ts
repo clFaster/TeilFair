@@ -25,9 +25,6 @@ for (const access of ['missing', 'wrong', 'other-group', 'reader'] as const) {
     const targets = [
       { table: 'groups', id: group.id, patch: { name: 'unauthorized' } },
       { table: 'members', id: members[0].id, patch: { name: 'unauthorized' } },
-      { table: 'expenses', id: expense.id, patch: { description: 'unauthorized' } },
-      { table: 'expense_payers', id: expense.payers[0].id, patch: { amount: 99 } },
-      { table: 'expense_splits', id: expense.splits[0].id, patch: { share: 99 } },
     ];
     for (const target of targets) {
       const path = `${target.table}?id=eq.${target.id}&select=id`;
@@ -36,6 +33,33 @@ for (const access of ['missing', 'wrong', 'other-group', 'reader'] as const) {
       const visible = await backend.rows('GET', path, token);
       expect(visible).toHaveLength(access === 'reader' ? 1 : 0);
       expect(await backend.rows('GET', path, group.writeToken)).toHaveLength(1);
+    }
+    const rpc = await backend.send('POST', 'rpc/save_expense', token, {
+      requested_group_id: group.id,
+      requested_expense_id: expense.id,
+      expected_revision: 1,
+      payload: {
+        description: 'unauthorized', total_amount: 30, expense_date: '2026-10-01T18:30:00Z',
+        payers: [{ member_id: members[0].id, amount: 30 }],
+        splits: [{ member_id: members[0].id, share: 1, share_type: 'ratio' }],
+      },
+    });
+    expect(rpc.status()).toBe(401);
+    expect(await rpc.json()).toMatchObject({ code: '42501' });
+    const directExpenseUpdate = await backend.send('PATCH', `expenses?id=eq.${expense.id}`, token,
+      { description: 'unauthorized' });
+    expect(directExpenseUpdate.status()).toBe(401);
+    expect(await directExpenseUpdate.json()).toMatchObject({ code: '42501' });
+    for (const table of ['expense_payers', 'expense_splits']) {
+      const path = `${table}?id=eq.${table === 'expense_payers' ? expense.payers[0].id : expense.splits[0].id}`;
+      for (const [method, body] of [
+        ['PATCH', table === 'expense_payers' ? { amount: 99 } : { share: 99 }],
+        ['DELETE', undefined],
+      ] as const) {
+        const response = await backend.send(method, path, token, body);
+        expect(response.status()).toBe(401);
+        expect(await response.json()).toMatchObject({ code: '42501' });
+      }
     }
     const insert = await backend.send('POST', 'members', token, { group_id: group.id, name: 'Unauthorized member' });
     expect(insert.status()).toBe(401);
@@ -47,10 +71,19 @@ for (const access of ['missing', 'wrong', 'other-group', 'reader'] as const) {
 
 test('writer CRUD persists and deleted expense data is no longer visible', async ({ backend, group, members }) => {
   const expense = await backend.expense(group, members);
-  const [updated] = await backend.rows('PATCH', `expenses?id=eq.${expense.id}`, group.writeToken,
-    { description: 'Updated dinner', total_amount: 40 });
-  expect(updated).toMatchObject({ description: 'Updated dinner', total_amount: 40 });
-  await backend.rows('PATCH', `expense_payers?id=eq.${expense.payers[0].id}`, group.writeToken, { amount: 40 });
+  const saved = await backend.saveExpense(group, expense.id, {
+    description: 'Updated dinner',
+    total_amount: 40,
+    expense_date: '2026-10-01T18:30:00Z',
+    payers: [{ member_id: members[0].id, amount: 40 }],
+    splits: [{ member_id: members[0].id, share: 1, share_type: 'ratio' }],
+  }, 1);
+  expect(saved.ok()).toBe(true);
+  expect(await saved.json()).toMatchObject({ expense: { description: 'Updated dinner', total_amount: 40, revision: 2 } });
+  const directChildWrite = await backend.send('PATCH', `expense_payers?id=eq.${expense.payers[0].id}`,
+    group.writeToken, { amount: 40 });
+  expect(directChildWrite.status()).toBe(401);
+  expect(await directChildWrite.json()).toMatchObject({ code: '42501' });
   expect(await backend.rows('GET', `expenses?id=eq.${expense.id}`, group.readToken)).toHaveLength(1);
   await backend.rows('DELETE', `expenses?id=eq.${expense.id}`, group.writeToken);
   // Physical cascade deletion is checked without RLS in supabase/tests/expense_cascade.sql.
@@ -77,25 +110,35 @@ test('expense participants must belong to the expense group', async ({ backend, 
   const other = await backend.createGroup();
   const [foreign] = await backend.members(other);
   for (const table of ['expense_payers', 'expense_splits']) {
-    const values = table === 'expense_payers' ? { amount: 10 } : { share: 1, share_type: 'ratio' };
-    const response = await backend.send('POST', table, group.writeToken,
-      { expense_id: expense.id, member_id: foreign.id, ...values });
+    const payload = {
+      description: 'Foreign participant',
+      total_amount: 30,
+      expense_date: '2026-10-01T18:30:00Z',
+      payers: [{ member_id: table === 'expense_payers' ? foreign.id : members[0].id, amount: 30 }],
+      splits: [{ member_id: table === 'expense_splits' ? foreign.id : members[0].id, share: 1, share_type: 'ratio' }],
+    };
+    const response = await backend.saveExpense(group, randomUUID(), payload, 0);
     expect(response.status()).toBe(400);
     expect(await response.json()).toMatchObject({ code: '23514' });
-    const update = await backend.send('PATCH', `${table}?expense_id=eq.${expense.id}`, group.writeToken,
-      { member_id: foreign.id });
+    const update = await backend.saveExpense(group, expense.id, payload, 1);
     expect(update.status()).toBe(400);
     expect(await update.json()).toMatchObject({ code: '23514' });
   }
 });
 
-test('invalid group tokens and expense amounts fail database constraints', async ({ backend, group }) => {
+test('invalid group tokens and expense amounts fail database constraints', async ({ backend, group, members }) => {
   const badGroup = await backend.send('POST', 'groups?select=id', 'short', {
     id: randomUUID(), name: 'Invalid', read_token: 'short', write_token: 'short',
   });
   expect(badGroup.ok()).toBe(false);
-  const badExpense = await backend.send('POST', 'expenses', group.writeToken,
-    { group_id: group.id, description: 'Invalid', total_amount: 0 });
+  const badExpense = await backend.saveExpense(group, randomUUID(), {
+    description: 'Invalid',
+    total_amount: 0,
+    expense_date: '2026-10-01T18:30:00Z',
+    payers: [{ member_id: members[0].id, amount: 0 }],
+    splits: [{ member_id: members[0].id, share: 1, share_type: 'ratio' }],
+  }, 0);
   expect(badExpense.status()).toBe(400);
+  expect(await badExpense.json()).toMatchObject({ code: '22023' });
   expect(await backend.rows('GET', `expenses?group_id=eq.${group.id}`, group.writeToken)).toEqual([]);
 });

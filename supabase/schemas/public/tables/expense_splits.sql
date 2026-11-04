@@ -9,7 +9,7 @@ CREATE TABLE "public"."expense_splits" (
   CONSTRAINT "expense_splits_share_check" CHECK ((share > (0)::numeric)),
   CONSTRAINT "expense_splits_share_type_check" CHECK ((share_type = ANY (ARRAY['ratio'::text, 'fixed'::text, 'percentage'::text]))),
   CONSTRAINT "expense_splits_expense_id_fkey" FOREIGN KEY (expense_id) REFERENCES public.expenses(id) ON DELETE CASCADE,
-  CONSTRAINT "expense_splits_member_id_fkey" FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE CASCADE
+  CONSTRAINT "expense_splits_member_id_fkey" FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE NO ACTION
 );
 
 ALTER TABLE "public"."expense_splits"
@@ -51,7 +51,8 @@ CREATE POLICY "Update expense_splits with write token" ON "public"."expense_spli
    FROM public.expenses e
   WHERE ((e.id = expense_splits.expense_id) AND private.check_group_access(e.group_id, true)))));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_splits" TO "anon", "authenticated";
+GRANT SELECT ON TABLE "public"."expense_splits" TO "anon", "authenticated";
+REVOKE INSERT, UPDATE, DELETE ON TABLE public.expense_splits FROM anon, authenticated;
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_splits" TO "service_role";
 

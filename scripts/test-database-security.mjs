@@ -65,6 +65,7 @@ try {
     if (/^\d{14}_.*\.sql$/.test(name)) sql(migration(name));
   }
   sql(readFileSync(new URL('../supabase/tests/group_boundaries.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/expense_writes.sql', import.meta.url), 'utf8'));
   console.log('Database security assertions passed, including cascades, reset recovery and reapplication.');
 } finally {
   docker(['rm', '--force', container], undefined, true);

@@ -39,6 +39,7 @@ export interface Expense {
   groupId: string;
   description: string;
   totalAmount: number;
+  revision: number;
   date: Date;
   createdAt: Date;
   payers: ExpensePayer[];

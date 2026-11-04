@@ -20,6 +20,7 @@ export function expense(
 ): Expense {
   return {
     id, groupId: group.id, description: id, totalAmount,
+    revision: 1,
     date: new Date('2026-10-03T19:30:00Z'), createdAt: group.createdAt,
     payers: payers.map(([memberId, amount], index) => ({ id: `${id}-p${index}`, expenseId: id, memberId, amount })),
     splits: splits.map(([memberId, share, shareType], index) => ({ id: `${id}-s${index}`, expenseId: id, memberId, share, shareType })),

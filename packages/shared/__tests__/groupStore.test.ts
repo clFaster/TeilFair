@@ -23,7 +23,7 @@ function setup() {
     deleteMember: vi.fn<GroupStoreApi['deleteMember']>().mockResolvedValue(undefined),
     getExpenses: vi.fn<GroupStoreApi['getExpenses']>().mockResolvedValue([expense()]),
     createExpense: vi.fn<GroupStoreApi['createExpense']>().mockResolvedValue(expense('taxi', 30, [['bob', 30]])),
-    updateExpense: vi.fn<GroupStoreApi['updateExpense']>().mockResolvedValue(expense('dinner', 60)),
+    updateExpense: vi.fn<GroupStoreApi['updateExpense']>().mockResolvedValue({ ...expense('dinner', 60), revision: 2 }),
     deleteExpense: vi.fn<GroupStoreApi['deleteExpense']>().mockResolvedValue(undefined),
   } satisfies GroupStoreApi;
   let state: GroupState;
@@ -192,8 +192,8 @@ describe('expense lifecycle', () => {
     expect(get().recentGroups[0]).toMatchObject({ expenseCount: 2, totalExpenses: 120 });
 
     await get().updateExpense('dinner', expenseInput(expense('dinner', 60)));
-    expect(api.updateExpense).toHaveBeenCalledExactlyOnceWith('dinner', group.writeToken, expenseInput(expense('dinner', 60)));
-    expect(get().expenses).toEqual([taxi, expense('dinner', 60)]);
+    expect(api.updateExpense).toHaveBeenCalledExactlyOnceWith(group.id, 'dinner', group.writeToken, expenseInput(expense('dinner', 60)), 1);
+    expect(get().expenses).toEqual([taxi, { ...expense('dinner', 60), revision: 2 }]);
     expect(get().memberBalances.map(b => b.netBalance)).toEqual([0, 30, -30]);
     expect(get().settlements).toEqual([{ fromMemberId: 'carol', toMemberId: 'alice', amount: 30 }]);
     expect(get().recentGroups[0]).toMatchObject({ expenseCount: 2, totalExpenses: 90 });

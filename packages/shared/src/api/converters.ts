@@ -46,6 +46,7 @@ export function expenseFromRow(
     groupId: row.group_id,
     description: row.description,
     totalAmount: Number(row.total_amount),
+    revision: row.revision,
     date: new Date(row.expense_date),
     createdAt: new Date(row.created_at),
     payers: payers.map((p) => ({

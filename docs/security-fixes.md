@@ -37,3 +37,24 @@ no longer deletes its saved token, including during network outages.
 
 Validation includes failed navigation, out-of-order loads, late mutation results,
 reader write attempts, deliberate forgetting, and persistence after reload.
+
+## F4 Atomic expense writes
+
+Expense creation and replacement now use the `save_expense` database function,
+which checks the write token and validates the complete payload before writing.
+Each call inserts or replaces the expense, payers, and splits in one transaction;
+invalid totals, foreign-group participants, and failed child inserts cannot leave
+partial accounting data. Split coverage allows the same one-cent tolerance as the
+client validator, while payer totals and percentage/fixed limits remain enforced.
+
+Updates include the expense's current revision. A stale revision returns SQLSTATE
+`40001` instead of overwriting newer edits, and each successful update advances the
+revision. Direct expense inserts/updates and payer/split mutations are revoked for
+the API roles; deleting an expense remains supported. Member references now use
+`ON DELETE NO ACTION`, so members with accounting rows must be unlinked before
+they can be deleted.
+
+Validation: `expense_writes.sql` covers invalid totals, the one-cent split boundary,
+atomic rollback after a failed replacement, revision conflicts, and denied direct
+writes for both API roles. Local API and browser tests exercise the RPC payload and
+the clients' revision handling.

@@ -23,7 +23,7 @@ export interface GroupStoreApi {
   deleteMember(memberId: string, token: string): Promise<void>;
   getExpenses(groupId: string, token: string): Promise<Expense[]>;
   createExpense(groupId: string, token: string, input: CreateExpenseInput): Promise<Expense>;
-  updateExpense(expenseId: string, token: string, input: CreateExpenseInput): Promise<Expense>;
+  updateExpense(groupId: string, expenseId: string, token: string, input: CreateExpenseInput, expectedRevision: number): Promise<Expense>;
   deleteExpense(expenseId: string, token: string): Promise<void>;
 }
 
@@ -333,8 +333,10 @@ export function createGroupStoreState(
 
     updateExpense: async (expenseId, input) => {
       const { token, group, isCurrent } = requireWriter();
-      
-      const updated = await api.updateExpense(expenseId, token, input);
+      const currentExpense = get().expenses.find(expense => expense.id === expenseId);
+      if (!currentExpense) throw new Error('Expense not found');
+
+      const updated = await api.updateExpense(group.id, expenseId, token, input, currentExpense.revision);
       if (!isCurrent()) return;
       const newExpenses = get().expenses.map(e => e.id === expenseId ? updated : e);
       const { memberBalances, settlements } = calculateGroupBalances(newExpenses);

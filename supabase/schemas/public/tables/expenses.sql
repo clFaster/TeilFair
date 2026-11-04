@@ -5,6 +5,8 @@ CREATE TABLE "public"."expenses" (
   "total_amount" numeric(12,2)            NOT NULL,
   "expense_date" timestamp with time zone NOT NULL DEFAULT now(),
   "created_at"   timestamp with time zone NOT NULL DEFAULT now(),
+  "revision"     integer                  NOT NULL DEFAULT 1,
+  CONSTRAINT "expenses_revision_check" CHECK (revision > 0),
   CONSTRAINT "expenses_pkey" PRIMARY KEY (id),
   CONSTRAINT "expenses_total_amount_check" CHECK ((total_amount > (0)::numeric)),
   CONSTRAINT "expenses_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE
@@ -41,7 +43,8 @@ CREATE POLICY "Update expenses with write token" ON "public"."expenses"
   TO PUBLIC
   USING (private.check_group_access(group_id, true));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expenses" TO "anon", "authenticated";
+GRANT DELETE, SELECT ON TABLE "public"."expenses" TO "anon", "authenticated";
+REVOKE INSERT, UPDATE ON TABLE public.expenses FROM anon, authenticated;
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expenses" TO "service_role";
 
