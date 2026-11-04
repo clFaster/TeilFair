@@ -20,7 +20,7 @@
     "db:start": "node scripts/start-local-backend.mjs",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset --local",
-    "db:diff": "supabase db schema declarative sync --schema public,private --no-apply",
+    "db:diff": "supabase db schema declarative sync --no-apply",
     "db:check": "node scripts/check-db-schema.mjs",
     "web": "pnpm --filter @teilfair/web run dev",
     "mobile": "pnpm run build:shared && pnpm --filter @teilfair/mobile run start",

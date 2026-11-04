@@ -215,6 +215,42 @@ export async function getExpenses(groupId: string, token: string): Promise<Expen
   );
 }
 
+interface ExpenseWriteResult {
+  expense: ExpenseRow;
+  payers: ExpensePayerRow[];
+  splits: ExpenseSplitRow[];
+}
+
+async function saveExpense(
+  groupId: string,
+  token: string,
+  expenseId: string,
+  input: CreateExpenseInput,
+  expectedRevision: number
+): Promise<Expense> {
+  const { data, error } = await createGroupClient(token).rpc('save_expense', {
+    requested_group_id: groupId,
+    requested_expense_id: expenseId,
+    payload: {
+      description: input.description,
+      total_amount: input.totalAmount,
+      expense_date: input.date.toISOString(),
+      payers: input.payers.map(({ memberId, amount }) => ({ member_id: memberId, amount })),
+      splits: input.splits.map(({ memberId, share, shareType }) => ({
+        member_id: memberId,
+        share,
+        share_type: shareType,
+      })),
+    },
+    expected_revision: expectedRevision,
+  });
+
+  if (error) throw error;
+  if (!data) throw new Error('Expense save returned no data');
+  const result = data as unknown as ExpenseWriteResult;
+  return expenseFromRow(result.expense, result.payers, result.splits);
+}
+
 /**
  * Create a new expense
  */
@@ -223,55 +259,7 @@ export async function createExpense(
   token: string,
   input: CreateExpenseInput
 ): Promise<Expense> {
-  const client = createGroupClient(token);
-  const expenseId = generateUUID();
-
-  const { data: expense, error: expenseError } = await client
-    .from('expenses')
-    .insert({
-      id: expenseId,
-      group_id: groupId,
-      description: input.description,
-      total_amount: input.totalAmount,
-      expense_date: input.date.toISOString(),
-    })
-    .select()
-    .single();
-
-  if (expenseError) throw expenseError;
-
-  const payersToInsert = input.payers.map((p) => ({
-    expense_id: expenseId,
-    member_id: p.memberId,
-    amount: p.amount,
-  }));
-
-  const { data: payers, error: payersError } = await client
-    .from('expense_payers')
-    .insert(payersToInsert)
-    .select();
-
-  if (payersError) throw payersError;
-
-  const splitsToInsert = input.splits.map((s) => ({
-    expense_id: expenseId,
-    member_id: s.memberId,
-    share: s.share,
-    share_type: s.shareType,
-  }));
-
-  const { data: splits, error: splitsError } = await client
-    .from('expense_splits')
-    .insert(splitsToInsert)
-    .select();
-
-  if (splitsError) throw splitsError;
-
-  return expenseFromRow(
-    expense as ExpenseRow,
-    payers as ExpensePayerRow[],
-    splits as ExpenseSplitRow[]
-  );
+  return saveExpense(groupId, token, generateUUID(), input, 0);
 }
 
 /**
@@ -292,60 +280,11 @@ export async function deleteExpense(expenseId: string, token: string): Promise<v
  * Update an expense
  */
 export async function updateExpense(
+  groupId: string,
   expenseId: string,
   token: string,
-  input: CreateExpenseInput
+  input: CreateExpenseInput,
+  expectedRevision: number
 ): Promise<Expense> {
-  const client = createGroupClient(token);
-
-  const { data: expense, error: expenseError } = await client
-    .from('expenses')
-    .update({
-      description: input.description,
-      total_amount: input.totalAmount,
-      expense_date: input.date.toISOString(),
-    })
-    .eq('id', expenseId)
-    .select()
-    .single();
-
-  if (expenseError) throw expenseError;
-
-  await Promise.all([
-    client.from('expense_payers').delete().eq('expense_id', expenseId),
-    client.from('expense_splits').delete().eq('expense_id', expenseId),
-  ]);
-
-  const payersToInsert = input.payers.map((p) => ({
-    expense_id: expenseId,
-    member_id: p.memberId,
-    amount: p.amount,
-  }));
-
-  const { data: payers, error: payersError } = await client
-    .from('expense_payers')
-    .insert(payersToInsert)
-    .select();
-
-  if (payersError) throw payersError;
-
-  const splitsToInsert = input.splits.map((s) => ({
-    expense_id: expenseId,
-    member_id: s.memberId,
-    share: s.share,
-    share_type: s.shareType,
-  }));
-
-  const { data: splits, error: splitsError } = await client
-    .from('expense_splits')
-    .insert(splitsToInsert)
-    .select();
-
-  if (splitsError) throw splitsError;
-
-  return expenseFromRow(
-    expense as ExpenseRow,
-    payers as ExpensePayerRow[],
-    splits as ExpenseSplitRow[]
-  );
+  return saveExpense(groupId, token, expenseId, input, expectedRevision);
 }

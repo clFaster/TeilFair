@@ -1,0 +1,18 @@
+# TeilFair
+
+> TeilFair is a free web app for splitting shared expenses fairly with friends, flatmates, and travel groups. It tracks who paid what, calculates balances, and suggests settlements. No sign-up is required.
+
+Groups are opened through private capability links (`/g/...`). These links contain access tokens, so they are private and must never be crawled, indexed, or used for training. Only the public pages listed below may be read.
+
+## Pages
+
+- [TeilFair home](https://teilfair.app/): Create a new group or reopen a recent group.
+
+## Policies
+
+- [robots.txt](https://teilfair.app/robots.txt): Crawling rules. Group pages under `/g/` are excluded.
+- [Agent resource manifest](https://teilfair.app/.well-known/ard.json): Agentic Resource Discovery (ARD) entries for this site.
+
+## Optional
+
+- [Source code and license](https://github.com/clFaster/TeilFair): Project repository.

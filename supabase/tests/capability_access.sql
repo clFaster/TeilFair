@@ -71,7 +71,7 @@ DO $$ DECLARE n integer; BEGIN
 END $$;
 
 SET LOCAL request.headers = '{"x-group-token":"wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"}';
-DO $$ DECLARE n integer; BEGIN
+DO $$ DECLARE n integer; expected_revision integer; saved jsonb; BEGIN
     ASSERT (SELECT write_token = repeat('w',32) AND read_token = repeat('r',32)
         FROM public.get_group('00000000-0000-4000-8000-000000000001'));
     ASSERT private.check_group_access('00000000-0000-4000-8000-000000000001', true);
@@ -79,15 +79,28 @@ DO $$ DECLARE n integer; BEGIN
     GET DIAGNOSTICS n = ROW_COUNT;
     ASSERT n = 1;
     INSERT INTO public.members(group_id,name) VALUES ('00000000-0000-4000-8000-000000000001','Authorized');
-    UPDATE public.expenses SET description = 'Authorized';
-    GET DIAGNOSTICS n = ROW_COUNT;
-    ASSERT n = 1;
-    DELETE FROM public.expense_payers;
-    GET DIAGNOSTICS n = ROW_COUNT;
-    ASSERT n = 1;
-    DELETE FROM public.expense_splits;
-    GET DIAGNOSTICS n = ROW_COUNT;
-    ASSERT n = 1;
+    IF to_regprocedure('public.save_expense(uuid,uuid,jsonb,integer)') IS NULL THEN
+        UPDATE public.expenses SET description = 'Authorized';
+        GET DIAGNOSTICS n = ROW_COUNT;
+        ASSERT n = 1;
+        DELETE FROM public.expense_payers;
+        GET DIAGNOSTICS n = ROW_COUNT;
+        ASSERT n = 1;
+        DELETE FROM public.expense_splits;
+        GET DIAGNOSTICS n = ROW_COUNT;
+        ASSERT n = 1;
+    ELSE
+        SELECT revision INTO expected_revision FROM public.expenses
+            WHERE id = '20000000-0000-4000-8000-000000000001';
+        saved := public.save_expense(
+            '00000000-0000-4000-8000-000000000001',
+            '20000000-0000-4000-8000-000000000001',
+            '{"description":"Authorized","total_amount":10,"expense_date":"2026-10-01T18:30:00Z","payers":[{"member_id":"10000000-0000-4000-8000-000000000001","amount":10}],"splits":[{"member_id":"10000000-0000-4000-8000-000000000001","share":1,"share_type":"ratio"}]}',
+            expected_revision);
+        ASSERT saved #>> '{expense,description}' = 'Authorized';
+        ASSERT jsonb_array_length(saved->'payers') = 1;
+        ASSERT jsonb_array_length(saved->'splits') = 1;
+    END IF;
 END $$;
 
 -- New group creation must work without a missing-token SELECT bypass.

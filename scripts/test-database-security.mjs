@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -59,6 +59,16 @@ try {
   sql(migration('006_private_access_helper.sql'));
   sql(assertions);
   sql(cascadeAssertions);
+  // Apply every incremental security migration to populated data, then exercise
+  // the current schema. Keep the legacy recovery checks above separately useful.
+  for (const name of readdirSync(new URL('../supabase/migrations/', import.meta.url)).sort()) {
+    if (/^\d{14}_.*\.sql$/.test(name)) sql(migration(name));
+  }
+  sql(readFileSync(new URL('../supabase/tests/group_boundaries.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/expense_writes.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/privileges.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/length_limits.sql', import.meta.url), 'utf8'));
+  sql(assertions);
   console.log('Database security assertions passed, including cascades, reset recovery and reapplication.');
 } finally {
   docker(['rm', '--force', container], undefined, true);

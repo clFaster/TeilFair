@@ -4,13 +4,18 @@ CREATE TABLE "public"."members" (
   "name"       text                     NOT NULL,
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT "members_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE,
-  CONSTRAINT "members_pkey" PRIMARY KEY (id)
+  CONSTRAINT "members_pkey" PRIMARY KEY (id),
+  CONSTRAINT "members_name_length" CHECK ((char_length(btrim(name)) BETWEEN 1 AND 100))
 );
 
 ALTER TABLE "public"."members"
   ENABLE ROW LEVEL SECURITY;
 
 CREATE INDEX idx_members_group_id ON public.members USING btree (group_id);
+
+CREATE TRIGGER prevent_group_reassignment
+BEFORE UPDATE ON public.members
+FOR EACH ROW EXECUTE FUNCTION private.prevent_group_reassignment();
 
 CREATE POLICY "Delete members with write token" ON "public"."members"
   FOR DELETE
@@ -32,7 +37,9 @@ CREATE POLICY "Update members with write token" ON "public"."members"
   TO PUBLIC
   USING (private.check_group_access(group_id, true));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."members" TO "anon", "authenticated";
+GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE "public"."members" TO "anon", "authenticated";
+
+REVOKE MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE "public"."members" FROM "anon", "authenticated";
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."members" TO "service_role";
 

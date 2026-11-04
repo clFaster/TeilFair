@@ -7,7 +7,7 @@ CREATE TABLE "public"."expense_payers" (
   CONSTRAINT "expense_payers_expense_id_member_id_key" UNIQUE (expense_id, member_id),
   CONSTRAINT "expense_payers_pkey" PRIMARY KEY (id),
   CONSTRAINT "expense_payers_expense_id_fkey" FOREIGN KEY (expense_id) REFERENCES public.expenses(id) ON DELETE CASCADE,
-  CONSTRAINT "expense_payers_member_id_fkey" FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE CASCADE
+  CONSTRAINT "expense_payers_member_id_fkey" FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE NO ACTION
 );
 
 ALTER TABLE "public"."expense_payers"
@@ -16,6 +16,10 @@ ALTER TABLE "public"."expense_payers"
 CREATE INDEX idx_expense_payers_expense_id ON public.expense_payers USING btree (expense_id);
 
 CREATE INDEX idx_expense_payers_member_id ON public.expense_payers USING btree (member_id);
+
+CREATE TRIGGER enforce_expense_member_group
+BEFORE INSERT OR UPDATE ON public.expense_payers
+FOR EACH ROW EXECUTE FUNCTION private.enforce_expense_member_group();
 
 CREATE POLICY "Delete expense_payers with write token" ON "public"."expense_payers"
   FOR DELETE
@@ -45,7 +49,8 @@ CREATE POLICY "Update expense_payers with write token" ON "public"."expense_paye
    FROM public.expenses e
   WHERE ((e.id = expense_payers.expense_id) AND private.check_group_access(e.group_id, true)))));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_payers" TO "anon", "authenticated";
+GRANT SELECT ON TABLE "public"."expense_payers" TO "anon", "authenticated";
+REVOKE INSERT, UPDATE, DELETE, MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE public.expense_payers FROM anon, authenticated;
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_payers" TO "service_role";
 
