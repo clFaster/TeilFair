@@ -9,6 +9,7 @@ CREATE TABLE "public"."expenses" (
   CONSTRAINT "expenses_revision_check" CHECK (revision > 0),
   CONSTRAINT "expenses_pkey" PRIMARY KEY (id),
   CONSTRAINT "expenses_description_length" CHECK ((char_length(description) BETWEEN 1 AND 250 AND description ~ '[^[:space:]]')),
+  CONSTRAINT "expenses_date_range" CHECK ((isfinite(expense_date) AND expense_date >= '0001-01-01 00:00:00+00'::timestamptz AND expense_date < '10000-01-01 00:00:00+00'::timestamptz)),
   CONSTRAINT "expenses_total_amount_check" CHECK ((total_amount > (0)::numeric)),
   CONSTRAINT "expenses_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE
 );

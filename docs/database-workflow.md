@@ -44,6 +44,8 @@ including padding, currency must be three uppercase
 ASCII letters, and expense descriptions must be nonblank and at most 250
 characters including padding. Constraint installation rejects incompatible rows;
 review and correct them explicitly rather than truncating financial descriptions.
+The expense-date migration likewise rejects existing non-finite dates or dates
+outside years 1–9999; correct those records explicitly before deployment.
 
 Before deploying the first future migration to an existing installation, reconcile
 the hosted migration ledger with the already-applied `001`–`006` SQL. Do not replay

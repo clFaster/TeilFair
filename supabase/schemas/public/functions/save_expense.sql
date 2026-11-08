@@ -11,6 +11,7 @@ CREATE OR REPLACE FUNCTION public.save_expense (
   AS $function$
 DECLARE
   saved public.expenses;
+  expense_timestamp timestamptz;
   total numeric;
   paid numeric;
   allocated numeric;
@@ -40,6 +41,16 @@ BEGIN
     OR payload->>'expense_date' IS NULL THEN
     RAISE EXCEPTION 'Invalid expense details' USING ERRCODE = '22023';
   END IF;
+  BEGIN
+    expense_timestamp := (payload->>'expense_date')::timestamptz;
+  EXCEPTION WHEN invalid_datetime_format OR datetime_field_overflow THEN
+    RAISE EXCEPTION 'Invalid expense date' USING ERRCODE = '22023';
+  END;
+  IF NOT isfinite(expense_timestamp)
+    OR expense_timestamp < '0001-01-01 00:00:00+00'::timestamptz
+    OR expense_timestamp >= '10000-01-01 00:00:00+00'::timestamptz THEN
+    RAISE EXCEPTION 'Expense date must be between years 1 and 9999' USING ERRCODE = '22023';
+  END IF;
   IF EXISTS (SELECT 1 FROM jsonb_to_recordset(payload->'payers') AS p(member_id uuid, amount numeric)
       WHERE p.member_id IS NULL OR p.amount IS NULL OR p.amount::text IN ('NaN','Infinity','-Infinity')
       OR p.amount <= 0 OR p.amount <> round(p.amount,2))
@@ -68,7 +79,7 @@ BEGIN
   IF expected_revision = 0 THEN
     INSERT INTO public.expenses(id,group_id,description,total_amount,expense_date)
     VALUES(requested_expense_id,requested_group_id,payload->>'description',total,
-      (payload->>'expense_date')::timestamptz) RETURNING * INTO saved;
+      expense_timestamp) RETURNING * INTO saved;
   ELSE
     SELECT * INTO saved FROM public.expenses
       WHERE id=requested_expense_id AND group_id=requested_group_id FOR UPDATE;
@@ -79,7 +90,7 @@ BEGIN
       RAISE EXCEPTION 'Expense changed. Reload before saving again.' USING ERRCODE = '40001';
     END IF;
     UPDATE public.expenses SET description=payload->>'description',total_amount=total,
-      expense_date=(payload->>'expense_date')::timestamptz,revision=revision+1
+      expense_date=expense_timestamp,revision=revision+1
       WHERE id=requested_expense_id RETURNING * INTO saved;
     DELETE FROM public.expense_payers WHERE expense_id=requested_expense_id;
     DELETE FROM public.expense_splits WHERE expense_id=requested_expense_id;
