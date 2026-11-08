@@ -96,17 +96,10 @@ export async function updateGroup(
 }
 
 /**
- * Delete all expenses and the group itself
+ * Delete a group and its dependent data
  */
 export async function deleteGroup(groupId: string, token: string): Promise<void> {
   const client = createGroupClient(token);
-
-  const { error: expensesError } = await client
-    .from('expenses')
-    .delete()
-    .eq('group_id', groupId);
-
-  if (expensesError) throw expensesError;
 
   const { data, error } = await client
     .from('groups')

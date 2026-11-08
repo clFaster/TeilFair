@@ -88,6 +88,11 @@
 }
 
 .group-delete-button {
+  color: var(--hero-ink-soft);
+}
+
+.group-delete-button:hover,
+.group-delete-button:focus-visible {
   color: var(--color-danger-solid);
 }
 

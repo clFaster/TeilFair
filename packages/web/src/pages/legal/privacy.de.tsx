@@ -177,7 +177,9 @@ export const privacyDe: LegalDocument = {
           Gruppen, Mitglieder und Ausgaben bleiben gespeichert, bis Sie die Gruppe über die Löschfunktion in der App
           löschen oder eine Löschung per E-Mail anfordern. Eine automatische Löschung inaktiver Gruppen findet derzeit
           nicht statt. Technische Zugriffsdaten werden nur so lange aufbewahrt, wie sie für Betrieb und Sicherheit
-          erforderlich sind; lokale Browserdaten bleiben gespeichert, bis Sie sie im Browser löschen.
+          erforderlich sind; lokale Browserdaten bleiben gespeichert, bis Sie sie im Browser löschen. Gelöschte Daten
+          können noch für begrenzte Zeit in Sicherungskopien und Logs der Anbieter enthalten sein, bis deren jeweilige
+          Aufbewahrungsfristen ablaufen.
         </p>
       ),
     },

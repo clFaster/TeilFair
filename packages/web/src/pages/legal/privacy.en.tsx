@@ -171,7 +171,8 @@ export const privacyEn: LegalDocument = {
           Groups, members and expenses remain stored until you delete the group using the in-app delete function or
           request deletion by email. Inactive groups are not automatically deleted at this time. Technical access data
           is retained only as long as needed for operation and security; local browser data remains until you remove it
-          in your browser.
+          in your browser. Deleted data may remain in provider backups and logs for a limited time, until their respective
+          retention periods expire.
         </p>
       ),
     },

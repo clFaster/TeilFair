@@ -49,6 +49,7 @@ try {
   sql(readFileSync(new URL('../supabase/tests/length_limits.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/token_rotation.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/write_limits.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/group_delete.sql', import.meta.url), 'utf8'));
   console.log('Database security assertions passed on fresh migration replay, including quotas, token rotation and cascades.');
 } finally {
   docker(['rm', '--force', container], undefined, true);
