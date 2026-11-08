@@ -92,3 +92,10 @@ REVOKE MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE "public"."groups" FROM "
 REVOKE ALL ON TABLE "public"."groups" FROM "postgres";
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."groups" TO "postgres";
+
+CREATE TRIGGER enforce_write_limits BEFORE INSERT OR UPDATE ON public.groups
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();
+CREATE TRIGGER track_deleted_rows AFTER DELETE ON public.groups
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();
+CREATE TRIGGER track_inserted_rows AFTER INSERT ON public.groups
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();

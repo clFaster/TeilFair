@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { test, expect } from './fixtures';
 
 test('anonymous creation returns metadata; reader RPC redacts write capability', async ({ backend, group }) => {
@@ -69,6 +69,30 @@ for (const access of ['missing', 'wrong', 'other-group', 'reader'] as const) {
   });
 }
 
+test('token rotation revokes old links and preserves the new permission split', async ({ backend, group }) => {
+  const oldReader = group.readToken;
+  const oldWriter = group.writeToken;
+  const readToken = randomBytes(16).toString('hex');
+  const writeToken = randomBytes(16).toString('hex');
+  const payload = { requested_group_id: group.id, new_read_token: readToken, new_write_token: writeToken };
+  const denied = await backend.send('POST', 'rpc/rotate_group_tokens', oldReader, payload);
+  expect(denied.status()).toBe(401);
+  expect(await denied.json()).toMatchObject({ code: '42501' });
+  const response = await backend.send('POST', 'rpc/rotate_group_tokens', oldWriter, payload);
+  expect(response.ok()).toBe(true);
+  // The fixture retains the replacement capability for cleanup.
+  group.readToken = readToken;
+  group.writeToken = writeToken;
+  expect(await response.json()).toMatchObject([{ id: group.id, read_token: readToken, write_token: writeToken }]);
+  for (const token of [oldReader, oldWriter]) {
+    expect(await backend.rows('POST', 'rpc/get_group', token, { requested_group_id: group.id })).toEqual([]);
+  }
+  const [reader] = await backend.rows('POST', 'rpc/get_group', readToken, { requested_group_id: group.id });
+  expect(reader.write_token).toBe('');
+  const [updated] = await backend.rows('PATCH', `groups?id=eq.${group.id}&select=id,name`, writeToken, { name: 'Rotated group' });
+  expect(updated.name).toBe('Rotated group');
+});
+
 test('writer CRUD persists and deleted expense data is no longer visible', async ({ backend, group, members }) => {
   const expense = await backend.expense(group, members);
   const saved = await backend.saveExpense(group, expense.id, {
@@ -99,8 +123,10 @@ test('writer CRUD persists and deleted expense data is no longer visible', async
 test('moving a member into another group is denied', async ({ backend, group, members }) => {
   const other = await backend.createGroup();
   const result = await backend.send('PATCH', `members?id=eq.${members[0].id}`, group.writeToken, { group_id: other.id });
-  expect(result.status()).toBe(400);
-  expect(await result.json()).toMatchObject({ code: '23514' });
+  // The recovered quota trigger checks target-group authority before the
+  // immutable-parent trigger runs, so this fails at authorization first.
+  expect(result.status()).toBe(401);
+  expect(await result.json()).toMatchObject({ code: '42501' });
   const [member] = await backend.rows('GET', `members?id=eq.${members[0].id}`, group.writeToken);
   expect(member.group_id).toBe(group.id);
 });

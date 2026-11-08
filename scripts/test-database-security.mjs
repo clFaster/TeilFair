@@ -62,13 +62,27 @@ try {
   // Apply every incremental security migration to populated data, then exercise
   // the current schema. Keep the legacy recovery checks above separately useful.
   for (const name of readdirSync(new URL('../supabase/migrations/', import.meta.url)).sort()) {
-    if (/^\d{14}_.*\.sql$/.test(name)) sql(migration(name));
+    if (/^(?:00[7-9]|\d{14})_.*\.sql$/.test(name)) sql(migration(name));
   }
   sql(readFileSync(new URL('../supabase/tests/group_boundaries.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/expense_writes.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/expense_dates.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/privileges.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/length_limits.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/token_rotation.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/write_limits.sql', import.meta.url), 'utf8'));
+  // The replay bridge must leave the newer production triggers untouched.
+  sql(migration('009_reconcile_legacy_parent_triggers.sql'));
+  sql(migration('20261108105627_preserve_legacy_security_controls.sql'));
+  // Existing local databases can have the dated migrations but not 007/008.
+  // Restoring the missing history must retain the newer parent-trigger shape.
+  sql(`CREATE SCHEMA supabase_migrations;
+    CREATE TABLE supabase_migrations.schema_migrations(version text PRIMARY KEY);
+    INSERT INTO supabase_migrations.schema_migrations VALUES('20261104181342');`);
+  sql(migration('007_participant_integrity_and_token_rotation.sql'));
+  sql(migration('008_database_abuse_limits.sql'));
+  sql(migration('009_reconcile_legacy_parent_triggers.sql'));
+  sql(migration('20261108105627_preserve_legacy_security_controls.sql'));
   sql(assertions);
   console.log('Database security assertions passed, including cascades, reset recovery and reapplication.');
 } finally {

@@ -92,6 +92,10 @@ TeilFair uses **capability-based security** instead of user accounts:
 - Share the read link for view-only access
 - Share the write link for full edit access
 - Tokens are validated via Supabase Row Level Security
+- Database quotas bound anonymous creation and per-group writes; a writer-only
+  RPC can replace compromised sharing links. See the
+  [database security controls](docs/database-workflow.md#recovered-production-migrations-007-and-008)
+  for limits and migration history.
 - Groups cannot be guessed (cryptographically random IDs and tokens)
 
 ## Getting Started
@@ -135,7 +139,7 @@ The following instructions apply when configuring a hosted project:
 
 1. Create a new project at [supabase.com](https://supabase.com) (free tier is fine)
 2. Navigate to the SQL Editor
-3. Run migrations `001` through `006` from `supabase/migrations/` in order in the SQL Editor.
+3. Apply migrations `001` through `009`, followed by the timestamped migrations in filename order. `000_reset.sql` is for disposable local bootstrap only.
 4. For an existing database, run only migrations you have not applied; no database recreation is needed. Future changes start in `supabase/schemas/` and generate incremental migrations as described in [the database workflow](docs/database-workflow.md).
 5. In Settings > API, copy:
    - **Project URL**: `https://[project-id].supabase.co`

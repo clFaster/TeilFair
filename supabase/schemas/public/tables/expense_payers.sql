@@ -28,12 +28,9 @@ CREATE POLICY "Delete expense_payers with write token" ON "public"."expense_paye
    FROM public.expenses e
   WHERE ((e.id = expense_payers.expense_id) AND private.check_group_access(e.group_id, true)))));
 
-CREATE POLICY "Insert expense_payers with write token" ON "public"."expense_payers"
-  FOR INSERT
-  TO PUBLIC
-  WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.expenses e
-  WHERE ((e.id = expense_payers.expense_id) AND private.check_group_access(e.group_id, true)))));
+CREATE POLICY "Insert expense_payers with write token" ON public.expense_payers
+  FOR INSERT TO PUBLIC WITH CHECK ((EXISTS (SELECT 1 FROM public.expenses e JOIN public.members m ON m.group_id=e.group_id
+    WHERE e.id=expense_payers.expense_id AND m.id=expense_payers.member_id AND private.check_group_access(e.group_id,true))));
 
 CREATE POLICY "Read expense_payers with valid group token" ON "public"."expense_payers"
   FOR SELECT
@@ -42,12 +39,11 @@ CREATE POLICY "Read expense_payers with valid group token" ON "public"."expense_
    FROM public.expenses e
   WHERE ((e.id = expense_payers.expense_id) AND private.check_group_access(e.group_id, false)))));
 
-CREATE POLICY "Update expense_payers with write token" ON "public"."expense_payers"
-  FOR UPDATE
-  TO PUBLIC
-  USING ((EXISTS ( SELECT 1
-   FROM public.expenses e
-  WHERE ((e.id = expense_payers.expense_id) AND private.check_group_access(e.group_id, true)))));
+CREATE POLICY "Update expense_payers with write token" ON public.expense_payers
+  FOR UPDATE TO PUBLIC
+  USING (EXISTS (SELECT 1 FROM public.expenses e WHERE e.id=expense_payers.expense_id AND private.check_group_access(e.group_id,true)))
+  WITH CHECK ((EXISTS (SELECT 1 FROM public.expenses e JOIN public.members m ON m.group_id=e.group_id
+    WHERE e.id=expense_payers.expense_id AND m.id=expense_payers.member_id AND private.check_group_access(e.group_id,true))));
 
 GRANT SELECT ON TABLE "public"."expense_payers" TO "anon", "authenticated";
 REVOKE INSERT, UPDATE, DELETE, MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE public.expense_payers FROM anon, authenticated;
@@ -57,3 +53,12 @@ GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON
 REVOKE ALL ON TABLE "public"."expense_payers" FROM "postgres";
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_payers" TO "postgres";
+
+CREATE TRIGGER enforce_write_limits BEFORE INSERT OR UPDATE ON public.expense_payers
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();
+CREATE TRIGGER track_deleted_rows AFTER DELETE ON public.expense_payers
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();
+CREATE TRIGGER track_inserted_rows AFTER INSERT ON public.expense_payers
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();
+CREATE TRIGGER validate_expense_participant BEFORE INSERT OR UPDATE ON public.expense_payers
+  FOR EACH ROW EXECUTE FUNCTION private.validate_expense_participant();

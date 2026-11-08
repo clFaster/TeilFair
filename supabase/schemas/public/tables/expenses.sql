@@ -53,3 +53,10 @@ GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON
 REVOKE ALL ON TABLE "public"."expenses" FROM "postgres";
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expenses" TO "postgres";
+
+CREATE TRIGGER enforce_write_limits BEFORE INSERT OR UPDATE ON public.expenses
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();
+CREATE TRIGGER track_deleted_rows AFTER DELETE ON public.expenses
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();
+CREATE TRIGGER track_inserted_rows AFTER INSERT ON public.expenses
+  FOR EACH ROW EXECUTE FUNCTION private.enforce_write_limits();

@@ -8,6 +8,7 @@ const baseURL = assertLocalUrl(external ?? 'http://127.0.0.1:4175');
 
 export default defineConfig({
   testDir: './tests/local',
+  globalSetup: '../../scripts/local-test-quotas.mjs',
   outputDir: './test-results-local',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
