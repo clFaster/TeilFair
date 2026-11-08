@@ -54,7 +54,7 @@ packages/web/
 - The `t` fragment parameter is treated as the group capability token. Legacy query links are replaced before React and telemetry load.
 - Read/write permission is derived via `getTokenPermission` before mutating operations.
 - Recent groups and their capability tokens persist in localStorage (`teilfair-storage`) so opening a group once keeps it available after reloads and browser restarts. This preserves the existing storage format. Only recent-group entries are persisted, not the full group data.
-- Database grants restrict direct group queries to metadata. The `get_group` RPC checks the capability and returns a write token only to writers. Apply migration `004` before using the updated clients.
+- Database grants restrict direct group queries to metadata. The `get_group` RPC checks the capability and returns a write token only to writers. New databases use the single initial migration; existing installations must follow the repository's [database workflow](../../docs/database-workflow.md#fresh-and-existing-databases).
 
 ## Runbook
 

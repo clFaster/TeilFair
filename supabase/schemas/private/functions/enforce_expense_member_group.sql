@@ -1,5 +1,8 @@
 CREATE OR REPLACE FUNCTION private.enforce_expense_member_group()
-RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+  SET search_path TO ''
+  AS $function$
 BEGIN
   -- Invoker visibility deliberately rejects references to inaccessible parents.
   IF NOT EXISTS (
@@ -11,6 +14,6 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$;
-REVOKE ALL ON FUNCTION private.enforce_expense_member_group() FROM PUBLIC;
+$function$;
 
+REVOKE ALL ON FUNCTION private.enforce_expense_member_group() FROM PUBLIC;

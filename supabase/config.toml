@@ -48,4 +48,6 @@ enabled = false
 enabled = false
 
 [experimental.pgdelta]
+# Declarative DDL lives in supabase/schemas/; pg-delta orders dependencies.
+# Generate migrations with `pnpm db:diff --file <name>`.
 enabled = true

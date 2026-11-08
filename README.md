@@ -75,10 +75,9 @@ teilfair/
 │       ├── app.json            # Expo config
 │       └── package.json
 ├── supabase/
-│   ├── migrations/             # Database schema and RLS policies
-│   │   ├── 000_reset.sql
-│   │   ├── 001_initial_schema.sql
-│   │   └── 002_change_expense_date_to_timestamptz.sql
+│   ├── schemas/                # Declarative DDL: edit these for schema changes
+│   ├── migrations/             # Generated deployment SQL
+│   │   └── 20261108112650_initial_schema.sql
 │   └── config.toml
 ├── pnpm-workspace.yaml         # Monorepo workspace config
 └── package.json
@@ -94,8 +93,8 @@ TeilFair uses **capability-based security** instead of user accounts:
 - Tokens are validated via Supabase Row Level Security
 - Database quotas bound anonymous creation and per-group writes; a writer-only
   RPC can replace compromised sharing links. See the
-  [database security controls](docs/database-workflow.md#recovered-production-migrations-007-and-008)
-  for limits and migration history.
+  [database security controls](docs/database-workflow.md#database-security-controls)
+  for limits and token rotation.
 - Groups cannot be guessed (cryptographically random IDs and tokens)
 
 ## Getting Started
@@ -138,30 +137,27 @@ and [schema-first database development](docs/database-workflow.md) for DB change
 The following instructions apply when configuring a hosted project:
 
 1. Create a new project at [supabase.com](https://supabase.com) (free tier is fine)
-2. Navigate to the SQL Editor
-3. Apply migrations `001` through `009`, followed by the timestamped migrations in filename order. `000_reset.sql` is for disposable local bootstrap only.
-4. For an existing database, run only migrations you have not applied; no database recreation is needed. Future changes start in `supabase/schemas/` and generate incremental migrations as described in [the database workflow](docs/database-workflow.md).
+2. Link the project with `pnpm exec supabase link`.
+3. For a new, empty database, review `pnpm exec supabase db push --dry-run --remote`, then apply with `pnpm exec supabase db push --remote`.
+4. Existing databases must reconcile their retired migration history before using the single baseline; follow [the database workflow](docs/database-workflow.md#fresh-and-existing-databases). Future schema changes start in `supabase/schemas/` and generate migrations with `pnpm db:diff --file describe_the_change`.
 5. In Settings > API, copy:
    - **Project URL**: `https://[project-id].supabase.co`
    - **Anon Public Key**: The public API key
    - **Service Role Key**: Keep this safe, only for backend use
 
-Migration `005_index_member_foreign_keys.sql` adds the missing `member_id` indexes
-on expense payers and splits, supporting foreign-key checks and member-deletion
-cascades. Run it during low traffic because index creation temporarily blocks
-writes to those tables. It retains the expense-date and group-token indexes:
+The initial schema includes `member_id` indexes on expense payers and splits,
+supporting foreign-key checks and member-deletion cascades. It also retains the
+expense-date and group-token indexes:
 Supabase's unused-index notices alone do not establish that they are unnecessary.
 Review representative query plans and the statistics collection period before
 removing them.
 
-Migration `006_private_access_helper.sql` moves the internal access check into
-the `private` schema and updates the RLS policies. Keep `private` out of the
+The internal access check lives in the `private` schema. Keep `private` out of the
 Supabase Data API's exposed schemas. Clients continue to call `public.get_group`.
 The two SECURITY DEFINER execution warnings for `get_group` are intentional:
 capability links work without login, and this function checks the supplied group
 token before returning data, hiding the write token from readers. Revoking its
 execution privilege or making it SECURITY INVOKER would break that access path.
-If reapplying migration `004` for policy recovery, reapply `006` afterward.
 
 ### 3. Configure Environment Variables
 

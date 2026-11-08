@@ -7,11 +7,12 @@ Git identity.
 
 ## 1. Declarative database and local Supabase
 
-- Keep migrations `000`–`006` unchanged for existing installations.
+- Use one generated initial baseline; document ledger reconciliation for existing
+  installations when replacing the retired migration history.
 - Declare the current tables, indexes, functions, permissions, and RLS policies in
   `supabase/schemas/` as the starting point for future schema changes.
 - Add local configuration and a documented schema-first migration workflow.
-- Verify fresh migrations, upgrade/recovery checks, and schema consistency.
+- Verify fresh migration replay, current security controls, and schema consistency.
 
 ## 2. Repeatable local test environment
 
@@ -56,9 +57,9 @@ Git identity.
 ## Progress
 
 - [x] Inspect existing tests, migrations, workflows, and tooling; agree staged scope.
-- [x] Stage 1: declarative database and local Supabase. Exported from local migration
-  replay; `pnpm db:check` reports no differences, and existing database security,
-  upgrade, recovery, and reapplication checks pass.
+- [x] Stage 1: declarative database and local Supabase. The history is now consolidated
+  into one generated initial baseline. `pnpm db:check` reports no differences,
+  rejects changed routine bodies, and fresh replay passes the database security suite.
 - [x] Stage 2: repeatable local test environment. Local RPC readiness and target
   guards pass; the web production build serves successfully with local settings.
   Independent API/browser fixtures are delivered with the tests in stage 3.

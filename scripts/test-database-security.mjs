@@ -19,10 +19,16 @@ try {
   // No exposed ports, host mounts, or existing database connections.
   docker(['run', '--detach', '--rm', '--name', container, '-e', 'POSTGRES_PASSWORD=disposable-test-only', 'postgres:17-alpine'], undefined, true);
   docker(['exec', container, 'sh', '-c', 'until pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; do sleep 1; done'], undefined, true);
-  sql(`CREATE ROLE anon; CREATE ROLE authenticated;
+  sql(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+    CREATE SCHEMA extensions;
     GRANT USAGE ON SCHEMA public TO anon, authenticated;
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;`);
-  for (const name of ['000_reset.sql','001_initial_schema.sql','002_change_expense_date_to_timestamptz.sql','003_fix_security_warnings.sql']) sql(migration(name));
+  // Replay the baseline and every future generated migration on an empty DB.
+  // A transaction matches the CLI and keeps SET LOCAL effective for routines
+  // whose dependencies are created later in the generated SQL.
+  for (const name of readdirSync(new URL('../supabase/migrations/', import.meta.url)).sort()) {
+    if (name.endsWith('.sql')) sql(`BEGIN;\n${migration(name)}\nCOMMIT;`);
+  }
   sql(`INSERT INTO public.groups(id,name,read_token,write_token) VALUES
     ('00000000-0000-4000-8000-000000000001','Existing group',repeat('r',32),repeat('w',32)),
     ('00000000-0000-4000-8000-000000000002','Other group',repeat('x',32),repeat('y',32));
@@ -34,36 +40,8 @@ try {
     ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001',10);
     INSERT INTO public.expense_splits(expense_id,member_id,share,share_type) VALUES
     ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001',1,'ratio');`);
-  sql(migration('004_harden_capability_access.sql'));
-  sql(migration('005_index_member_foreign_keys.sql'));
-  sql(migration('005_index_member_foreign_keys.sql')); // Safe to reapply.
-  sql(migration('006_private_access_helper.sql'));
-  sql(migration('006_private_access_helper.sql')); // Safe to reapply.
-  const assertions = readFileSync(new URL('../supabase/tests/capability_access.sql', import.meta.url), 'utf8');
-  const cascadeAssertions = readFileSync(new URL('../supabase/tests/expense_cascade.sql', import.meta.url), 'utf8');
-  sql(assertions);
-  sql(cascadeAssertions);
-  // Reproduce an interrupted old reset: policies removed and RLS disabled.
-  sql(`DO $$ DECLARE p record; BEGIN
-    FOR p IN SELECT tablename,policyname FROM pg_policies WHERE schemaname='public' LOOP
-      EXECUTE format('DROP POLICY %I ON public.%I', p.policyname, p.tablename);
-    END LOOP;
-    END $$;
-    ALTER TABLE public.groups DISABLE ROW LEVEL SECURITY;
-    ALTER TABLE public.members DISABLE ROW LEVEL SECURITY;
-    ALTER TABLE public.expenses DISABLE ROW LEVEL SECURITY;
-    ALTER TABLE public.expense_payers DISABLE ROW LEVEL SECURITY;
-    ALTER TABLE public.expense_splits DISABLE ROW LEVEL SECURITY;`);
-  sql(migration('004_harden_capability_access.sql'));
-  sql(migration('004_harden_capability_access.sql')); // Safe to reapply.
-  sql(migration('006_private_access_helper.sql'));
-  sql(assertions);
-  sql(cascadeAssertions);
-  // Apply every incremental security migration to populated data, then exercise
-  // the current schema. Keep the legacy recovery checks above separately useful.
-  for (const name of readdirSync(new URL('../supabase/migrations/', import.meta.url)).sort()) {
-    if (/^(?:00[7-9]|\d{14})_.*\.sql$/.test(name)) sql(migration(name));
-  }
+  sql(readFileSync(new URL('../supabase/tests/capability_access.sql', import.meta.url), 'utf8'));
+  sql(readFileSync(new URL('../supabase/tests/expense_cascade.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/group_boundaries.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/expense_writes.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/expense_dates.sql', import.meta.url), 'utf8'));
@@ -71,20 +49,7 @@ try {
   sql(readFileSync(new URL('../supabase/tests/length_limits.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/token_rotation.sql', import.meta.url), 'utf8'));
   sql(readFileSync(new URL('../supabase/tests/write_limits.sql', import.meta.url), 'utf8'));
-  // The replay bridge must leave the newer production triggers untouched.
-  sql(migration('009_reconcile_legacy_parent_triggers.sql'));
-  sql(migration('20261108105627_preserve_legacy_security_controls.sql'));
-  // Existing local databases can have the dated migrations but not 007/008.
-  // Restoring the missing history must retain the newer parent-trigger shape.
-  sql(`CREATE SCHEMA supabase_migrations;
-    CREATE TABLE supabase_migrations.schema_migrations(version text PRIMARY KEY);
-    INSERT INTO supabase_migrations.schema_migrations VALUES('20261104181342');`);
-  sql(migration('007_participant_integrity_and_token_rotation.sql'));
-  sql(migration('008_database_abuse_limits.sql'));
-  sql(migration('009_reconcile_legacy_parent_triggers.sql'));
-  sql(migration('20261108105627_preserve_legacy_security_controls.sql'));
-  sql(assertions);
-  console.log('Database security assertions passed, including cascades, reset recovery and reapplication.');
+  console.log('Database security assertions passed on fresh migration replay, including quotas, token rotation and cascades.');
 } finally {
   docker(['rm', '--force', container], undefined, true);
 }

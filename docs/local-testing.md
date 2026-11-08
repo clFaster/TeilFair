@@ -86,8 +86,11 @@ emulation does not replace testing the native Expo app on devices.
 
 Edit `supabase/schemas/`, generate a reviewed incremental migration, and commit
 both. See [the database workflow](database-workflow.md). `pnpm db:check` verifies
-that schema declarations and migration history agree; the existing security test
-continues to check upgrading existing records and policy recovery.
+that schema declarations and migration history agree; the security suite replays
+the initial baseline and subsequent generated migrations in a disposable database.
+It checks authorization, group isolation, quotas, token rotation, and cascades.
+Local databases using the retired history need the one-time reset or ledger
+reconciliation described in that workflow before applying future migrations.
 
 ## CI and production monitoring
 

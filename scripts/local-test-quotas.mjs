@@ -12,7 +12,7 @@ export default async function localTestQuotas() {
   const previous = query("SELECT name,value FROM private.write_limits WHERE name IN ('creations_per_minute','creations_per_hour') ORDER BY name");
   if (previous.length !== names.length || previous.some(row =>
     !names.includes(row.name) || !Number.isSafeInteger(Number(row.value)) || Number(row.value) <= 0)) {
-    throw new Error('Expected the two local creation quotas from migration 008.');
+    throw new Error('Expected the two local creation quotas from the initial database setup.');
   }
   // Parallel fixtures create more than ten groups per minute. Keep every
   // authorization check and row cap active; raise only these local test budgets.

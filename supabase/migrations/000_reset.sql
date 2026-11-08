@@ -1,3 +1,0 @@
--- Retired: the old reset script disabled RLS and exposed existing data.
--- Intentionally a no-op so fresh migration runs remain safe.
--- For existing installations apply 004_harden_capability_access.sql instead.

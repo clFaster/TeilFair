@@ -1,102 +1,116 @@
-# Schema-first database development
+# Declarative database development
 
-Application database definitions live in `supabase/schemas/`. Edit these files
-first, then generate and review an incremental migration. Existing migrations
-`000`–`006` remain unchanged and are still required for installation and upgrades.
-The declarations are exported from a local replay of that history, not production.
+`supabase/schemas/` is the source of truth for application DDL: tables, indexes,
+functions, triggers, permissions, and RLS policies. The migration directory starts
+with one generated baseline, `20261108112650_initial_schema.sql`, replacing the
+previous sequential and timestamped history. It creates the current schema
+without replaying superseded definitions or history-repair steps.
 
 Prerequisites: Node/pnpm from the root package, Docker, and installed dependencies.
 Supabase CLI 3.0.0 is pinned and installed by `pnpm install`.
+
+## Changing the schema
 
 ```sh
 pnpm db:start
 # Edit supabase/schemas/ to express the desired final database state.
 pnpm db:diff --file describe_the_change
-# Review the new SQL under supabase/migrations/ before applying it.
+# Review the generated SQL under supabase/migrations/.
 pnpm exec supabase migration up
 pnpm db:check
 pnpm test:security:db
 ```
 
-The project explicitly enables Supabase's `pg-delta` engine, now the v3 default.
-`db:diff` uses `db schema declarative sync --no-apply`; it compares declarations to migration
-history and does not capture changes made through Studio or a SQL editor.
-Commit the schema edits and generated migration together. Data backfills belong
-in reviewed handwritten migrations; fixture rows belong in test setup, not schema
-files. Review grants, function security, and RLS in every generated change.
+`db:diff` runs `supabase db schema declarative sync --no-apply` using pg-delta.
+It compares declarations against migration history and writes an incremental
+migration without applying it. Commit the schema edits and generated migration
+together. Future migrations accumulate as deployment artifacts; edit the
+declarations instead of writing DDL migrations manually. Do not rewrite the
+initial baseline after adopting it on an existing database.
 
-`pnpm db:check` runs generation in a temporary copy without hosted-project
-linkage, fails on differences, and leaves the working tree unchanged.
-It includes both `public` and `private`. Keep `private` out of `[api].schemas`:
-the access-check helper is used by RLS and must not become a public RPC.
+Changes made directly through Studio or a SQL editor are not captured by this
+workflow. The engine orders schema dependencies automatically; `schema_paths`
+is unnecessary. Review grants, function security, RLS, and destructive statements
+in every generated migration.
+
+`pnpm db:check` generates in a temporary copy without hosted-project linkage and
+leaves the working tree unchanged. It fails on schema differences, except for
+known pg-delta routine re-emissions whose full definitions exactly match both
+the latest migration and the declaration. `pnpm test:security:db` replays all
+migrations in a disposable PostgreSQL database and exercises the current controls.
+
+Both `public` and `private` belong in the declarations. Keep `private` out of
+`[api].schemas`: internal access and quota helpers must not become public RPCs.
+
+## Required data
+
+Declarative schema diffs do not capture `INSERT`, `UPDATE`, or `DELETE`. The initial
+migration therefore also initializes `private.write_limits` and the five zeroed
+`private.write_totals` counters. These rows are required for writes to work and
+must be installed in every environment, including hosted projects. They are not
+optional development seeds; `[db.seed]` remains disabled.
+
+Future data backfills or quota-default changes require an explicit reviewed data
+migration. Keep fixture rows in test setup, outside the declarative schema tree.
+
+## Fresh and existing databases
+
+For a fresh local database, `pnpm db:start` applies the baseline. A local database
+using the retired history needs a one-time reset if its data is disposable:
 
 ```sh
-pnpm db:reset  # Destructive only to this project's LOCAL database.
-pnpm db:stop   # Stop this project's stack, retaining local development data.
+pnpm db:reset  # Deletes this project's LOCAL development data.
+pnpm db:stop   # Stops the local stack, retaining its data.
 ```
 
 Local configuration uses ports 55320–55323 and project ID `teilfair-local`.
-It does not alter hosted Supabase configuration. Production deployment remains a
-separate operation; this testing setup never pushes migrations to a hosted project.
-Before deploying the text-limit migration, reconcile existing data with the new
-constraints: group/member names must be nonblank and at most 100 characters
-including padding, currency must be three uppercase
-ASCII letters, and expense descriptions must be nonblank and at most 250
-characters including padding. Constraint installation rejects incompatible rows;
-review and correct them explicitly rather than truncating financial descriptions.
-The expense-date migration likewise rejects existing non-finite dates or dates
-outside years 1–9999; correct those records explicitly before deployment.
+It does not alter hosted configuration. Database commands target local Supabase
+by default in CLI v3; hosted commands require an explicit `--remote`.
 
-Before deploying the first future migration to an existing installation, reconcile
-the hosted migration ledger with the already-applied `001`–`006` SQL. Do not replay
-initial table creation on an existing database or rewrite applied migration IDs.
-
-Reference: [Supabase declarative database schemas](https://supabase.com/docs/guides/local-development/declarative-database-schemas).
-
-## Supabase CLI v3
-
-Database commands now target the local stack by default. Local scripts omit the
-deprecated `--local` flag. Hosted commands require an explicit `--remote`; keep
-it last when the command also takes positional arguments. For example:
+For a **new, empty hosted project**, link it, review the initial migration, then
+deploy it:
 
 ```sh
-# Review pending hosted migrations without applying them.
-pnpm exec supabase db push --include-all --dry-run --remote
-# After reviewing, apply the approved hosted migrations.
-pnpm exec supabase db push --include-all --yes --remote
+pnpm exec supabase link
+pnpm exec supabase db push --dry-run --remote
+pnpm exec supabase db push --remote
 ```
 
-Hosted mutations require confirmation; unattended runs must pass `--yes`.
-CI installs the pinned CLI from the root lockfile and runs only local database
-commands. Upgrading the CLI does not deploy migrations or push configuration.
+For an **existing database**, do not run the initial migration or reset its data.
+The baseline changes the recorded history, not the intended application schema.
+Before deploying another migration:
 
-The existing `[local_smtp]` section and explicit `project_id = "teilfair-local"`
-are compatible with v3 and retain this project's local container/volume names.
-Flags and `SUPABASE_*` environment variables now override `config.toml`, including
-remote-specific blocks. Review those overrides and run
-`pnpm exec supabase config diff` before a hosted configuration push.
+1. Back up application data, private quota settings/counters, and the existing
+   `supabase_migrations.schema_migrations` ledger.
+2. Verify that the database matches the declarations, including grants, RLS,
+   routines, triggers, and quota initialization. A database missing any of the
+   retired changes must be upgraded from the pre-squash Git revision first.
+3. Run `pnpm exec supabase migration list --remote` and identify the retired
+   versions actually recorded there. The retired versions are `000`–`009`,
+   `20261104181342`, `20261104192300`, `20261104192500`, `20261104192600`,
+   `20261108100024`, `20261108100531`, and `20261108105627`.
+4. Use `supabase migration repair --status reverted <retired-versions> --remote`
+   through `pnpm exec` for those recorded versions, then
+   `pnpm exec supabase migration repair --status applied 20261108112650 --remote`.
+   These are ledger repairs only: they neither undo SQL nor execute the baseline.
+   Preserve any versions outside the retired list and reconcile their changes
+   separately before proceeding.
+5. Check `migration list --remote` again and run
+   `pnpm exec supabase db push --dry-run --remote`. The baseline must not be pending.
 
-See [the official CLI v3 migration guide](https://supabase.com/docs/guides/local-development/cli/migrating-to-v3).
+This repository cleanup does not repair any existing local or hosted ledger.
+Hosted mutations prompt for confirmation; unattended deployments require `--yes`.
+CI runs local database commands only. See the
+[Supabase declarative schema guide](https://supabase.com/docs/guides/local-development/declarative-database-schemas)
+and [CLI v3 migration guide](https://supabase.com/docs/guides/local-development/cli/migrating-to-v3).
 
-## Recovered production migrations 007 and 008
+## Database security controls
 
-These files were reconstructed from the statement lists in production's
-`supabase_migrations.schema_migrations` ledger on 8 November 2026. They were
-already deployed but missing from both this branch and `main`. Their deployed
-statements are preserved; the corresponding tables, routines, policies, and
-triggers now also live in `supabase/schemas/`.
-
-`007_participant_integrity_and_token_rotation.sql` introduced participant group
-checks and `public.rotate_group_tokens`. The later dated migrations strengthen
-group boundaries and atomic writes, but do not replace token rotation. Only a
-holder of the current write capability can rotate both links; replacement tokens
-must be fresh, distinct, 32-character alphanumeric strings. Old links then stop
-working. The RPC is available without accounts; the current clients do not offer
-a rotation UI.
-
-`008_database_abuse_limits.sql` adds private quota settings, counters, budgets,
-and 15 triggers covering all five application tables. These controls also apply
-to direct REST/RPC calls and privileged writes. Defaults are:
+The baseline retains token rotation, cross-group participant checks, atomic
+expense writes, text/date constraints, and quotas from the retired history.
+Only the current write capability can rotate both links through
+`public.rotate_group_tokens`; replacement tokens must be fresh, distinct,
+32-character alphanumeric strings. Old links then stop working.
 
 | Limit | Default |
 | --- | --- |
@@ -107,38 +121,10 @@ to direct REST/RPC calls and privileged writes. Defaults are:
 | Total payer / split rows | 100,000 / 250,000 |
 
 These are fixed-window resource budgets, not per-person or per-IP fairness or
-DDoS protection. One caller can consume the shared creation budget. Replacing a
-large expense consumes a budget unit for each inserted/updated accounting row.
-Administrators can tune `private.write_limits`; reapplying 008 preserves settings
-and reconciles row counters. Inserts that fail, roll back, or hit `ON CONFLICT DO
-NOTHING` do not consume stored row capacity. Deleting rows releases that capacity.
-Private quota tables and helper routines are not accessible to application roles.
-The newer text/date constraints supersede 008's looser text guards.
+DDoS protection. Administrators can tune `private.write_limits`. Rejected writes,
+rollbacks, and `ON CONFLICT DO NOTHING` do not consume stored row capacity;
+deletions release it. Private quota tables and helpers are inaccessible to clients.
 
-### Replay compatibility
-
-The recovered 007 and the already-applied dated group-boundary migration use the
-same parent-trigger names. History-repair migration `009` therefore occupies the
-last sequential slot before the dated files. On a fresh replay it renames only
-the legacy `UPDATE OF group_id` triggers, keeping their protection active until
-the newer migration installs its replacements. It leaves the newer triggers
-untouched when run against an existing deployment. If a local database already
-recorded the dated migration before 007 was restored, 009 restores that newer
-helper and trigger directly.
-
-The generated `20261108105627_preserve_legacy_security_controls.sql` migration
-removes the legacy aliases only after checking the replacement triggers exist.
-Its `IF EXISTS` guards make it safe on production, where the aliases were already
-removed during the security deployment. No historical migration was rewritten.
-Because 009 precedes production's latest recorded version, use
-`pnpm exec supabase db push --include-all --dry-run --remote` to review an existing project's
-pending history-repair and cleanup steps before applying them. Do not replay 007
-or 008 on a project whose ledger already records them.
-
-`pnpm test:security:db` replays the recovered history and covers link rotation,
-both API roles, quotas, row counters, rollback, and replay compatibility in a
-disposable database. `pnpm db:check` checks that declarations retain these controls.
 The local Playwright suite temporarily raises only its two creation budgets so
 parallel fixtures do not exhaust them; teardown restores the previous settings.
-The setup verifies loopback-only CLI status and uses `db query` with v3's local default.
 Production quotas, authorization, row caps, and group-write budgets stay active.

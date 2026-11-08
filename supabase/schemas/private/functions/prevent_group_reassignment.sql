@@ -1,5 +1,8 @@
 CREATE OR REPLACE FUNCTION private.prevent_group_reassignment()
-RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+  SET search_path TO ''
+  AS $function$
 BEGIN
   -- Parent group IDs are immutable, including for privileged callers. This
   -- prevents later moves and concurrent moves from invalidating child checks.
@@ -8,5 +11,6 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$;
+$function$;
+
 REVOKE ALL ON FUNCTION private.prevent_group_reassignment() FROM PUBLIC;
