@@ -19,7 +19,7 @@
     "test:local:targets": "node --test --test-isolation=none scripts/test-local-targets.mjs",
     "db:start": "node scripts/start-local-backend.mjs",
     "db:stop": "supabase stop",
-    "db:reset": "supabase db reset --local",
+    "db:reset": "supabase db reset",
     "db:diff": "supabase db schema declarative sync --no-apply",
     "db:check": "node scripts/check-db-schema.mjs",
     "web": "pnpm --filter @teilfair/web run dev",
@@ -45,7 +45,7 @@
   "devDependencies": {
     "@microsoft/aspire-cli": "13.6.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "supabase": "2.122.0",
+    "supabase": "3.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

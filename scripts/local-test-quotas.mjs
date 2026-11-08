@@ -2,7 +2,8 @@ import { supabase } from './lib/commands.mjs';
 import { localEnvironment } from './lib/local-environment.mjs';
 
 const names = ['creations_per_minute', 'creations_per_hour'];
-const execute = sql => supabase(['db', 'query', '--local', sql], { stdio: 'pipe' });
+// CLI v3 targets the local database unless --remote is explicitly supplied.
+const execute = sql => supabase(['db', 'query', sql], { stdio: 'pipe' });
 const query = sql => JSON.parse(execute(sql)).rows;
 
 export default async function localTestQuotas() {

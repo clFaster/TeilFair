@@ -6,20 +6,20 @@ first, then generate and review an incremental migration. Existing migrations
 The declarations are exported from a local replay of that history, not production.
 
 Prerequisites: Node/pnpm from the root package, Docker, and installed dependencies.
-The pinned Supabase CLI is installed by `pnpm install`.
+Supabase CLI 3.0.0 is pinned and installed by `pnpm install`.
 
 ```sh
 pnpm db:start
 # Edit supabase/schemas/ to express the desired final database state.
 pnpm db:diff --file describe_the_change
 # Review the new SQL under supabase/migrations/ before applying it.
-pnpm exec supabase migration up --local
+pnpm exec supabase migration up
 pnpm db:check
 pnpm test:security:db
 ```
 
-The project enables Supabase's `pg-delta` engine. `db:diff` uses
-`db schema declarative sync --no-apply`; it compares declarations to migration
+The project explicitly enables Supabase's `pg-delta` engine, now the v3 default.
+`db:diff` uses `db schema declarative sync --no-apply`; it compares declarations to migration
 history and does not capture changes made through Studio or a SQL editor.
 Commit the schema edits and generated migration together. Data backfills belong
 in reviewed handwritten migrations; fixture rows belong in test setup, not schema
@@ -52,6 +52,31 @@ the hosted migration ledger with the already-applied `001`–`006` SQL. Do not r
 initial table creation on an existing database or rewrite applied migration IDs.
 
 Reference: [Supabase declarative database schemas](https://supabase.com/docs/guides/local-development/declarative-database-schemas).
+
+## Supabase CLI v3
+
+Database commands now target the local stack by default. Local scripts omit the
+deprecated `--local` flag. Hosted commands require an explicit `--remote`; keep
+it last when the command also takes positional arguments. For example:
+
+```sh
+# Review pending hosted migrations without applying them.
+pnpm exec supabase db push --include-all --dry-run --remote
+# After reviewing, apply the approved hosted migrations.
+pnpm exec supabase db push --include-all --yes --remote
+```
+
+Hosted mutations require confirmation; unattended runs must pass `--yes`.
+CI installs the pinned CLI from the root lockfile and runs only local database
+commands. Upgrading the CLI does not deploy migrations or push configuration.
+
+The existing `[local_smtp]` section and explicit `project_id = "teilfair-local"`
+are compatible with v3 and retain this project's local container/volume names.
+Flags and `SUPABASE_*` environment variables now override `config.toml`, including
+remote-specific blocks. Review those overrides and run
+`pnpm exec supabase config diff` before a hosted configuration push.
+
+See [the official CLI v3 migration guide](https://supabase.com/docs/guides/local-development/cli/migrating-to-v3).
 
 ## Recovered production migrations 007 and 008
 
@@ -106,7 +131,7 @@ removes the legacy aliases only after checking the replacement triggers exist.
 Its `IF EXISTS` guards make it safe on production, where the aliases were already
 removed during the security deployment. No historical migration was rewritten.
 Because 009 precedes production's latest recorded version, use
-`supabase db push --linked --include-all --dry-run` to review an existing project's
+`pnpm exec supabase db push --include-all --dry-run --remote` to review an existing project's
 pending history-repair and cleanup steps before applying them. Do not replay 007
 or 008 on a project whose ledger already records them.
 
@@ -115,5 +140,5 @@ both API roles, quotas, row counters, rollback, and replay compatibility in a
 disposable database. `pnpm db:check` checks that declarations retain these controls.
 The local Playwright suite temporarily raises only its two creation budgets so
 parallel fixtures do not exhaust them; teardown restores the previous settings.
-The setup verifies loopback-only CLI status and always uses `db query --local`.
+The setup verifies loopback-only CLI status and uses `db query` with v3's local default.
 Production quotas, authorization, row caps, and group-write budgets stay active.
