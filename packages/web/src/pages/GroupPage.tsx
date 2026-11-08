@@ -56,10 +56,16 @@ function GroupStatus({ children }: Readonly<GroupStatusProps>) {
 }
 
 export function GroupPage() {
-  const { t } = useTranslation();
   const { groupId } = useParams<{ groupId: string }>();
   const location = useLocation();
   const token = new URLSearchParams(location.hash.slice(1)).get('t');
+
+  // Reset dialogs, drafts, and confirmations together when authority changes.
+  return <GroupPageContent key={`${groupId}:${token}`} groupId={groupId} token={token} />;
+}
+
+function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undefined; token: string | null }>) {
+  const { t } = useTranslation();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const {

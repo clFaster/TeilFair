@@ -1,8 +1,59 @@
 /// <reference lib="dom" />
 import { expect, test } from '@playwright/test';
-import { GROUP_ID, READ_TOKEN, WRITE_TOKEN, groupUrl, mockBackend } from './fixtures/group';
+import { GROUP_ID, READ_TOKEN, WRITE_TOKEN, groupRow, memberRows, expenseRows, payerRows, splitRows, groupUrl, mockBackend } from './fixtures/group';
 
 test.beforeEach(async ({ page }) => { await mockBackend(page); });
+
+test('group navigation closes the previous group edit dialog and clears its data', async ({ page }) => {
+  const options = { tables: {
+    groups: [groupRow], members: memberRows, expenses: expenseRows,
+    expense_payers: payerRows, expense_splits: splitRows,
+  } };
+  await mockBackend(page, options);
+  await page.goto(groupUrl());
+  const card = page.getByTestId('expense-card').first();
+  await card.hover();
+  await card.getByRole('button', { name: 'Edit', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Edit Expense' });
+  await expect(dialog).toBeVisible();
+  const otherId = '6f1c2b8e-4d3a-4f6b-9c1e-2a7b8c9d0e20';
+  options.tables.groups = [{ ...groupRow, id: otherId, name: 'Other group', write_token: 'other-write-token' }];
+  options.tables.members = memberRows.map(row => ({ ...row, group_id: otherId }));
+  options.tables.expenses = [];
+  options.tables.expense_payers = [];
+  options.tables.expense_splits = [];
+  await page.evaluate(({ otherId }) => {
+    history.pushState({}, '', `/g/${otherId}#t=other-write-token`);
+    dispatchEvent(new PopStateEvent('popstate'));
+  }, { otherId });
+  await expect(page.getByRole('heading', { name: 'Other group', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByTestId('expense-card')).toHaveCount(0);
+  // Returning to A must not resurrect its cached edit dialog either.
+  options.tables.groups = [groupRow];
+  options.tables.members = memberRows;
+  options.tables.expenses = expenseRows;
+  options.tables.expense_payers = payerRows;
+  options.tables.expense_splits = splitRows;
+  await page.goBack();
+  await expect(page.getByTestId('expense-card').first()).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('switching to read access closes an open expense draft', async ({ page }) => {
+  await page.goto(groupUrl());
+  await page.getByTestId('add-expense-button').click();
+  await page.getByTestId('expense-description-input').fill('Private draft');
+  await page.evaluate(token => { location.hash = `t=${token}`; }, READ_TOKEN);
+  await expect(page.getByTestId('expense-card').first()).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByTestId('add-expense-button')).toHaveCount(0);
+  await page.evaluate(token => { location.hash = `t=${token}`; }, WRITE_TOKEN);
+  await expect(page.getByTestId('add-expense-button')).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByTestId('add-expense-button').click();
+  await expect(page.getByTestId('expense-description-input')).toHaveValue('');
+});
 
 test('invalid navigation clears active data without deleting the saved capability', async ({ page }) => {
   await page.goto(groupUrl());
