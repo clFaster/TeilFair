@@ -3,7 +3,9 @@
     "path": "aspire-apphost/apphost.mts",
     "language": "typescript/nodejs"
   },
-  "sdk": { "version": "13.6.1" },
+  "sdk": {
+    "version": "13.6.4"
+  },
   "channel": "stable",
   "profiles": {
     "default": {

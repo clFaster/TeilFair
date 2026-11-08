@@ -122,13 +122,18 @@ pnpm exec aspire describe --format Json
 pnpm exec aspire logs web
 ```
 
-Use the repository's `aspire:start`/`aspire:restore` launchers. Aspire 13.6.1 installs
+Use the repository's `aspire:start`/`aspire:restore` launchers. Aspire 13.6.4 installs
 its TypeScript tooling with `pnpm --ignore-workspace`, so the launcher supplies the
 required esbuild-only build permission and enforces its separate lockfile. The
 AppHost is an isolated tooling package, rather than an application workspace.
 Its dependencies are tracked by Dependabot separately.
 When upgrading Aspire, update the root CLI dependency and `sdk.version` in
 `aspire.config.json` together, then restore and validate the generated SDK.
+
+Aspire 13.6.4's generated transport still imports `vscode-jsonrpc/node.js`, so the
+AppHost retains `vscode-jsonrpc` 8.2.1. Version 10 exports `/node` instead and fails
+AppHost compilation. Dependabot major updates for this package are ignored until
+Aspire's generator supports the new exports; do not patch the generated SDK.
 
 One local Supabase stack uses the configured project ID and ports on a machine.
 Parallel Playwright workers have isolated groups, but simultaneous checkouts need
