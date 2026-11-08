@@ -20,6 +20,7 @@ export interface ExpenseRow {
   group_id: string;
   description: string;
   total_amount: number;
+  revision: number;
   expense_date: string;
   created_at: string;
 }

@@ -31,6 +31,22 @@ async function openAddExpense(page: Page) {
 }
 
 test.describe('expense form', () => {
+  test('description limit is visible, translated, and enforced while typing', async ({ page }) => {
+    const dialog = await openAddExpense(page);
+    const description = dialog.getByTestId('expense-description-input');
+    await expect(description).toHaveAttribute('maxlength', '250');
+    await expect(description).toHaveAccessibleDescription('0 / 250 characters');
+    await description.fill('d'.repeat(250));
+    await description.press('End');
+    await description.press('x');
+    await expect(description).toHaveValue('d'.repeat(250));
+    await expect(description).toHaveAccessibleDescription('250 / 250 characters');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Select language', exact: true }).click();
+    await page.getByTestId('add-expense-button').click();
+    await expect(page.getByTestId('expense-description-input')).toHaveAccessibleDescription('0 / 250 Zeichen');
+  });
+
   test('amount fields use the decimal keypad and the split picker uses real checkboxes', async ({ page }) => {
     const dialog = await openAddExpense(page);
 
@@ -109,10 +125,14 @@ test.describe('expense form', () => {
     await submit.click();
     await expect(dialog).toHaveCount(0);
 
-    const expense = writes.find((write) => write.method === 'POST' && write.table === 'expenses');
-    expect(expense?.body).toMatchObject({ total_amount: 1500 });
-    const payers = writes.find((write) => write.method === 'POST' && write.table === 'expense_payers');
-    expect(payers?.body).toEqual([expect.objectContaining({ member_id: 'm-anna', amount: 1500 })]);
+    const expense = writes.find((write) => write.method === 'POST' && write.table === 'save_expense');
+    expect(expense?.body).toMatchObject({
+      requested_group_id: GROUP_ID,
+      expected_revision: 0,
+      payload: { total_amount: 1500 },
+    });
+    expect((expense?.body as { payload: { payers: unknown[] } }).payload.payers)
+      .toEqual([{ member_id: 'm-anna', amount: 1500 }]);
   });
 
   test('custom amounts show a live remaining indicator and accept a decimal comma', async ({ page }) => {
@@ -199,10 +219,10 @@ test.describe('amount parsing', () => {
     await submit.click();
     await expect(dialog).toHaveCount(0);
 
-    const expense = writes.find((write) => write.method === 'POST' && write.table === 'expenses');
-    expect(expense?.body).toMatchObject({ total_amount: 1234.56 });
-    const payers = writes.find((write) => write.method === 'POST' && write.table === 'expense_payers');
-    expect(payers?.body).toEqual([expect.objectContaining({ member_id: 'm-anna', amount: 1234.56 })]);
+    const expense = writes.find((write) => write.method === 'POST' && write.table === 'save_expense');
+    expect(expense?.body).toMatchObject({ payload: { total_amount: 1234.56 } });
+    expect((expense?.body as { payload: { payers: unknown[] } }).payload.payers)
+      .toEqual([{ member_id: 'm-anna', amount: 1234.56 }]);
   });
 
   test('an unreadable per-member amount is flagged on its own field', async ({ page }) => {
@@ -230,6 +250,7 @@ test.describe('edit expense', () => {
     group_id: GROUP_ID,
     description: 'Groceries',
     total_amount: 50.5,
+    revision: 1,
     expense_date: '2026-10-04T09:15:00.000Z',
     created_at: '2026-10-04T09:16:00.000Z',
   };
@@ -238,6 +259,7 @@ test.describe('edit expense', () => {
     group_id: GROUP_ID,
     description: 'Taxi home',
     total_amount: 18,
+    revision: 1,
     expense_date: '2026-10-01T22:40:00.000Z',
     created_at: '2026-10-01T22:41:00.000Z',
   };
@@ -301,25 +323,27 @@ test.describe('edit expense', () => {
     await dialog.getByRole('button', { name: 'Save Changes' }).click();
     await expect(dialog).toHaveCount(0);
 
-    await expect.poll(() => writes.length).toBe(5);
-    const [update] = writesTo('expenses', 'PATCH');
-    expect(update.query).toMatchObject({ id: 'eq.e-groceries' });
-    expect(update.body).toEqual({
-      description: 'Groceries',
-      total_amount: 50.5,
-      expense_date: groceries.expense_date,
+    await expect.poll(() => writes.length).toBe(1);
+    const [update] = writesTo('save_expense', 'POST');
+    expect(update.body).toMatchObject({
+      requested_group_id: GROUP_ID,
+      requested_expense_id: 'e-groceries',
+      expected_revision: 1,
+      payload: {
+        description: 'Groceries',
+        total_amount: 50.5,
+        expense_date: groceries.expense_date,
+        payers: [
+          { member_id: 'm-anna', amount: 30 },
+          { member_id: 'm-ben', amount: 20.5 },
+        ],
+        splits: [
+          { member_id: 'm-anna', share: 10.5, share_type: 'fixed' },
+          { member_id: 'm-ben', share: 15, share_type: 'fixed' },
+          { member_id: 'm-cleo', share: 25, share_type: 'fixed' },
+        ],
+      },
     });
-    expect(writesTo('expense_payers', 'DELETE')[0].query).toMatchObject({ expense_id: 'eq.e-groceries' });
-    expect(writesTo('expense_splits', 'DELETE')[0].query).toMatchObject({ expense_id: 'eq.e-groceries' });
-    expect(writesTo('expense_payers', 'POST')[0].body).toEqual([
-      { expense_id: 'e-groceries', member_id: 'm-anna', amount: 30 },
-      { expense_id: 'e-groceries', member_id: 'm-ben', amount: 20.5 },
-    ]);
-    expect(writesTo('expense_splits', 'POST')[0].body).toEqual([
-      { expense_id: 'e-groceries', member_id: 'm-anna', share: 10.5, share_type: 'fixed' },
-      { expense_id: 'e-groceries', member_id: 'm-ben', share: 15, share_type: 'fixed' },
-      { expense_id: 'e-groceries', member_id: 'm-cleo', share: 25, share_type: 'fixed' },
-    ]);
   });
 
   test('an equal split prefills the payer and the ticked members', async ({ page }) => {
@@ -340,14 +364,16 @@ test.describe('edit expense', () => {
     await dialog.getByRole('button', { name: 'Save Changes' }).click();
     await expect(dialog).toHaveCount(0);
 
-    await expect.poll(() => writes.length).toBe(5);
-    expect(writesTo('expenses', 'PATCH')[0].body).toMatchObject({ total_amount: 1234.56 });
-    expect(writesTo('expense_payers', 'POST')[0].body).toEqual([
-      { expense_id: 'e-taxi', member_id: 'm-cleo', amount: 1234.56 },
-    ]);
-    expect(writesTo('expense_splits', 'POST')[0].body).toEqual(
-      ['m-anna', 'm-ben', 'm-cleo'].map((member_id) => ({ expense_id: 'e-taxi', member_id, share: 1, share_type: 'ratio' }))
-    );
+    await expect.poll(() => writes.length).toBe(1);
+    expect(writesTo('save_expense', 'POST')[0].body).toMatchObject({
+      requested_expense_id: 'e-taxi',
+      expected_revision: 1,
+      payload: {
+        total_amount: 1234.56,
+        payers: [{ member_id: 'm-cleo', amount: 1234.56 }],
+        splits: ['m-anna', 'm-ben', 'm-cleo'].map((member_id) => ({ member_id, share: 1, share_type: 'ratio' })),
+      },
+    });
     await expect(page.getByTestId('expense-card').filter({ hasText: 'Taxi home' })).toContainText('1,234.56');
   });
 });
@@ -359,6 +385,7 @@ test.describe('edit legacy fractional JPY expense', () => {
     group_id: GROUP_ID,
     description: 'Ramen night',
     total_amount: 96.6,
+    revision: 1,
     expense_date: '2026-10-05T12:00:00.000Z',
     created_at: '2026-10-05T12:01:00.000Z',
   };
@@ -367,6 +394,7 @@ test.describe('edit legacy fractional JPY expense', () => {
     group_id: GROUP_ID,
     description: 'Sushi lunch',
     total_amount: 96.6,
+    revision: 1,
     expense_date: '2026-10-04T12:00:00.000Z',
     created_at: '2026-10-04T12:01:00.000Z',
   };
@@ -404,12 +432,12 @@ test.describe('edit legacy fractional JPY expense', () => {
     return dialog;
   }
 
-  /** Changes only the description, saves and waits for the five update writes. */
+  /** Changes only the description, saves and waits for the atomic write. */
   async function saveDescriptionOnly(dialog: Locator, description: string) {
     await dialog.getByTestId('expense-description-input').fill(description);
     await dialog.getByRole('button', { name: 'Save Changes' }).click();
     await expect(dialog).toHaveCount(0);
-    await expect.poll(() => writes.length).toBe(5);
+    await expect.poll(() => writes.length).toBe(1);
   }
 
   const writesTo = (table: string, method: string) =>
@@ -418,23 +446,25 @@ test.describe('edit legacy fractional JPY expense', () => {
     dialog.getByRole('textbox', { name: `Amount paid by ${name}` });
   const share = (dialog: Locator, name: string) =>
     dialog.getByRole('textbox', { name: `Share of ${name}` });
-  const ratioSplits = (expenseId: string, memberIds: string[]) =>
-    memberIds.map((member_id) => ({ expense_id: expenseId, member_id, share: 1, share_type: 'ratio' }));
+  const ratioSplits = (memberIds: string[]) =>
+    memberIds.map((member_id) => ({ member_id, share: 1, share_type: 'ratio' }));
 
   test('single payer: a description-only save keeps the stored total and payment', async ({ page }) => {
     const dialog = await openEdit(page, 'Dinner at Figlmüller');
     await expect(dialog.getByTestId('expense-amount-input')).toHaveValue('96.6');
 
     await saveDescriptionOnly(dialog, 'Dinner with friends');
-    expect(writesTo('expenses', 'PATCH')[0].body).toEqual({
-      description: 'Dinner with friends',
-      total_amount: 96.6,
-      expense_date: expenseRows[0].expense_date,
+    expect(writesTo('save_expense', 'POST')[0].body).toMatchObject({
+      requested_expense_id: 'e-dinner',
+      expected_revision: 1,
+      payload: {
+        description: 'Dinner with friends',
+        total_amount: 96.6,
+        expense_date: expenseRows[0].expense_date,
+        payers: [{ member_id: 'm-anna', amount: 96.6 }],
+        splits: ratioSplits(['m-anna', 'm-ben', 'm-cleo']),
+      },
     });
-    expect(writesTo('expense_payers', 'POST')[0].body).toEqual([
-      { expense_id: 'e-dinner', member_id: 'm-anna', amount: 96.6 },
-    ]);
-    expect(writesTo('expense_splits', 'POST')[0].body).toEqual(ratioSplits('e-dinner', ['m-anna', 'm-ben', 'm-cleo']));
   });
 
   test('multiple payers: a description-only save keeps untouched stored payments', async ({ page }) => {
@@ -444,14 +474,18 @@ test.describe('edit legacy fractional JPY expense', () => {
     await expect(paid(dialog, 'Ben')).toHaveValue('46.3');
 
     await saveDescriptionOnly(dialog, 'Ramen with friends');
-    expect(writesTo('expenses', 'PATCH')[0].body).toMatchObject({
-      description: 'Ramen with friends',
-      total_amount: 96.6,
+    expect(writesTo('save_expense', 'POST')[0].body).toMatchObject({
+      requested_expense_id: 'e-ramen',
+      expected_revision: 1,
+      payload: {
+        description: 'Ramen with friends',
+        total_amount: 96.6,
+        payers: [
+          { member_id: 'm-anna', amount: 50.3 },
+          { member_id: 'm-ben', amount: 46.3 },
+        ],
+      },
     });
-    expect(writesTo('expense_payers', 'POST')[0].body).toEqual([
-      { expense_id: 'e-ramen', member_id: 'm-anna', amount: 50.3 },
-      { expense_id: 'e-ramen', member_id: 'm-ben', amount: 46.3 },
-    ]);
   });
 
   test('multiple payers: stored payments add up and are saved unchanged', async ({ page }) => {
@@ -472,12 +506,19 @@ test.describe('edit legacy fractional JPY expense', () => {
     await expect(meter).toHaveClass(/is-ok/);
 
     await saveDescriptionOnly(dialog, 'Ramen night out');
-    expect(writesTo('expenses', 'PATCH')[0].body).toMatchObject({ description: 'Ramen night out', total_amount: 96.6 });
-    expect(writesTo('expense_payers', 'POST')[0].body).toEqual([
-      { expense_id: 'e-ramen', member_id: 'm-anna', amount: 50.3 },
-      { expense_id: 'e-ramen', member_id: 'm-ben', amount: 46.3 },
-    ]);
-    expect(writesTo('expense_splits', 'POST')[0].body).toEqual(ratioSplits('e-ramen', ['m-anna', 'm-ben']));
+    expect(writesTo('save_expense', 'POST')[0].body).toMatchObject({
+      requested_expense_id: 'e-ramen',
+      expected_revision: 1,
+      payload: {
+        description: 'Ramen night out',
+        total_amount: 96.6,
+        payers: [
+          { member_id: 'm-anna', amount: 50.3 },
+          { member_id: 'm-ben', amount: 46.3 },
+        ],
+        splits: ratioSplits(['m-anna', 'm-ben']),
+      },
+    });
   });
 
   test('fixed split: stored shares add up and are saved unchanged', async ({ page }) => {
@@ -491,14 +532,18 @@ test.describe('edit legacy fractional JPY expense', () => {
     await expect(meter).toContainText('Adds up');
 
     await saveDescriptionOnly(dialog, 'Sushi lunch downtown');
-    expect(writesTo('expenses', 'PATCH')[0].body).toMatchObject({ total_amount: 96.6 });
-    expect(writesTo('expense_payers', 'POST')[0].body).toEqual([
-      { expense_id: 'e-sushi', member_id: 'm-cleo', amount: 96.6 },
-    ]);
-    expect(writesTo('expense_splits', 'POST')[0].body).toEqual([
-      { expense_id: 'e-sushi', member_id: 'm-anna', share: 48.3, share_type: 'fixed' },
-      { expense_id: 'e-sushi', member_id: 'm-ben', share: 48.3, share_type: 'fixed' },
-    ]);
+    expect(writesTo('save_expense', 'POST')[0].body).toMatchObject({
+      requested_expense_id: 'e-sushi',
+      expected_revision: 1,
+      payload: {
+        total_amount: 96.6,
+        payers: [{ member_id: 'm-cleo', amount: 96.6 }],
+        splits: [
+          { member_id: 'm-anna', share: 48.3, share_type: 'fixed' },
+          { member_id: 'm-ben', share: 48.3, share_type: 'fixed' },
+        ],
+      },
+    });
   });
 
   test('edited amounts are still checked for whole yen', async ({ page }) => {

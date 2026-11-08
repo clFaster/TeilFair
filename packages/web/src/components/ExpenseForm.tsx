@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleCheck, faCircleExclamation, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { CreateExpenseInput, Expense, Member, ShareType } from '@teilfair/shared';
+import { EXPENSE_DESCRIPTION_MAX_LENGTH } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import {
   currencyFractionDigits,
@@ -164,6 +165,10 @@ export function ExpenseForm({
     event.preventDefault();
     setError(null);
 
+    if (description.length > EXPENSE_DESCRIPTION_MAX_LENGTH) {
+      return fail('descriptionTooLong', { max: String(EXPENSE_DESCRIPTION_MAX_LENGTH) }, 'description');
+    }
+
     if (failOnInvalid([['total', totalAmount]], storedTotal ? { total: storedTotal } : {})) return;
     if (!(total > 0)) {
       fail('validAmount', undefined, 'total');
@@ -261,8 +266,14 @@ export function ExpenseForm({
             placeholder={t('expense.descriptionPlaceholder')}
             enterKeyHint="next"
             value={description}
+            maxLength={EXPENSE_DESCRIPTION_MAX_LENGTH}
+            aria-describedby={`${ids.description}-hint`}
+            aria-invalid={error?.field === 'description' || undefined}
             onChange={(e) => setDescription(e.target.value)}
           />
+          <p id={`${ids.description}-hint`} className="input-hint">
+            {t('expense.descriptionLength', { current: description.length, max: EXPENSE_DESCRIPTION_MAX_LENGTH })}
+          </p>
         </div>
 
         <div className="input-row">

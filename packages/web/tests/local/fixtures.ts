@@ -34,6 +34,15 @@ export class LocalBackend {
     });
   }
 
+  saveExpense(group: TestGroup, expenseId: string, payload: unknown, expectedRevision: number) {
+    return this.send('POST', 'rpc/save_expense', group.writeToken, {
+      requested_group_id: group.id,
+      requested_expense_id: expenseId,
+      payload,
+      expected_revision: expectedRevision,
+    });
+  }
+
   async rows<T = Record<string, unknown>>(method: string, path: string, token?: string, data?: unknown): Promise<T[]> {
     const response = await this.send(method, path, token, data);
     expect(response.ok(), `${method} ${path}: ${await response.text()}`).toBe(true);
@@ -58,26 +67,33 @@ export class LocalBackend {
   }
 
   async expense(group: TestGroup, members: MemberRow[], shareType = 'ratio') {
-    const [expense] = await this.rows<{ id: string }>('POST', 'expenses', group.writeToken, {
-      group_id: group.id, description: 'Seeded dinner', total_amount: 30,
-      expense_date: '2026-10-01T18:30:00Z',
-    });
-    const payers = await this.rows<{ id: string }>('POST', 'expense_payers', group.writeToken,
-      { expense_id: expense.id, member_id: members[0].id, amount: 30 });
+    const expenseId = randomUUID();
     const shares = shareType === 'percentage' ? [25, 75] : shareType === 'fixed' ? [10, 20] : [1, 1];
-    const splits = await this.rows<{ id: string }>('POST', 'expense_splits', group.writeToken,
-      members.map((member, index) => ({ expense_id: expense.id, member_id: member.id,
-        share: shares[index], share_type: shareType })));
-    return { id: expense.id, payers, splits };
+    const response = await this.saveExpense(group, expenseId, {
+        description: 'Seeded dinner',
+        total_amount: 30,
+        expense_date: '2026-10-01T18:30:00Z',
+        payers: [{ member_id: members[0].id, amount: 30 }],
+        splits: members.map((member, index) => ({ member_id: member.id,
+          share: shares[index], share_type: shareType })),
+      }, 0);
+    expect(response.ok(), `save expense: ${await response.text()}`).toBe(true);
+    const saved = await response.json();
+    return { id: saved.expense.id, payers: saved.payers, splits: saved.splits };
   }
 
   async dispose() {
     const errors: unknown[] = [];
     for (const group of this.groups) {
-      try {
-        await this.rows('DELETE', `groups?id=eq.${group.id}&select=id`, group.writeToken);
-      } catch (error) {
-        errors.push(error);
+      for (const path of [
+        `expenses?group_id=eq.${group.id}&select=id`,
+        `groups?id=eq.${group.id}&select=id`,
+      ]) {
+        try {
+          await this.rows('DELETE', path, group.writeToken);
+        } catch (error) {
+          errors.push(error);
+        }
       }
     }
     if (errors.length) throw new AggregateError(errors, 'Failed to clean up local test groups.');

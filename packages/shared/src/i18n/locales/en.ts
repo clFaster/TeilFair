@@ -164,6 +164,7 @@ const en = {
     // Form
     descriptionLabel: 'Description',
     descriptionPlaceholder: 'e.g., Dinner, Taxi, Hotel',
+    descriptionLength: '{{current}} / {{max}} characters',
     amountLabel: 'Amount ({{currency}})',
     amountPlaceholder: '0.00',
     dateLabel: 'Date',
@@ -192,6 +193,7 @@ const en = {
 
     // Validation
     errors: {
+      descriptionTooLong: 'Descriptions can be at most {{max}} characters',
       validAmount: 'Please enter an amount greater than 0',
       amountFormat: '"{{value}}" isn\'t a valid amount. Use one decimal separator, e.g. 1234.56 or 1,234.56',
       amountFormatWhole: '"{{value}}" isn\'t a valid amount. {{currency}} has no decimals, so enter a whole number, e.g. 1500 or 1,500',

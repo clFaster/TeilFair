@@ -13,10 +13,35 @@ try {
   const migrations = join(scratch, 'supabase', 'migrations');
   const before = new Set(readdirSync(migrations));
   supabase(['db', 'schema', 'declarative', 'sync', '--workdir', scratch,
-    '--schema', 'public,private', '--file', 'schema_consistency', '--no-apply']);
+    '--file', 'schema_consistency', '--no-apply']);
   const generated = readdirSync(migrations).filter(name => !before.has(name));
-  for (const name of generated) console.error(readFileSync(join(migrations, name), 'utf8'));
-  if (generated.length) throw new Error('Schema declarations differ from migrations. Generate and review a migration.');
+  // pg-delta 2.122 re-emits routines even after replaying its own
+  // output. Accept only exact declaration text, preserving bodies and literals.
+  const declarations = readdirSync(join(scratch, 'supabase', 'schemas'), { recursive: true })
+    .filter(name => name.endsWith('.sql'))
+    .map(name => readFileSync(join(scratch, 'supabase', 'schemas', name), 'utf8').replaceAll('\r\n', '\n'));
+  const baseline = [...before].sort().map(name => readFileSync(join(migrations, name), 'utf8')
+    .replaceAll('\r\n', '\n')).join('\n');
+  const duplicateNames = ['private.check_group_access', 'public.get_group', 'public.get_token', 'public.save_expense'];
+  for (const name of generated) {
+    let diff = readFileSync(join(migrations, name), 'utf8').replaceAll('\r\n', '\n');
+    diff = diff.replace(/^SET local check_function_bodies = off;\s*/, '');
+    diff = diff.replace(/CREATE OR REPLACE FUNCTION ([\w.]+)[\s\S]*?\$function\$;/g, (statement, routine) => {
+      if (!duplicateNames.includes(routine)) return statement;
+      // The latest definition in the migration baseline must also be byte-identical.
+      // Comparing only with the desired declaration would hide real body changes.
+      const start = baseline.lastIndexOf(`CREATE OR REPLACE FUNCTION ${routine}`);
+      const end = baseline.indexOf('$function$;', baseline.indexOf('$function$', start) + 10);
+      const latest = start < 0 || end < 0 ? '' : baseline.slice(start, end + 11);
+      const laterDrop = /DROP\s+FUNCTION/i.test(baseline.slice(start));
+      return !laterDrop && latest === statement && declarations.some(source => source.includes(statement))
+        ? '' : statement;
+    });
+    if (diff.trim()) {
+      console.error(diff);
+      throw new Error('Schema declarations differ from migrations. Generate and review a migration.');
+    }
+  }
   console.log('Declarative application schema matches migration history.');
 } finally {
   const parent = resolve(tmpdir()) + sep;

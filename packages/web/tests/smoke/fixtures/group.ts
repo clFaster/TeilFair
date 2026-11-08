@@ -26,6 +26,7 @@ export const expenseRows = [
     group_id: GROUP_ID,
     description: 'Dinner at Figlmüller',
     total_amount: 96.6,
+    revision: 1,
     expense_date: '2026-10-03T19:30:00.000Z',
     created_at: '2026-10-03T19:31:00.000Z',
   },
@@ -34,6 +35,7 @@ export const expenseRows = [
     group_id: GROUP_ID,
     description: 'Museum tickets',
     total_amount: 45,
+    revision: 1,
     expense_date: '2026-10-02T11:00:00.000Z',
     created_at: '2026-10-02T11:01:00.000Z',
   },
@@ -63,6 +65,7 @@ export function manyExpenses(count: number, firstAmount = 42.5): Required<Backen
       group_id: GROUP_ID,
       description: `${DESCRIPTIONS[i % DESCRIPTIONS.length]} #${i + 1}`,
       total_amount: i === 0 ? firstAmount : 12 + i * 3.35,
+      revision: 1,
       expense_date: date.toISOString(),
       created_at: date.toISOString(),
     };
@@ -171,7 +174,8 @@ async function fulfillSupabase(route: Route, options: BackendOptions, writes: Ba
 
   const url = new URL(request.url());
   const isGroupRpc = url.pathname === '/rest/v1/rpc/get_group';
-  const table = isGroupRpc ? 'groups' : url.pathname.replace(/^\/rest\/v1\//, '').split('/')[0];
+  const isExpenseRpc = url.pathname === '/rest/v1/rpc/save_expense';
+  const table = isGroupRpc ? 'groups' : isExpenseRpc ? 'save_expense' : url.pathname.replace(/^\/rest\/v1\//, '').split('/')[0];
   if (options.failTables?.includes(table)) {
     return route.fulfill({
       status: 500,
@@ -181,6 +185,42 @@ async function fulfillSupabase(route: Route, options: BackendOptions, writes: Ba
   }
 
   let rows = { ...TABLES, ...options.tables }[table] ?? [];
+  if (isExpenseRpc) {
+    const body = request.postDataJSON() as Row;
+    const payload = body.payload as Row;
+    const expenseId = String(body.requested_expense_id);
+    const previous = (({ ...TABLES, ...options.tables }).expenses ?? []) as Row[];
+    const existing = previous.find((row) => row.id === expenseId);
+    const savedExpense = {
+      ...existing,
+      id: expenseId,
+      group_id: body.requested_group_id,
+      description: payload.description,
+      total_amount: payload.total_amount,
+      expense_date: payload.expense_date,
+      created_at: existing?.created_at ?? '2026-10-01T10:00:00.000Z',
+      revision: body.expected_revision === 0 ? 1 : Number(body.expected_revision) + 1,
+    };
+    const write: BackendWrite = { method: 'POST', table, query: {}, body };
+    writes.push(write);
+    return route.fulfill({
+      status: 200,
+      headers: { ...CORS_HEADERS, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        expense: savedExpense,
+        payers: (payload.payers as Row[]).map((payer, index) => ({
+          id: `rpc-payer-${writes.length}-${index}`,
+          expense_id: expenseId,
+          ...payer,
+        })),
+        splits: (payload.splits as Row[]).map((split, index) => ({
+          id: `rpc-split-${writes.length}-${index}`,
+          expense_id: expenseId,
+          ...split,
+        })),
+      }),
+    });
+  }
   if (isGroupRpc) {
     const requestedId = request.postDataJSON().requested_group_id;
     for (const [index, write] of writes.entries()) {

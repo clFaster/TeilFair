@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { ShareType } from '@teilfair/shared';
+import { EXPENSE_DESCRIPTION_MAX_LENGTH } from '@teilfair/shared';
 import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { MobileIcon } from '../components/MobileIcon';
@@ -118,6 +119,10 @@ export function AddExpenseScreen() {
   };
 
   const handleSubmit = async () => {
+    if (description.length > EXPENSE_DESCRIPTION_MAX_LENGTH) {
+      Alert.alert(t('common.error'), t('expense.errors.descriptionTooLong', { max: EXPENSE_DESCRIPTION_MAX_LENGTH }));
+      return;
+    }
     const amount = parseFloat(totalAmount);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert(t('common.error'), t('validation.enterValidAmount'));
@@ -243,7 +248,11 @@ export function AddExpenseScreen() {
             placeholderTextColor={theme.colors.textSecondary}
             value={description}
             onChangeText={setDescription}
+            maxLength={EXPENSE_DESCRIPTION_MAX_LENGTH}
           />
+          <Text style={{ color: theme.colors.textSecondary }}>
+            {t('expense.descriptionLength', { current: description.length, max: EXPENSE_DESCRIPTION_MAX_LENGTH })}
+          </Text>
         </View>
 
         {/* Amount */}

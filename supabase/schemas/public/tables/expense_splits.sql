@@ -9,7 +9,7 @@ CREATE TABLE "public"."expense_splits" (
   CONSTRAINT "expense_splits_share_check" CHECK ((share > (0)::numeric)),
   CONSTRAINT "expense_splits_share_type_check" CHECK ((share_type = ANY (ARRAY['ratio'::text, 'fixed'::text, 'percentage'::text]))),
   CONSTRAINT "expense_splits_expense_id_fkey" FOREIGN KEY (expense_id) REFERENCES public.expenses(id) ON DELETE CASCADE,
-  CONSTRAINT "expense_splits_member_id_fkey" FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE CASCADE
+  CONSTRAINT "expense_splits_member_id_fkey" FOREIGN KEY (member_id) REFERENCES public.members(id) ON DELETE NO ACTION
 );
 
 ALTER TABLE "public"."expense_splits"
@@ -18,6 +18,10 @@ ALTER TABLE "public"."expense_splits"
 CREATE INDEX idx_expense_splits_expense_id ON public.expense_splits USING btree (expense_id);
 
 CREATE INDEX idx_expense_splits_member_id ON public.expense_splits USING btree (member_id);
+
+CREATE TRIGGER enforce_expense_member_group
+BEFORE INSERT OR UPDATE ON public.expense_splits
+FOR EACH ROW EXECUTE FUNCTION private.enforce_expense_member_group();
 
 CREATE POLICY "Delete expense_splits with write token" ON "public"."expense_splits"
   FOR DELETE
@@ -47,7 +51,8 @@ CREATE POLICY "Update expense_splits with write token" ON "public"."expense_spli
    FROM public.expenses e
   WHERE ((e.id = expense_splits.expense_id) AND private.check_group_access(e.group_id, true)))));
 
-GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_splits" TO "anon", "authenticated";
+GRANT SELECT ON TABLE "public"."expense_splits" TO "anon", "authenticated";
+REVOKE INSERT, UPDATE, DELETE, MAINTAIN, REFERENCES, TRIGGER, TRUNCATE ON TABLE public.expense_splits FROM anon, authenticated;
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."expense_splits" TO "service_role";
 

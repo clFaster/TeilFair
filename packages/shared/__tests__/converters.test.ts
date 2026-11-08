@@ -18,7 +18,7 @@ describe('database to domain conversion', () => {
   it('normalizes monetary values and split precision and keeps expense time separate from creation time', () => {
     // PostgREST numeric values can be delivered as strings despite the row types.
     const row = { id: 'e', group_id: 'g', description: 'Dinner', total_amount: '12.50',
-      expense_date: '2026-10-03T21:30:00+02:00', created_at: created } as unknown as ExpenseRow;
+      revision: 3, expense_date: '2026-10-03T21:30:00+02:00', created_at: created } as unknown as ExpenseRow;
     const payers = [{ id: 'p', expense_id: 'e', member_id: 'alice', amount: '12.50' }] as unknown as ExpensePayerRow[];
     const splits = [
       { id: 's1', expense_id: 'e', member_id: 'alice', share: '1.2500', share_type: 'ratio' },
@@ -28,6 +28,7 @@ describe('database to domain conversion', () => {
     const before = structuredClone({ row, payers, splits });
     expect(expenseFromRow(row, payers, splits)).toEqual({
       id: 'e', groupId: 'g', description: 'Dinner', totalAmount: 12.5,
+      revision: 3,
       date: new Date('2026-10-03T19:30:00Z'), createdAt: new Date(created),
       payers: [{ id: 'p', expenseId: 'e', memberId: 'alice', amount: 12.5 }],
       splits: [
@@ -41,6 +42,7 @@ describe('database to domain conversion', () => {
 
   it('handles an expense with no associated payer or split rows', () => {
     expect(expenseFromRow({ id: 'e', group_id: 'g', description: 'Empty', total_amount: 0,
-      expense_date: created, created_at: created }, [], [])).toMatchObject({ totalAmount: 0, payers: [], splits: [] });
+      revision: 1, expense_date: created, created_at: created }, [], []))
+      .toMatchObject({ totalAmount: 0, revision: 1, payers: [], splits: [] });
   });
 });

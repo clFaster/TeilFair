@@ -8,7 +8,7 @@ test('cleanup attempts every group and reports all deletion failures', async ({ 
     override async rows<T>(method: string, path: string): Promise<T[]> {
       attempts.push(`${method} ${path}`);
       if (attempts.length === 1) throw failures[0];
-      if (attempts.length === 3) throw failures[1];
+      if (attempts.length === 4) throw failures[1];
       return [];
     }
   }
@@ -19,8 +19,11 @@ test('cleanup attempts every group and reports all deletion failures', async ({ 
 
   await expect(backend.dispose()).rejects.toMatchObject({ name: 'AggregateError', errors: failures });
   expect(attempts).toEqual([
+    'DELETE expenses?group_id=eq.first&select=id',
     'DELETE groups?id=eq.first&select=id',
+    'DELETE expenses?group_id=eq.second&select=id',
     'DELETE groups?id=eq.second&select=id',
+    'DELETE expenses?group_id=eq.third&select=id',
     'DELETE groups?id=eq.third&select=id',
   ]);
 });
