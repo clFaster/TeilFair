@@ -11,6 +11,7 @@ const storeApi: GroupStoreApi = {
   getGroup: api.getGroup,
   getTokenPermission: api.getTokenPermission,
   updateGroup: api.updateGroup,
+  deleteGroup: api.deleteGroup,
   getMembers: api.getMembers,
   addMember: api.addMember,
   updateMember: api.updateMember,

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPen, faReceipt, faShare, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPen, faReceipt, faShare, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 interface GroupHeaderProps {
   name: string;
@@ -10,10 +10,11 @@ interface GroupHeaderProps {
   /** Pre-formatted total, e.g. "€141.60". */
   total: string;
   onShare: () => void;
+  onDelete?: () => void;
 }
 
 /** Group hero: name + share, meta chips (counts, access) and the running total. */
-export function GroupHeader({ name, expenseCount, memberCount, canWrite, total, onShare }: Readonly<GroupHeaderProps>) {
+export function GroupHeader({ name, expenseCount, memberCount, canWrite, total, onShare, onDelete }: Readonly<GroupHeaderProps>) {
   const { t } = useTranslation();
 
   return (
@@ -30,6 +31,17 @@ export function GroupHeader({ name, expenseCount, memberCount, canWrite, total, 
           >
             <FontAwesomeIcon icon={faShare} aria-hidden="true" />
           </button>
+          {onDelete && (
+            <button
+              type="button"
+              className="group-share-button group-delete-button"
+              onClick={onDelete}
+              title={t('group.deleteGroup')}
+              aria-label={t('group.deleteGroup')}
+            >
+              <FontAwesomeIcon icon={faTrash} aria-hidden="true" />
+            </button>
+          )}
         </div>
         <ul className="group-chips">
           <li className="group-chip">

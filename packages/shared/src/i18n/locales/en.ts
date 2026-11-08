@@ -140,6 +140,10 @@ const en = {
     averagePerMember: 'Avg. per member',
     summary: 'Summary',
     editGroup: 'Edit Group',
+    deleteGroup: 'Delete group',
+    deleteGroupConfirmTitle: 'Delete this group?',
+    deleteGroupConfirmMessage: 'This permanently deletes the group and all its members and expenses. This cannot be undone.',
+    deleteGroupFailed: 'The group could not be deleted. Please try again.',
     
     // States
     loadingGroup: 'Loading group...',
@@ -369,6 +373,12 @@ const en = {
     privacy: 'Privacy',
     imprint: 'Imprint',
     legalNavigation: 'Legal',
+  },
+
+  legal: {
+    contents: 'Contents',
+    lastUpdated: 'Last updated: {{date}}',
+    germanVersionBinding: 'The German version of this privacy notice is the legally binding version. This English translation is provided for convenience.',
   },
 } as const;
 

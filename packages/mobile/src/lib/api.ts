@@ -96,6 +96,29 @@ export async function updateGroup(
 }
 
 /**
+ * Delete all expenses and the group itself
+ */
+export async function deleteGroup(groupId: string, token: string): Promise<void> {
+  const client = createGroupClient(token);
+
+  const { error: expensesError } = await client
+    .from('expenses')
+    .delete()
+    .eq('group_id', groupId);
+
+  if (expensesError) throw expensesError;
+
+  const { data, error } = await client
+    .from('groups')
+    .delete()
+    .eq('id', groupId)
+    .select('id');
+
+  if (error) throw error;
+  if (!data?.length) throw new Error('Group not found or access denied');
+}
+
+/**
  * Get all members of a group
  */
 export async function getMembers(groupId: string, token: string): Promise<Member[]> {

@@ -87,6 +87,10 @@
   background: var(--hero-glass-strong);
 }
 
+.group-delete-button {
+  color: var(--color-danger-solid);
+}
+
 .group-share-button:active {
   transform: scale(0.94);
 }

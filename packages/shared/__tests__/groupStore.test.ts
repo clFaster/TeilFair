@@ -18,6 +18,7 @@ function setup() {
     getGroup: vi.fn<GroupStoreApi['getGroup']>().mockResolvedValue(group),
     getTokenPermission: vi.fn<GroupStoreApi['getTokenPermission']>().mockResolvedValue('write'),
     updateGroup: vi.fn<GroupStoreApi['updateGroup']>().mockResolvedValue({ ...group, name: 'New trip', currency: 'USD' }),
+    deleteGroup: vi.fn<GroupStoreApi['deleteGroup']>().mockResolvedValue(undefined),
     getMembers: vi.fn<GroupStoreApi['getMembers']>().mockResolvedValue(members),
     addMember: vi.fn<GroupStoreApi['addMember']>().mockResolvedValue({ ...members[0], id: 'dave', name: 'Dave' }),
     updateMember: vi.fn<GroupStoreApi['updateMember']>().mockResolvedValue({ ...members[0], name: 'Alicia' }),
@@ -241,6 +242,24 @@ describe('creating and maintaining groups', () => {
     expect(get().members.map(m => m.id)).toEqual(['alice', 'bob', 'carol']);
     expect(get().recentGroups[0].memberCount).toBe(3);
   });
+
+  it('deletes a group and removes it from recent history', async () => {
+    const { api, get, set } = setup();
+    set({ recentGroups: [recent('other')] });
+    await get().loadGroup(group.id, group.writeToken);
+
+    await get().deleteGroup();
+
+    expect(api.deleteGroup).toHaveBeenCalledExactlyOnceWith(group.id, group.writeToken);
+    expect(get()).toMatchObject({
+      group: null,
+      members: [],
+      expenses: [],
+      permission: null,
+      token: null,
+      recentGroups: [recent('other')],
+    });
+  });
 });
 
 describe('expense lifecycle', () => {
@@ -279,6 +298,7 @@ describe('expense lifecycle', () => {
 
 const mutations = [
   { action: 'updateGroup', method: 'updateGroup', run: (s: GroupState) => s.updateGroup({ name: 'Renamed' }) },
+  { action: 'deleteGroup', method: 'deleteGroup', run: (s: GroupState) => s.deleteGroup() },
   { action: 'addMember', method: 'addMember', run: (s: GroupState) => s.addMember('Dave') },
   { action: 'updateMember', method: 'updateMember', run: (s: GroupState) => s.updateMember('alice', 'Alicia') },
   { action: 'deleteMember', method: 'deleteMember', run: (s: GroupState) => s.deleteMember('alice') },

@@ -192,7 +192,7 @@ test.describe('tablet', () => {
     await page.goto('/privacy');
 
     for (const name of ['Privacy', 'Imprint']) {
-      const link = page.getByRole('link', { name });
+      const link = page.locator('footer.footer').getByRole('link', { name, exact: true });
       await expect(link).toBeVisible();
       const box = (await link.boundingBox())!;
       expect(box.height).toBeGreaterThanOrEqual(44);

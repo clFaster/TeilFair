@@ -18,11 +18,12 @@ const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 );
 
-// Never include capability fragments or legacy query parameters in telemetry.
+// Never include capability fragments, group IDs, or legacy query parameters in telemetry.
 function withoutUrlSecrets<T extends { url: string }>(event: T): T {
   const url = new URL(event.url, globalThis.location.origin);
   url.search = '';
   url.hash = '';
+  url.pathname = url.pathname.replace(/(\/g\/)[^/]+/g, '$1[id]');
   return { ...event, url: url.href };
 }
 

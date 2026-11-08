@@ -64,7 +64,7 @@ test.describe('phone', { tag: '@once' }, () => {
 
     await menu.getByRole('link', { name: 'Privacy' }).click();
     await expect(page).toHaveURL(/\/privacy$/);
-    await expect(page.getByRole('heading', { name: 'Datenschutzerklärung', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Privacy notice', exact: true })).toBeVisible();
     await expect(moreButton(page)).toHaveAttribute('aria-expanded', 'false');
     await expect(legalMenu(page)).toBeHidden();
   });

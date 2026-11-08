@@ -123,6 +123,10 @@ const de = {
     averagePerMember: 'Ø pro Mitglied',
     summary: 'Zusammenfassung',
     editGroup: 'Gruppe bearbeiten',
+    deleteGroup: 'Gruppe löschen',
+    deleteGroupConfirmTitle: 'Diese Gruppe löschen?',
+    deleteGroupConfirmMessage: 'Dadurch werden die Gruppe sowie alle Mitglieder und Ausgaben endgültig gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.',
+    deleteGroupFailed: 'Die Gruppe konnte nicht gelöscht werden. Bitte versuche es erneut.',
     loadingGroup: 'Gruppe wird geladen...',
     groupNotFoundTitle: 'Gruppe nicht gefunden',
     groupNotFoundDescription: 'Diese Gruppe existiert nicht oder Sie haben keinen Zugriff.',
@@ -328,6 +332,12 @@ const de = {
     privacy: 'Datenschutz',
     imprint: 'Impressum',
     legalNavigation: 'Rechtliches',
+  },
+
+  legal: {
+    contents: 'Inhaltsverzeichnis',
+    lastUpdated: 'Stand: {{date}}',
+    germanVersionBinding: 'Die deutsche Version dieser Datenschutzerklärung ist rechtsverbindlich.',
   },
 } as const;
 

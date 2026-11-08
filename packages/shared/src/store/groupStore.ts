@@ -17,6 +17,7 @@ export interface GroupStoreApi {
   getGroup(groupId: string, token: string): Promise<Group | null>;
   getTokenPermission(groupId: string, token: string): Promise<TokenPermission | null>;
   updateGroup(groupId: string, token: string, updates: { name?: string; currency?: string }): Promise<Group>;
+  deleteGroup(groupId: string, token: string): Promise<void>;
   getMembers(groupId: string, token: string): Promise<Member[]>;
   addMember(groupId: string, token: string, name: string): Promise<Member>;
   updateMember(memberId: string, token: string, name: string): Promise<Member>;
@@ -68,6 +69,7 @@ export interface GroupState {
   loadGroup: (groupId: string, token: string) => Promise<boolean>;
   createGroup: (name: string, currency?: string) => Promise<Group>;
   updateGroup: (updates: { name?: string; currency?: string }) => Promise<void>;
+  deleteGroup: () => Promise<void>;
   
   addMember: (name: string) => Promise<Member>;
   updateMember: (memberId: string, name: string) => Promise<void>;
@@ -275,6 +277,14 @@ export function createGroupStoreState(
       
       // Update recent groups
       updateRecentGroupStats(group.id, { name: updated.name, currency: updated.currency });
+    },
+
+    deleteGroup: async () => {
+      const { group, token, isCurrent } = requireWriter();
+
+      await api.deleteGroup(group.id, token);
+      if (!isCurrent()) return;
+      get().removeFromRecent(group.id);
     },
 
     addMember: async (name: string) => {

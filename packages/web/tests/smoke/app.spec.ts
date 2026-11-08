@@ -31,7 +31,7 @@ test('production app opens forms and persists theme and language', async ({ page
 });
 
 for (const [path, heading] of [
-  ['/privacy', 'Datenschutzerklärung'],
+  ['/privacy', 'Privacy notice'],
   ['/imprint', 'Impressum'],
   ['/missing-page', 'Page Not Found'],
 ]) {
@@ -40,3 +40,17 @@ for (const [path, heading] of [
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
   });
 }
+
+test('privacy notice is available in English and German', async ({ page }) => {
+  await page.goto('/privacy');
+
+  const legalContent = page.locator('main.legal-content');
+  await expect(legalContent).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: 'Privacy notice', exact: true })).toBeVisible();
+  await expect(legalContent.getByText('The German version of this privacy notice is the legally binding version.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Select language', exact: true }).click();
+  await expect(legalContent).toHaveAttribute('lang', 'de');
+  await expect(page.getByRole('heading', { name: 'Datenschutzerklärung', exact: true })).toBeVisible();
+  await expect(legalContent.getByText('Stand: November 2026')).toBeVisible();
+});

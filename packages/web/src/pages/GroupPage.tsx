@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { useParams, useLocation, Link } from 'react-router-dom';
+import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -19,6 +19,7 @@ import { ShareModal } from '../components/ShareModal';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
 import { GroupHeader } from '../components/GroupHeader';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { TabList, type TabItem } from '../components/TabList';
 import { MobileTabBar } from '../components/MobileTabBar';
 import { Fab } from '../components/Fab';
@@ -66,6 +67,7 @@ export function GroupPage() {
 
 function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undefined; token: string | null }>) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
 
   const {
@@ -77,6 +79,7 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
     loading,
     error,
     loadGroup,
+    deleteGroup,
     clearGroup,
   } = useGroupStore();
   const group = loadedGroup?.id === groupId && loadedToken === token ? loadedGroup : null;
@@ -87,6 +90,8 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
   const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
   const [showShare, setShowShare] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [showDeleteGroupConfirm, setShowDeleteGroupConfirm] = useState(false);
+  const [showDeleteGroupError, setShowDeleteGroupError] = useState(false);
   const detailsHeadingRef = useRef<HTMLHeadingElement>(null);
   const detailsTriggerRef = useRef<HTMLElement | null>(null);
   const focusMembersTabRef = useRef(false);
@@ -97,6 +102,15 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
 
   // Balances live in the side panel on desktop, so that tab only exists below 1024px.
   const currentTab: Tab = isDesktop && activeTab === 'balances' ? 'expenses' : activeTab;
+
+  const handleDeleteGroup = async () => {
+    try {
+      await deleteGroup();
+      navigate('/');
+    } catch {
+      setShowDeleteGroupError(true);
+    }
+  };
 
   // The member sheet is phone-only; desktop has the inline form on the Members tab.
   if (isDesktop && showAddMember) {
@@ -399,6 +413,7 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
             canWrite={canWrite}
             total={formatCurrency(totalExpenses)}
             onShare={() => setShowShare(true)}
+            onDelete={canWrite ? () => setShowDeleteGroupConfirm(true) : undefined}
           />
 
           {/* Fixed to the bottom visually, but before its panel in DOM (Tab) order */}
@@ -495,6 +510,26 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
 
       {showAddMember && (
         <AddMemberModal onClose={() => setShowAddMember(false)} />
+      )}
+
+      {showDeleteGroupConfirm && (
+        <ConfirmDialog
+          title={t('group.deleteGroupConfirmTitle')}
+          message={t('group.deleteGroupConfirmMessage')}
+          danger
+          confirmLabel={t('group.deleteGroup')}
+          onConfirm={() => { void handleDeleteGroup(); }}
+          onClose={() => setShowDeleteGroupConfirm(false)}
+        />
+      )}
+
+      {showDeleteGroupError && (
+        <ConfirmDialog
+          title={t('common.error')}
+          message={t('group.deleteGroupFailed')}
+          infoOnly
+          onClose={() => setShowDeleteGroupError(false)}
+        />
       )}
     </div>
   );
