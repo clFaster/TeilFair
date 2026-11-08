@@ -5,7 +5,7 @@ CREATE TABLE "public"."members" (
   "created_at" timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT "members_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE,
   CONSTRAINT "members_pkey" PRIMARY KEY (id),
-  CONSTRAINT "members_name_length" CHECK ((char_length(btrim(name)) BETWEEN 1 AND 100))
+  CONSTRAINT "members_name_length" CHECK ((char_length(name) BETWEEN 1 AND 100 AND name ~ '[^[:space:]]'))
 );
 
 ALTER TABLE "public"."members"

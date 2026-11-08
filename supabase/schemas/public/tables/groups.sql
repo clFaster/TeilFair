@@ -6,7 +6,8 @@ CREATE TABLE "public"."groups" (
   "write_token" text                     NOT NULL,
   "created_at"  timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT "groups_pkey" PRIMARY KEY (id),
-  CONSTRAINT "groups_name_length" CHECK ((char_length(btrim(name)) BETWEEN 1 AND 100)),
+  CONSTRAINT "groups_name_length" CHECK ((char_length(name) BETWEEN 1 AND 100 AND name ~ '[^[:space:]]')),
+  CONSTRAINT "groups_currency_format" CHECK ((currency ~ '^[A-Z]{3}$')),
   CONSTRAINT "read_token_length" CHECK ((char_length(read_token) BETWEEN 32 AND 128)),
   CONSTRAINT "tokens_different" CHECK ((read_token <> write_token)),
   CONSTRAINT "write_token_length" CHECK ((char_length(write_token) BETWEEN 32 AND 128))

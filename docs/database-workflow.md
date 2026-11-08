@@ -38,6 +38,13 @@ pnpm db:stop   # Stop this project's stack, retaining local development data.
 Local configuration uses ports 55320–55323 and project ID `teilfair-local`.
 It does not alter hosted Supabase configuration. Production deployment remains a
 separate operation; this testing setup never pushes migrations to a hosted project.
+Before deploying the text-limit migration, reconcile existing data with the new
+constraints: group/member names must be nonblank and at most 100 characters
+including padding, currency must be three uppercase
+ASCII letters, and expense descriptions must be nonblank and at most 250
+characters including padding. Constraint installation rejects incompatible rows;
+review and correct them explicitly rather than truncating financial descriptions.
+
 Before deploying the first future migration to an existing installation, reconcile
 the hosted migration ledger with the already-applied `001`–`006` SQL. Do not replay
 initial table creation on an existing database or rewrite applied migration IDs.

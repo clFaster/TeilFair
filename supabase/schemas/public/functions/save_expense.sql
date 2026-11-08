@@ -1,6 +1,14 @@
-CREATE OR REPLACE FUNCTION public.save_expense(
-  requested_group_id uuid, requested_expense_id uuid, payload jsonb, expected_revision integer
-) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.save_expense (
+  requested_group_id   uuid,
+  requested_expense_id uuid,
+  payload              jsonb,
+  expected_revision    integer
+)
+  RETURNS jsonb
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path TO ''
+  AS $function$
 DECLARE
   saved public.expenses;
   total numeric;
@@ -27,7 +35,8 @@ BEGIN
   total := (payload->>'total_amount')::numeric;
   IF total IS NULL OR total::text IN ('NaN','Infinity','-Infinity')
     OR total <= 0 OR total <> round(total,2) OR total >= 10000000000
-    OR length(trim(coalesce(payload->>'description',''))) NOT BETWEEN 1 AND 1000
+    OR length(coalesce(payload->>'description','')) NOT BETWEEN 1 AND 250
+    OR payload->>'description' !~ '[^[:space:]]'
     OR payload->>'expense_date' IS NULL THEN
     RAISE EXCEPTION 'Invalid expense details' USING ERRCODE = '22023';
   END IF;
@@ -83,6 +92,6 @@ BEGIN
     'payers',(SELECT jsonb_agg(to_jsonb(p)) FROM public.expense_payers p WHERE expense_id=saved.id),
     'splits',(SELECT jsonb_agg(to_jsonb(s)) FROM public.expense_splits s WHERE expense_id=saved.id));
 END;
-$$;
+$function$;
 REVOKE ALL ON FUNCTION public.save_expense(uuid,uuid,jsonb,integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.save_expense(uuid,uuid,jsonb,integer) TO anon, authenticated;

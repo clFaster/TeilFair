@@ -8,7 +8,7 @@ CREATE TABLE "public"."expenses" (
   "revision"     integer                  NOT NULL DEFAULT 1,
   CONSTRAINT "expenses_revision_check" CHECK (revision > 0),
   CONSTRAINT "expenses_pkey" PRIMARY KEY (id),
-  CONSTRAINT "expenses_description_length" CHECK ((char_length(btrim(description)) BETWEEN 1 AND 1000)),
+  CONSTRAINT "expenses_description_length" CHECK ((char_length(description) BETWEEN 1 AND 250 AND description ~ '[^[:space:]]')),
   CONSTRAINT "expenses_total_amount_check" CHECK ((total_amount > (0)::numeric)),
   CONSTRAINT "expenses_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE
 );

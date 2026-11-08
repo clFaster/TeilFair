@@ -31,6 +31,22 @@ async function openAddExpense(page: Page) {
 }
 
 test.describe('expense form', () => {
+  test('description limit is visible, translated, and enforced while typing', async ({ page }) => {
+    const dialog = await openAddExpense(page);
+    const description = dialog.getByTestId('expense-description-input');
+    await expect(description).toHaveAttribute('maxlength', '250');
+    await expect(description).toHaveAccessibleDescription('0 / 250 characters');
+    await description.fill('d'.repeat(250));
+    await description.press('End');
+    await description.press('x');
+    await expect(description).toHaveValue('d'.repeat(250));
+    await expect(description).toHaveAccessibleDescription('250 / 250 characters');
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Select language', exact: true }).click();
+    await page.getByTestId('add-expense-button').click();
+    await expect(page.getByTestId('expense-description-input')).toHaveAccessibleDescription('0 / 250 Zeichen');
+  });
+
   test('amount fields use the decimal keypad and the split picker uses real checkboxes', async ({ page }) => {
     const dialog = await openAddExpense(page);
 

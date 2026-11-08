@@ -15,14 +15,14 @@ try {
   supabase(['db', 'schema', 'declarative', 'sync', '--workdir', scratch,
     '--file', 'schema_consistency', '--no-apply']);
   const generated = readdirSync(migrations).filter(name => !before.has(name));
-  // pg-delta 2.122 re-emits SQL-language routines even after replaying its own
+  // pg-delta 2.122 re-emits routines even after replaying its own
   // output. Accept only exact declaration text, preserving bodies and literals.
   const declarations = readdirSync(join(scratch, 'supabase', 'schemas'), { recursive: true })
     .filter(name => name.endsWith('.sql'))
     .map(name => readFileSync(join(scratch, 'supabase', 'schemas', name), 'utf8').replaceAll('\r\n', '\n'));
   const baseline = [...before].sort().map(name => readFileSync(join(migrations, name), 'utf8')
     .replaceAll('\r\n', '\n')).join('\n');
-  const duplicateNames = ['private.check_group_access', 'public.get_group', 'public.get_token'];
+  const duplicateNames = ['private.check_group_access', 'public.get_group', 'public.get_token', 'public.save_expense'];
   for (const name of generated) {
     let diff = readFileSync(join(migrations, name), 'utf8').replaceAll('\r\n', '\n');
     diff = diff.replace(/^SET local check_function_bodies = off;\s*/, '');

@@ -101,3 +101,6 @@ export interface GroupWithMembers extends Group {
 export interface GroupFull extends GroupWithMembers {
   expenses: Expense[];
 }
+
+/** Keep in sync with the database's expenses_description_length constraint. */
+export const EXPENSE_DESCRIPTION_MAX_LENGTH = 250;

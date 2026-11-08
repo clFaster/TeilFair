@@ -143,6 +143,7 @@ const de = {
     defaultDescription: 'Ausgabe',
     descriptionLabel: 'Beschreibung',
     descriptionPlaceholder: 'z.B. Abendessen, Taxifahrt, Hotel',
+    descriptionLength: '{{current}} / {{max}} Zeichen',
     amountLabel: 'Betrag ({{currency}})',
     amountPlaceholder: '0.00',
     dateLabel: 'Datum',
@@ -169,6 +170,7 @@ const de = {
     paidAmountFor: 'Von {{name}} bezahlter Betrag',
     shareAmountFor: 'Anteil von {{name}}',
     errors: {
+      descriptionTooLong: 'Beschreibungen dürfen höchstens {{max}} Zeichen lang sein',
       validAmount: 'Bitte gib einen Betrag größer als 0 ein',
       amountFormat: '„{{value}}“ ist kein gültiger Betrag. Nutze ein Dezimaltrennzeichen, z. B. 1234,56 oder 1.234,56',
       amountFormatWhole: '„{{value}}“ ist kein gültiger Betrag. {{currency}} hat keine Nachkommastellen, gib also eine ganze Zahl ein, z. B. 1500 oder 1.500',
