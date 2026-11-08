@@ -22,7 +22,7 @@ export function PrivacyPage() {
         {!isGerman && <p>{t('legal.germanVersionBinding')}</p>}
 
         <nav className="privacy-toc" aria-label={t('legal.contents')}>
-          <h2>{t('legal.contents')}</h2>
+          <h2 className="privacy-toc-title">{t('legal.contents')}</h2>
           <ol>
             {document.sections.map((section) => (
               <li key={section.id}><a href={`#${section.id}`}>{section.title}</a></li>
