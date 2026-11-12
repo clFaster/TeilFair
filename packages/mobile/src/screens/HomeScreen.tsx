@@ -21,6 +21,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { LogoIcon } from '../components/LogoIcon';
 import { MobileIcon } from '../components/MobileIcon';
 import { SettingsSheet } from '../components/SettingsSheet';
+import { WEB_ORIGIN } from '../lib/webOrigin';
 import type { RootStackParamList } from '../../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -105,7 +106,7 @@ export function HomeScreen() {
   };
 
   const handleShareRecent = (item: RecentGroup) => {
-    const url = createCapabilityPath(item.id, item.token, 'https://teilfair.app');
+    const url = createCapabilityPath(item.id, item.token, WEB_ORIGIN);
     const message = t('share.shareMessageDefault', { groupName: item.name, url });
 
     Alert.alert(t('share.sharePromptTitle'), url, [

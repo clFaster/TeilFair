@@ -9,6 +9,7 @@ import type {
   ExpenseRow,
   ExpensePayerRow,
   ExpenseSplitRow,
+  ExpenseWithChildrenRow,
 } from '@teilfair/shared';
 import {
   generateToken,
@@ -16,6 +17,9 @@ import {
   groupFromRow,
   memberFromRow,
   expenseFromRow,
+  expenseFromNestedRow,
+  fetchAllPages,
+  EXPENSE_SELECT,
 } from '@teilfair/shared';
 import { createGroupClient } from './supabase';
 
@@ -53,6 +57,7 @@ export async function getGroup(groupId: string, token: string): Promise<Group | 
 
   if (error) {
     if (error.code === 'PGRST116') return null;
+    if (error.code === '22P02') return null; // Group ID is not a UUID, so no group can match
     throw error;
   }
   return groupFromRow(data as GroupRow);
@@ -187,48 +192,23 @@ export async function deleteMember(memberId: string, token: string): Promise<voi
  */
 export async function getExpenses(groupId: string, token: string): Promise<Expense[]> {
   const client = createGroupClient(token);
-  
-  const { data: expenses, error: expensesError } = await client
-    .from('expenses')
-    .select('*')
-    .eq('group_id', groupId)
-    .order('expense_date', { ascending: false });
 
-  if (expensesError) throw expensesError;
-  if (!expenses.length) return [];
+  // One request per page returns each expense with its payers and splits embedded.
+  // The id is the second sort key so the order is total and pages do not overlap.
+  const rows = await fetchAllPages<ExpenseWithChildrenRow>(async (from, to) => {
+    const { data, error, count } = await client
+      .from('expenses')
+      .select(EXPENSE_SELECT, { count: 'exact' })
+      .eq('group_id', groupId)
+      .order('expense_date', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to);
 
-  const expenseIds = expenses.map((e) => e.id);
+    if (error) throw error;
+    return { rows: data as unknown as ExpenseWithChildrenRow[], total: count };
+  });
 
-  const [payersResult, splitsResult] = await Promise.all([
-    client.from('expense_payers').select('*').in('expense_id', expenseIds),
-    client.from('expense_splits').select('*').in('expense_id', expenseIds),
-  ]);
-
-  if (payersResult.error) throw payersResult.error;
-  if (splitsResult.error) throw splitsResult.error;
-
-  const payersByExpense = new Map<string, ExpensePayerRow[]>();
-  const splitsByExpense = new Map<string, ExpenseSplitRow[]>();
-
-  for (const payer of payersResult.data as ExpensePayerRow[]) {
-    const list = payersByExpense.get(payer.expense_id) || [];
-    list.push(payer);
-    payersByExpense.set(payer.expense_id, list);
-  }
-
-  for (const split of splitsResult.data as ExpenseSplitRow[]) {
-    const list = splitsByExpense.get(split.expense_id) || [];
-    list.push(split);
-    splitsByExpense.set(split.expense_id, list);
-  }
-
-  return (expenses as ExpenseRow[]).map((e) =>
-    expenseFromRow(
-      e,
-      payersByExpense.get(e.id) || [],
-      splitsByExpense.get(e.id) || []
-    )
-  );
+  return rows.map(expenseFromNestedRow);
 }
 
 interface ExpenseWriteResult {

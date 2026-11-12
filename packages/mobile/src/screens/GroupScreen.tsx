@@ -20,6 +20,7 @@ import { useGroupStore } from '../store/groupStore';
 import { useTheme } from '../theme/ThemeProvider';
 import { MobileIcon } from '../components/MobileIcon';
 import { SettingsSheet } from '../components/SettingsSheet';
+import { WEB_ORIGIN } from '../lib/webOrigin';
 import type { RootStackParamList } from '../../App';
 
 type GroupScreenRouteProp = RouteProp<RootStackParamList, 'Group'>;
@@ -166,8 +167,7 @@ export function GroupScreen() {
   const handleShare = () => {
     if (!group) return;
     
-    const baseUrl = 'https://teilfair.app';
-    const urls = createGroupUrls(baseUrl, group.id, group.readToken, group.writeToken);
+    const urls = createGroupUrls(WEB_ORIGIN, group.id, group.readToken, group.writeToken);
     
     // If user has write permission, ask which link to share
     if (canWrite) {

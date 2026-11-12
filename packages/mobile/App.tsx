@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import './src/i18n'; // Initialize i18n before rendering
+import { WEB_ORIGIN } from './src/lib/webOrigin';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { GroupScreen } from './src/screens/GroupScreen';
@@ -27,7 +28,7 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ['https://teilfair.app', 'teilfair://'],
+  prefixes: [WEB_ORIGIN, 'teilfair://'],
   config: {
     screens: {
       Home: '',

@@ -24,7 +24,7 @@
           "data": [
             {
               "scheme": "https",
-              "host": "teilfair.app",
+              "host": "teilfair.moritzreis.dev",
               "pathPrefix": "/g/"
             }
           ],
