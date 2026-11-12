@@ -48,11 +48,17 @@
   appearance: none;
   display: block;
   min-width: 0;
-  line-height: normal;
+  /* iOS Safari top-aligns the value unless height/line-height are explicit
+     (48px field - 2 x 2px border = 44px content box) */
+  height: 48px;
+  line-height: 44px;
 }
 
 .input[type="date"]::-webkit-date-and-time-value,
 .input[type="time"]::-webkit-date-and-time-value {
+  margin: 0;
+  padding: 0;
+  line-height: inherit;
   text-align: left;
 }
 
