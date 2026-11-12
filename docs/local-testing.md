@@ -77,10 +77,19 @@ production deployment headers in `vercel.json` remain unchanged.
 
 The local suite covers anonymous group creation, metadata/token permissions,
 read/write/invalid/cross-group capabilities, RPC redaction, persisted CRUD and
-cascades, RLS rejection of group reassignment, database constraints, and browser
+cascades, RLS rejection of group reassignment, database constraints, paged expense
+reads with embedded payers and splits, and browser
 expense creation/editing/deletion, custom/ratio/fixed/percentage splits, balances,
 settlement suggestions, reload persistence, and read-only controls. Mobile browser
 emulation does not replace testing the native Expo app on devices.
+
+One API test and one browser test seed a group with 100 members and 11 expenses.
+Its 1,100 split rows exceed `max_rows` in `supabase/config.toml`, so these tests
+fail if expense loading is cut off by the API row cap. Seeding such a group writes
+more rows than the per-group budget of 600 writes per minute, so the test run
+raises `group_writes_per_minute` together with the two group-creation budgets and
+restores all three afterward. `supabase/tests/write_limits.sql` still checks the
+budgets at their real values.
 
 ## Database changes
 
@@ -122,7 +131,7 @@ pnpm exec aspire describe --format Json
 pnpm exec aspire logs web
 ```
 
-Use the repository's `aspire:start`/`aspire:restore` launchers. Aspire 13.6.4 installs
+Use the repository's `aspire:start`/`aspire:restore` launchers. Aspire 13.6.5 installs
 its TypeScript tooling with `pnpm --ignore-workspace`, so the launcher supplies the
 required esbuild-only build permission and enforces its separate lockfile. The
 AppHost is an isolated tooling package, rather than an application workspace.
@@ -130,7 +139,7 @@ Its dependencies are tracked by Dependabot separately.
 When upgrading Aspire, update the root CLI dependency and `sdk.version` in
 `aspire.config.json` together, then restore and validate the generated SDK.
 
-Aspire 13.6.4's generated transport still imports `vscode-jsonrpc/node.js`, so the
+Aspire 13.6.5's generated transport still imports `vscode-jsonrpc/node.js`, so the
 AppHost retains `vscode-jsonrpc` 8.2.1. Version 10 exports `/node` instead and fails
 AppHost compilation. Dependabot major updates for this package are ignored until
 Aspire's generator supports the new exports; do not patch the generated SDK.

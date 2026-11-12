@@ -125,6 +125,7 @@ DDoS protection. Administrators can tune `private.write_limits`. Rejected writes
 rollbacks, and `ON CONFLICT DO NOTHING` do not consume stored row capacity;
 deletions release it. Private quota tables and helpers are inaccessible to clients.
 
-The local Playwright suite temporarily raises only its two creation budgets so
-parallel fixtures do not exhaust them; teardown restores the previous settings.
-Production quotas, authorization, row caps, and group-write budgets stay active.
+The local Playwright suite temporarily raises the two creation budgets and the
+group-writes-per-minute budget so parallel fixtures do not exhaust them;
+teardown restores the previous settings. Other production quotas, authorization,
+and row caps stay active.

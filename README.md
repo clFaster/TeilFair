@@ -65,8 +65,8 @@ teilfair/
 │   │   ├── src/
 │   │   │   ├── components/     # React components
 │   │   │   ├── pages/          # Page components
-│   │   │   ├── stores/         # Zustand stores
-│   │   │   ├── services/       # API/Supabase services
+│   │   │   ├── store/          # Zustand stores
+│   │   │   ├── lib/            # API/Supabase services
 │   │   │   └── App.tsx
 │   │   ├── index.html
 │   │   └── package.json
@@ -112,13 +112,13 @@ TeilFair uses **capability-based security** instead of user accounts:
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/your-username/teilfair.git
-cd teilfair
+git clone https://github.com/clFaster/TeilFair.git
+cd TeilFair
 pnpm install
 ```
 
-See [the October 2026 dependency migration notes](docs/dependency-migration-2026-10.md)
-for upgraded versions, compatibility constraints, and remaining audit findings.
+See [dependency advisories](docs/dependency-advisories.md) for the CI audit gate
+and the remaining accepted audit findings.
 
 ### 2. Set Up Supabase
 
@@ -397,12 +397,19 @@ The calculation engine (in `packages/shared/src/calculations.ts`) handles:
 2. **Settlement Optimization**:
    Uses a greedy algorithm to minimize the number of transactions needed to settle all debts.
 
+## Releasing
+
+The web app is released at `https://teilfair.moritzreis.dev`. CI checks the
+repository; the hosted settings in Supabase, Vercel and GitHub are confirmed by
+hand with the [production release checklist](docs/production-release.md), which
+also lists the known limits of the release.
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run tests: `npm test`
+4. Run tests: `pnpm test`
 5. Submit a pull request
 
 ## License
