@@ -43,7 +43,7 @@
     "aspire:dev": "pnpm --dir aspire-apphost run aspire:dev"
   },
   "devDependencies": {
-    "@microsoft/aspire-cli": "13.6.4",
+    "@microsoft/aspire-cli": "13.6.5",
     "@typescript/native": "npm:typescript@^7.0.2",
     "supabase": "3.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
