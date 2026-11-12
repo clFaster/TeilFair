@@ -7,6 +7,7 @@ const en = {
   common: {
     appName: 'TeilFair',
     tagline: 'Split expenses fairly',
+    pageTitle: '{{page}} · TeilFair',
     loading: 'Loading...',
     error: 'Error',
     cancel: 'Cancel',
@@ -25,6 +26,7 @@ const en = {
     back: 'Back',
     goBack: 'Go Back',
     goHome: 'Go Home',
+    retry: 'Try again',
     share: 'Share',
     total: 'Total',
     unknown: 'Unknown',
@@ -125,6 +127,9 @@ const en = {
 
   // Group page
   group: {
+    // Browser tab title: generic on purpose, group names stay out of titles
+    pageTitle: 'Group',
+
     // Tabs
     tabExpenses: 'Expenses',
     tabBalances: 'Balances',
@@ -325,6 +330,7 @@ const en = {
     invalidTokenOrGroup: 'Invalid token or group not found',
     noGroupLoaded: 'No group loaded',
     failedToLoadGroup: 'Failed to load group',
+    loadFailedDescription: 'Something went wrong while loading this group. Check your connection and try again.',
     failedToCreateGroup: 'Failed to create group',
   },
 

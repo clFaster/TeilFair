@@ -44,6 +44,12 @@ export interface RecentGroup {
 }
 
 /**
+ * Why the last load or creation failed, so each platform can choose its own message:
+ * the token or group is missing, the request failed, or the group could not be created.
+ */
+export type GroupErrorCode = 'accessDenied' | 'loadFailed' | 'createFailed';
+
+/**
  * Group store state
  */
 export interface GroupState {
@@ -61,6 +67,7 @@ export interface GroupState {
   // Loading states
   loading: boolean;
   error: string | null;
+  errorCode: GroupErrorCode | null;
   
   // Recently accessed groups (stored locally)
   recentGroups: RecentGroup[];
@@ -96,7 +103,7 @@ export function createGroupStoreState(
   let requestedGroupId: string | null = null;
   const emptyActiveState = () => ({
     group: null, members: [], expenses: [], permission: null, token: null,
-    memberBalances: [], settlements: [], loading: false, error: null,
+    memberBalances: [], settlements: [], loading: false, error: null, errorCode: null,
   });
   const requireWriter = () => {
     const state = get();
@@ -143,6 +150,7 @@ export function createGroupStoreState(
     settlements: [],
     loading: false,
     error: null,
+    errorCode: null,
     recentGroups: [],
 
     loadGroup: async (groupId: string, token: string) => {
@@ -155,7 +163,7 @@ export function createGroupStoreState(
         const permission = await api.getTokenPermission(groupId, token);
         if (currentGeneration !== generation) return false;
         if (!permission) {
-          set({ loading: false, error: 'Invalid token or group not found' });
+          set({ loading: false, error: 'Invalid token or group not found', errorCode: 'accessDenied' });
           return false;
         }
         
@@ -168,7 +176,7 @@ export function createGroupStoreState(
         if (currentGeneration !== generation) return false;
         
         if (!group) {
-          set({ loading: false, error: 'Group not found' });
+          set({ loading: false, error: 'Group not found', errorCode: 'accessDenied' });
           return false;
         }
         
@@ -211,7 +219,8 @@ export function createGroupStoreState(
         if (currentGeneration !== generation) return false;
         set({ 
           loading: false, 
-          error: error instanceof Error ? error.message : 'Failed to load group' 
+          error: error instanceof Error ? error.message : 'Failed to load group',
+          errorCode: 'loadFailed',
         });
         return false;
       }
@@ -262,7 +271,8 @@ export function createGroupStoreState(
         if (currentGeneration !== generation) throw error;
         set({ 
           loading: false, 
-          error: error instanceof Error ? error.message : 'Failed to create group' 
+          error: error instanceof Error ? error.message : 'Failed to create group',
+          errorCode: 'createFailed',
         });
         throw error;
       }

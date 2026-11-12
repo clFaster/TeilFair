@@ -39,3 +39,9 @@ export interface ExpenseSplitRow {
   share: number;
   share_type: 'ratio' | 'fixed' | 'percentage';
 }
+
+// Expense row with its child rows embedded by PostgREST (see EXPENSE_SELECT)
+export interface ExpenseWithChildrenRow extends ExpenseRow {
+  expense_payers: ExpensePayerRow[];
+  expense_splits: ExpenseSplitRow[];
+}

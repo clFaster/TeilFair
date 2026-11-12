@@ -55,9 +55,9 @@ describe('loading groups', () => {
   it.each(['read', 'write'] as const)('loads data with %s access and computes balances and recent statistics', async permission => {
     const { api, get, set } = setup();
     api.getTokenPermission.mockResolvedValue(permission);
-    set({ error: 'previous failure' });
+    set({ error: 'previous failure', errorCode: 'loadFailed' });
     const pending = get().loadGroup(group.id, 'provided-token');
-    expect(get()).toMatchObject({ loading: true, error: null });
+    expect(get()).toMatchObject({ loading: true, error: null, errorCode: null });
     expect(await pending).toBe(true);
     expect(api.getTokenPermission).toHaveBeenCalledWith(group.id, 'provided-token');
     for (const method of [api.getGroup, api.getMembers, api.getExpenses]) {
@@ -65,6 +65,7 @@ describe('loading groups', () => {
     }
     expect(get()).toMatchObject({
       group, members, expenses: [expense()], token: 'provided-token', permission, loading: false, error: null,
+      errorCode: null,
       memberBalances: [
         { memberId: 'alice', totalPaid: 90, totalOwed: 30, netBalance: 60 },
         { memberId: 'bob', totalPaid: 0, totalOwed: 30, netBalance: -30 },
@@ -96,7 +97,8 @@ describe('loading groups', () => {
     const { api, get } = setup();
     api.getTokenPermission.mockResolvedValue(null);
     expect(await get().loadGroup(group.id, 'invalid')).toBe(false);
-    expect(get()).toMatchObject({ group: null, loading: false, error: 'Invalid token or group not found', recentGroups: [] });
+    expect(get()).toMatchObject({ group: null, loading: false, error: 'Invalid token or group not found',
+      errorCode: 'accessDenied', recentGroups: [] });
     expect(api.getGroup).not.toHaveBeenCalled();
     expect(api.getMembers).not.toHaveBeenCalled();
     expect(api.getExpenses).not.toHaveBeenCalled();
@@ -106,7 +108,8 @@ describe('loading groups', () => {
     const { api, get } = setup();
     api.getGroup.mockResolvedValue(null);
     expect(await get().loadGroup(group.id, group.readToken)).toBe(false);
-    expect(get()).toMatchObject({ group: null, loading: false, error: 'Group not found', recentGroups: [] });
+    expect(get()).toMatchObject({ group: null, loading: false, error: 'Group not found',
+      errorCode: 'accessDenied', recentGroups: [] });
   });
 
   it('ignores a permission lookup superseded by a newer load', async () => {
@@ -145,16 +148,55 @@ describe('loading groups', () => {
     const { api, get } = setup();
     api[method].mockRejectedValue(new Error('Network unavailable'));
     expect(await get().loadGroup(group.id, group.readToken)).toBe(false);
-    expect(get()).toMatchObject({ group: null, members: [], expenses: [], loading: false, error: 'Network unavailable', recentGroups: [] });
+    expect(get()).toMatchObject({ group: null, members: [], expenses: [], loading: false, error: 'Network unavailable',
+      errorCode: 'loadFailed', recentGroups: [] });
   });
 
   it('uses a fallback error message and can recover on retry', async () => {
     const { api, get } = setup();
     api.getGroup.mockRejectedValueOnce('offline');
     expect(await get().loadGroup(group.id, group.readToken)).toBe(false);
-    expect(get().error).toBe('Failed to load group');
+    expect(get()).toMatchObject({ error: 'Failed to load group', errorCode: 'loadFailed' });
     expect(await get().loadGroup(group.id, group.writeToken)).toBe(true);
-    expect(get()).toMatchObject({ error: null, loading: false, group });
+    expect(get()).toMatchObject({ error: null, errorCode: null, loading: false, group });
+  });
+
+  it.each([
+    { code: 'accessDenied', fail: (api: ReturnType<typeof setup>['api']) => api.getTokenPermission.mockResolvedValueOnce(null) },
+    { code: 'loadFailed', fail: (api: ReturnType<typeof setup>['api']) => api.getMembers.mockRejectedValueOnce(new Error('Network unavailable')) },
+  ] as const)('clears the $code code as soon as a retry starts', async ({ code, fail }) => {
+    const { api, get } = setup();
+    fail(api);
+    expect(await get().loadGroup(group.id, group.writeToken)).toBe(false);
+    expect(get().errorCode).toBe(code);
+
+    const permission = deferred<'read' | 'write' | null>();
+    api.getTokenPermission.mockReturnValueOnce(permission.promise);
+    const retry = get().loadGroup(group.id, group.writeToken);
+    expect(get()).toMatchObject({ loading: true, error: null, errorCode: null, group: null });
+    permission.resolve('write');
+
+    expect(await retry).toBe(true);
+    expect(get()).toMatchObject({ loading: false, error: null, errorCode: null, group });
+  });
+
+  it('a failed load that a retry has replaced cannot report its failure', async () => {
+    const { api, get } = setup();
+    const firstAttempt = deferred<typeof members>();
+    api.getMembers.mockReturnValueOnce(firstAttempt.promise);
+    const staleLoad = get().loadGroup(group.id, group.writeToken);
+    await vi.waitFor(() => expect(api.getMembers).toHaveBeenCalledOnce());
+
+    const permission = deferred<'read' | 'write' | null>();
+    api.getTokenPermission.mockReturnValueOnce(permission.promise);
+    const retry = get().loadGroup(group.id, group.writeToken);
+    firstAttempt.reject(new Error('Network unavailable'));
+
+    expect(await staleLoad).toBe(false);
+    expect(get()).toMatchObject({ loading: true, error: null, errorCode: null });
+    permission.resolve('write');
+    expect(await retry).toBe(true);
+    expect(get()).toMatchObject({ loading: false, error: null, errorCode: null, group });
   });
 });
 
@@ -173,11 +215,30 @@ describe('creating and maintaining groups', () => {
   });
 
   it.each([new Error('Creation failed'), 'offline'])('reports creation failure and rethrows it', async failure => {
-    const { api, get } = setup();
+    const { api, get, set } = setup();
+    const history = [recent('other')];
+    set({ recentGroups: history });
     api.createGroup.mockRejectedValue(failure);
-    await expect(get().createGroup('Trip')).rejects.toBe(failure);
-    expect(get()).toMatchObject({ loading: false, group: null, recentGroups: [],
-      error: failure instanceof Error ? failure.message : 'Failed to create group' });
+    const creation = get().createGroup('Trip');
+    expect(get()).toMatchObject({ loading: true, error: null, errorCode: null });
+    await expect(creation).rejects.toBe(failure);
+    expect(get()).toMatchObject({ loading: false, group: null, recentGroups: [recent('other')],
+      error: failure instanceof Error ? failure.message : 'Failed to create group', errorCode: 'createFailed' });
+    expect(get().recentGroups).toBe(history);
+  });
+
+  it('clears a creation failure when a group is loaded or created afterwards', async () => {
+    const { api, get } = setup();
+    api.createGroup.mockRejectedValueOnce(new Error('Creation failed'));
+    await expect(get().createGroup('Trip')).rejects.toThrow('Creation failed');
+    expect(get().errorCode).toBe('createFailed');
+    expect(await get().loadGroup(group.id, group.writeToken)).toBe(true);
+    expect(get()).toMatchObject({ error: null, errorCode: null });
+
+    api.createGroup.mockRejectedValueOnce(new Error('Creation failed'));
+    await expect(get().createGroup('Trip')).rejects.toThrow('Creation failed');
+    await get().createGroup('Trip');
+    expect(get()).toMatchObject({ error: null, errorCode: null, group });
   });
 
   it('retains a created group in recent history when creation is superseded', async () => {
@@ -424,10 +485,10 @@ describe('local persistence', () => {
     await get().loadGroup(group.id, group.writeToken);
     const history = structuredClone(get().recentGroups);
     expect(partializeGroupState(get())).toEqual({ recentGroups: history });
-    set({ error: 'Old failure' });
+    set({ error: 'Old failure', errorCode: 'loadFailed' });
     get().clearGroup();
     expect(get()).toMatchObject({ group: null, token: null, permission: null, members: [], expenses: [],
-      memberBalances: [], settlements: [], error: null, recentGroups: history });
+      memberBalances: [], settlements: [], error: null, errorCode: null, recentGroups: history });
     get().removeFromRecent('missing');
     expect(get().recentGroups).toEqual(history);
     get().removeFromRecent(group.id);

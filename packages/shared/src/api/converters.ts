@@ -5,6 +5,7 @@ import type {
   ExpenseRow,
   ExpensePayerRow,
   ExpenseSplitRow,
+  ExpenseWithChildrenRow,
 } from './types';
 
 /**
@@ -63,4 +64,11 @@ export function expenseFromRow(
       shareType: s.share_type,
     })),
   };
+}
+
+/**
+ * Convert a database expense row with embedded payers and splits to domain Expense object
+ */
+export function expenseFromNestedRow(row: ExpenseWithChildrenRow): Expense {
+  return expenseFromRow(row, row.expense_payers, row.expense_splits);
 }

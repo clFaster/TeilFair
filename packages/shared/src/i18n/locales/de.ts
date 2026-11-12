@@ -7,6 +7,7 @@ const de = {
   common: {
     appName: 'TeilFair',
     tagline: 'Ausgaben fair verteilen',
+    pageTitle: '{{page}} · TeilFair',
     loading: 'Wird geladen...',
     error: 'Fehler',
     cancel: 'Abbrechen',
@@ -25,6 +26,7 @@ const de = {
     back: 'Zurück',
     goBack: 'Zurück',
     goHome: 'Startseite',
+    retry: 'Erneut versuchen',
     share: 'Teilen',
     total: 'Summe',
     unknown: 'Unbekannt',
@@ -111,6 +113,7 @@ const de = {
 
   // Group page
   group: {
+    pageTitle: 'Gruppe',
     tabExpenses: 'Ausgaben',
     tabBalances: 'Guthaben',
     tabMembers: 'Mitglieder',
@@ -284,6 +287,7 @@ const de = {
     invalidTokenOrGroup: 'Ungültiger Token oder Gruppe nicht gefunden',
     noGroupLoaded: 'Keine Gruppe geladen',
     failedToLoadGroup: 'Gruppe konnte nicht geladen werden',
+    loadFailedDescription: 'Beim Laden dieser Gruppe ist etwas schiefgelaufen. Prüfe deine Verbindung und versuche es erneut.',
     failedToCreateGroup: 'Gruppe konnte nicht erstellt werden',
   },
 
