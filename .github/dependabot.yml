@@ -13,7 +13,7 @@ updates:
     directory: "/aspire-apphost"
     schedule:
       interval: "weekly"
-    # Aspire 13.6.4 generates vscode-jsonrpc/node.js imports. Version 10
+    # Aspire 13.6.5 generates vscode-jsonrpc/node.js imports. Version 10
     # exports /node instead; remove this once Aspire's generator supports it.
     ignore:
       - dependency-name: "vscode-jsonrpc"
