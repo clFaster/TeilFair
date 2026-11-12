@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { RouteFallback } from './components/RouteFallback';
 
 // Route-level code splitting: each page becomes its own chunk, loaded on demand.
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
@@ -25,14 +26,6 @@ function withoutUrlSecrets<T extends { url: string }>(event: T): T {
   url.hash = '';
   url.pathname = url.pathname.replace(/(\/g\/)[^/]+/g, '$1[id]');
   return { ...event, url: url.href };
-}
-
-function RouteFallback() {
-  return (
-    <div className="route-loading" aria-busy="true">
-      <div className="route-loading-spinner" />
-    </div>
-  );
 }
 
 function AppContent() {

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
 import { LegalBackLink } from '../components/LegalBackLink';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { privacyDe } from './legal/privacy.de';
 import { privacyEn } from './legal/privacy.en';
 
@@ -10,6 +11,7 @@ export function PrivacyPage() {
   const isGerman = (i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('de');
   const language = isGerman ? 'de' : 'en';
   const document = isGerman ? privacyDe : privacyEn;
+  useDocumentTitle(t('common.pageTitle', { page: document.title }));
 
   return (
     <div className="app">

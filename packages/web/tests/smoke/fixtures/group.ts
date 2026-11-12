@@ -1,4 +1,4 @@
-import type { Page, Route } from '@playwright/test';
+import type { Page, Request, Route } from '@playwright/test';
 
 /** Mock Supabase rows so the group page renders fully without a backend. */
 export const GROUP_ID = '6f1c2b8e-4d3a-4f6b-9c1e-2a7b8c9d0e1f';
@@ -129,11 +129,16 @@ const CORS_HEADERS = {
   'access-control-expose-headers': 'content-range',
 };
 
+/** `max_rows` in supabase/config.toml: PostgREST caps every list, embedded ones included. */
+export const MAX_ROWS = 1000;
+
 export interface BackendOptions {
   /** Replaces the fixture rows of the given tables (e.g. `members: []`). */
   tables?: Record<string, unknown[]>;
   /** Tables that answer with an HTTP 500 instead of rows. */
   failTables?: string[];
+  /** Row cap of the API, e.g. a hosted project configured below the default of `MAX_ROWS`. */
+  maxRows?: number;
 }
 
 /** A recorded POST / PATCH / DELETE call. */
@@ -155,7 +160,8 @@ function writeResult(write: BackendWrite, rows: unknown[], seq: number): Row[] {
   if (write.method === 'POST') {
     const items = (Array.isArray(write.body) ? write.body : [write.body]) as Row[];
     return items.map((item, index) => ({
-      id: `${write.table}-new-${seq}-${index}`,
+      // Groups get a UUID like the database default. It depends only on `seq`, so get_group can recompute it.
+      id: write.table === 'groups' ? `00000000-0000-4000-8000-${String(seq * 10 + index).padStart(12, '0')}` : `${write.table}-new-${seq}-${index}`,
       ...(write.table === 'groups' ? { created_at: '2026-10-01T10:00:00.000Z' } : {}),
       ...item,
     }));
@@ -164,6 +170,50 @@ function writeResult(write: BackendWrite, rows: unknown[], seq: number): Row[] {
     Object.entries(write.query).every(([column, filter]) => !filter.startsWith('eq.') || String(row[column]) === filter.slice(3))
   );
   return write.method === 'PATCH' ? matches.map((row) => ({ ...row, ...(write.body as Row) })) : matches;
+}
+
+/** Child tables PostgREST embeds into an expense through their `expense_id` foreign key. */
+const EXPENSE_CHILDREN = ['expense_payers', 'expense_splits'];
+
+/**
+ * Answers a list read like PostgREST: `offset` and `limit` select the page, the row cap
+ * limits it and every embedded list, and `Content-Range` reports the page and, with
+ * `Prefer: count=exact`, the total. An offset beyond the total is rejected (HTTP 416).
+ */
+function readResult(request: Request, table: string, tables: Record<string, unknown[]>, maxRows: number) {
+  const query = new URL(request.url()).searchParams;
+  const rows = (tables[table] ?? []) as Row[];
+  const offset = Number(query.get('offset') ?? 0);
+  const limit = Math.min(Number(query.get('limit') ?? maxRows), maxRows);
+  const total = (request.headers()['prefer'] ?? '').includes('count=exact') ? rows.length : null;
+  if (total !== null && offset > total) {
+    return {
+      status: 416,
+      contentRange: `*/${total}`,
+      body: {
+        code: 'PGRST103',
+        message: 'Requested range not satisfiable',
+        details: `An offset of ${offset} was requested, but there are only ${total} rows.`,
+        hint: null,
+      },
+    };
+  }
+
+  const select = query.get('select') ?? '';
+  const embedded = table === 'expenses' ? EXPENSE_CHILDREN.filter((child) => select.includes(`${child}(`)) : [];
+  const page = rows.slice(offset, offset + limit).map((row) => ({
+    ...row,
+    ...Object.fromEntries(embedded.map((child) => [
+      child,
+      ((tables[child] ?? []) as Row[]).filter((item) => item.expense_id === row.id).slice(0, maxRows),
+    ])),
+  }));
+  const range = page.length ? `${offset}-${offset + page.length - 1}` : '*';
+  return {
+    status: total !== null && page.length < total ? 206 : 200,
+    contentRange: `${range}/${total ?? '*'}`,
+    body: page,
+  };
 }
 
 async function fulfillSupabase(route: Route, options: BackendOptions, writes: BackendWrite[]) {
@@ -230,8 +280,38 @@ async function fulfillSupabase(route: Route, options: BackendOptions, writes: Ba
       }
     }
   }
-  if (isGroupRpc && request.headers()['x-group-token'] === READ_TOKEN) {
-    rows = (rows as Row[]).map(row => ({ ...row, write_token: '' }));
+  if (isGroupRpc) {
+    // Like PostgREST: the parameter is typed uuid, so text that is not a UUID is rejected with 400 22P02.
+    const requestedId = String(request.postDataJSON().requested_group_id);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedId)) {
+      return route.fulfill({
+        status: 400,
+        headers: { ...CORS_HEADERS, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          code: '22P02',
+          message: `invalid input syntax for type uuid: "${requestedId}"`,
+          details: null,
+          hint: null,
+        }),
+      });
+    }
+    // Like the real function: a token that is neither capability of the group finds no row,
+    // which PostgREST reports as an error when a single object was requested.
+    const token = request.headers()['x-group-token'];
+    rows = (rows as Row[]).filter(row => token === row.read_token || token === row.write_token);
+    if (rows.length === 0) {
+      return route.fulfill({
+        status: 406,
+        headers: { ...CORS_HEADERS, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          code: 'PGRST116',
+          message: 'Cannot coerce the result to a single JSON object',
+          details: 'The result contains 0 rows',
+          hint: null,
+        }),
+      });
+    }
+    if (token === READ_TOKEN) rows = (rows as Row[]).map(row => ({ ...row, write_token: '' }));
   }
   if (!isGroupRpc && request.method() !== 'GET' && request.method() !== 'HEAD') {
     const write: BackendWrite = {
@@ -244,6 +324,14 @@ async function fulfillSupabase(route: Route, options: BackendOptions, writes: Ba
     rows = writeResult(write, rows, writes.length);
   }
   const wantsObject = (request.headers()['accept'] ?? '').includes('vnd.pgrst.object');
+  if (!isGroupRpc && request.method() === 'GET' && !wantsObject) {
+    const result = readResult(request, table, { ...TABLES, ...options.tables }, options.maxRows ?? MAX_ROWS);
+    return route.fulfill({
+      status: result.status,
+      headers: { ...CORS_HEADERS, 'content-type': 'application/json', 'content-range': result.contentRange },
+      body: JSON.stringify(result.body),
+    });
+  }
 
   return route.fulfill({
     status: 200,
@@ -283,6 +371,41 @@ export async function failWrites(page: Page, table: string, method: string, time
       status: 500,
       headers: { ...CORS_HEADERS, 'content-type': 'application/json' },
       body: JSON.stringify({ code: 'XX000', message: 'Simulated write failure', details: null, hint: null }),
+    });
+  });
+}
+
+/**
+ * Fails the read of one table that starts at `offset` (HTTP 500), e.g. a later page of a
+ * paged read; other requests fall through to `mockBackend`. Call it after `mockBackend`.
+ */
+export async function failReadAt(page: Page, table: string, offset: number) {
+  await page.route(`**/rest/v1/${table}*`, (route) => {
+    const request = route.request();
+    const requested = Number(new URL(request.url()).searchParams.get('offset') ?? 0);
+    if (request.method() !== 'GET' || requested !== offset) return route.fallback();
+    return route.fulfill({
+      status: 500,
+      headers: { ...CORS_HEADERS, 'content-type': 'application/json' },
+      body: JSON.stringify({ code: 'XX000', message: 'Simulated read failure', details: null, hint: null }),
+    });
+  });
+}
+
+/**
+ * Fails the next `times` group lookups (`get_group`): the server answers HTTP 500, or the
+ * network drops the request. Later lookups fall through to `mockBackend`; call it after.
+ */
+export async function failGroupLookups(page: Page, times = 1, failure: 'server' | 'network' = 'server') {
+  let remaining = times;
+  await page.route('**/rest/v1/rpc/get_group', (route) => {
+    if (route.request().method() !== 'POST' || remaining <= 0) return route.fallback();
+    remaining -= 1;
+    if (failure === 'network') return route.abort();
+    return route.fulfill({
+      status: 500,
+      headers: { ...CORS_HEADERS, 'content-type': 'application/json' },
+      body: JSON.stringify({ code: 'XX000', message: 'Simulated lookup failure', details: null, hint: null }),
     });
   });
 }

@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expenseRows, groupUrl, memberRows, mockBackend, type BackendOptions } from './fixtures/group';
+import {
+  GROUP_ID, MAX_ROWS, expenseRows, failReadAt, groupUrl, manyExpenses, memberRows, mockBackend, payerRows,
+  type BackendOptions,
+} from './fixtures/group';
 
 test.afterEach(async ({ page }) => {
   expect(await page.pageErrors()).toEqual([]);
@@ -32,6 +35,116 @@ const settled: BackendOptions = {
     expense_splits: [{ id: 's-1', expense_id: 'e-dinner', member_id: 'm-anna', share: 1, share_type: 'ratio' }],
   },
 };
+
+/** GET requests to the mocked API, by table, in the order they were sent. */
+function recordReads(page: Page) {
+  const reads: { table: string; query: URLSearchParams; prefer: string }[] = [];
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (request.method() !== 'GET' || !url.pathname.startsWith('/rest/v1/')) return;
+    reads.push({
+      table: url.pathname.replace('/rest/v1/', ''),
+      query: url.searchParams,
+      prefer: request.headers()['prefer'] ?? '',
+    });
+  });
+  return {
+    of: (table: string) => reads.filter((read) => read.table === table),
+    offsets: (table: string) => reads.filter((read) => read.table === table).map((read) => read.query.get('offset')),
+  };
+}
+
+/** Phones show balances in their own tab; the desktop side panel always shows them. */
+async function showBalances(page: Page) {
+  const tab = page.getByTestId('balances-tab-button');
+  if (await tab.isVisible()) await tab.click();
+}
+
+test.describe('expense loading', () => {
+  const euros = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+
+  /** 450 expenses split equally by the three members: 1,350 split rows, more than one response may carry. */
+  const large = manyExpenses(450);
+  const amounts = (large.expenses as typeof expenseRows).map((expense) => Math.round(expense.total_amount * 100));
+  const totalCents = amounts.reduce((sum, cents) => sum + cents, 0);
+  const netCents = (memberId: string) => (large.expense_payers as typeof payerRows)
+    .filter((payer) => payer.member_id === memberId)
+    .reduce((sum, payer) => sum + Math.round(payer.amount * 100), 0) - totalCents / memberRows.length;
+
+  async function expectCompleteLargeGroup(page: Page) {
+    await expect(page.getByTestId('expense-card')).toHaveCount(450);
+    await expect(page.locator('.group-chip').filter({ hasText: 'expenses' })).toHaveText('450 expenses');
+    await expect(page.getByTestId('group-total')).toHaveText(euros(totalCents));
+
+    await showBalances(page);
+    await expect(page.locator('.balance-row')).toHaveCount(memberRows.length);
+    for (const member of memberRows) {
+      const net = netCents(member.id);
+      await expect(page.locator('.balance-row').filter({ hasText: member.name }).locator('.balance-amount'))
+        .toHaveText(`${net > 0 ? '+' : ''}${euros(Math.abs(net))}`);
+    }
+  }
+
+  test('a group with more split rows than the API row cap shows every expense and correct balances', async ({ page }) => {
+    expect(large.expense_splits.length).toBeGreaterThan(MAX_ROWS);
+    await mockBackend(page, { tables: large });
+    const reads = recordReads(page);
+    await page.goto(groupUrl());
+
+    await expectCompleteLargeGroup(page);
+    // One request per 200 expenses, each carrying its payers and splits.
+    expect(reads.offsets('expenses')).toEqual(['0', '200', '400']);
+    expect(reads.of('expense_payers')).toEqual([]);
+    expect(reads.of('expense_splits')).toEqual([]);
+  });
+
+  test('an API row cap below the page size still loads every expense', async ({ page }) => {
+    await mockBackend(page, { tables: large, maxRows: 120 });
+    const reads = recordReads(page);
+    await page.goto(groupUrl());
+
+    await expectCompleteLargeGroup(page);
+    // Paging continues from the rows received, not from the rows asked for.
+    expect(reads.offsets('expenses')).toEqual(['0', '120', '240', '360']);
+  });
+
+  test('a failed later page fails the load instead of showing partial data', async ({ page }) => {
+    await mockBackend(page, { tables: large });
+    await failReadAt(page, 'expenses', 200);
+    await page.goto(groupUrl());
+
+    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page.getByTestId('expense-card')).toHaveCount(0);
+    await expect(page.getByTestId('group-total')).toHaveCount(0);
+  });
+
+  test('a typical group loads its expenses, payers and splits with a single request', async ({ page }) => {
+    await mockBackend(page);
+    const reads = recordReads(page);
+    await page.goto(groupUrl());
+    await expect(page.getByTestId('expense-card')).toHaveCount(expenseRows.length);
+    await expect(page.getByTestId('group-total')).toHaveText(euros(14160));
+
+    const [read, ...others] = reads.of('expenses');
+    expect(others).toEqual([]);
+    expect(Object.fromEntries(read.query)).toEqual({
+      select: '*,expense_payers(*),expense_splits(*)',
+      group_id: `eq.${GROUP_ID}`,
+      order: 'expense_date.desc,id.desc',
+      offset: '0',
+      limit: '200',
+    });
+    expect(read.prefer).toContain('count=exact');
+    expect(reads.of('expense_payers')).toEqual([]);
+    expect(reads.of('expense_splits')).toEqual([]);
+
+    await showBalances(page);
+    // Anna paid 96.60 and Ben 45.00; each of the three owes a third of 141.60.
+    for (const [name, amount] of [['Anna', '+€49.40'], ['Ben', '€2.20'], ['Cleo', '€47.20']]) {
+      await expect(page.locator('.balance-row').filter({ hasText: name }).locator('.balance-amount')).toHaveText(amount);
+    }
+  });
+});
 
 test.describe('desktop', { tag: '@desktop' }, () => {
   test.use({ viewport: { width: 1280, height: 800 } });

@@ -14,6 +14,9 @@ import '@fontsource/source-sans-3/700.css';
 import './index.css'; // imports theme/theme.css tokens + ordered style modules
 import './i18n'; // Initialize i18n before rendering
 import App from './App';
+import { reloadOnMissingChunk } from './lib/chunkReload';
+
+reloadOnMissingChunk();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,8 +1,13 @@
+import { useTranslation } from 'react-i18next';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
 import { LegalBackLink } from '../components/LegalBackLink';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export function ImprintPage() {
+  const { t } = useTranslation();
+  useDocumentTitle(t('common.pageTitle', { page: t('footer.imprint') }));
+
   return (
     <div className="app">
       <AppHeader />

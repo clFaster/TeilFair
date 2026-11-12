@@ -10,6 +10,7 @@ import { HomeHero } from '../components/HomeHero';
 import { HomeRecentGroups } from '../components/HomeRecentGroups';
 import { HomeHowItWorks } from '../components/HomeHowItWorks';
 import { Modal } from '../components/Modal';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { createCapabilityPath, parseCapabilityUrl } from '@teilfair/shared';
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK'] as const;
@@ -20,6 +21,7 @@ export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { createGroup, loadGroup, recentGroups, removeFromRecent, loading } = useGroupStore();
+  useDocumentTitle(`${t('common.appName')} - ${t('common.tagline')}`);
 
   const [dialog, setDialog] = useState<Dialog>(null);
   const [groupName, setGroupName] = useState('');
@@ -52,6 +54,16 @@ export function HomePage() {
     }
   };
 
+  /**
+   * Message for a load that returned false: a network or server failure is not the link's
+   * fault. A load that a newer action replaced left no failure in the store and stays silent.
+   */
+  const loadFailureMessage = (accessDenied: string) => {
+    const { errorCode } = useGroupStore.getState();
+    if (errorCode === 'loadFailed') return t('error.failedToLoadGroup');
+    return errorCode === 'accessDenied' ? accessDenied : '';
+  };
+
   const handleJoinGroup = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
@@ -69,7 +81,7 @@ export function HomePage() {
       if (await loadGroup(groupId, token)) {
         navigate(createCapabilityPath(groupId, token));
       } else {
-        setError(t('error.failedToJoin'));
+        setError(loadFailureMessage(t('error.failedToJoin')));
       }
     } catch {
       setError(t('error.invalidLinkFormat'));
@@ -77,10 +89,11 @@ export function HomePage() {
   };
 
   const handleOpenRecent = async (groupId: string, token: string) => {
+    setError('');
     if (await loadGroup(groupId, token)) {
       navigate(createCapabilityPath(groupId, token));
     } else {
-      setError(t('error.groupNoLongerAccessible'));
+      setError(loadFailureMessage(t('error.groupNoLongerAccessible')));
     }
   };
 

@@ -107,7 +107,19 @@ test('read-only capability loads data without exposing editing controls', async 
 
 test('invalid capability cannot load an existing group', async ({ page, group }) => {
   await page.goto(`/g/${group.id}#t=${'invalid'.repeat(8)}`);
-  await expect(page.getByRole('heading', { name: 'Error', exact: true })).toBeVisible();
+  const alert = page.getByRole('alert');
+  await expect(alert.getByRole('heading', { name: 'Group Not Found', exact: true })).toBeVisible();
+  await expect(alert.getByRole('link', { name: 'Go Home' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0);
   await expect(page.getByTestId('expense-card')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: group.name, exact: true })).toHaveCount(0);
+});
+
+test('a truncated group ID cannot load a group and offers no retry', async ({ page, group }) => {
+  await page.goto(`/g/${group.id.slice(0, 13)}#t=${group.writeToken}`);
+  const alert = page.getByRole('alert');
+  await expect(alert.getByRole('heading', { name: 'Group Not Found', exact: true })).toBeVisible();
+  await expect(alert.getByRole('link', { name: 'Go Home' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0);
+  await expect(page.getByTestId('expense-card')).toHaveCount(0);
 });

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus, faReceipt, faUsers, faChartPie, faXmark, faUserPlus,
-  faExclamationTriangle, faHome, faEye, faLinkSlash, faMagnifyingGlass,
+  faExclamationTriangle, faHome, faEye, faLinkSlash, faMagnifyingGlass, faRotateRight,
   type IconDefinition
 } from '@fortawesome/free-solid-svg-icons';
 import { useGroupStore } from '../store/groupStore';
@@ -27,6 +27,7 @@ import { EmptyState } from '../components/EmptyState';
 import { GroupPageSkeleton } from '../components/Skeleton';
 import { tabId, tabPanelId } from '../components/tabIds';
 import { DESKTOP_QUERY, useMediaQuery } from '../hooks/useMediaQuery';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import type { Expense } from '@teilfair/shared';
 
 type Tab = 'expenses' | 'balances' | 'members';
@@ -69,6 +70,8 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
+  // Generic on purpose: the group name stays out of the title, history and telemetry.
+  useDocumentTitle(t('common.pageTitle', { page: t('group.pageTitle') }));
 
   const {
     group: loadedGroup,
@@ -78,6 +81,7 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
     permission,
     loading,
     error,
+    errorCode,
     loadGroup,
     deleteGroup,
     clearGroup,
@@ -190,6 +194,24 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
   }
 
   if (error && !group) {
+    // Retrying cannot help when the link gives no access or the group is gone.
+    if (errorCode === 'accessDenied') {
+      return (
+        <GroupStatus>
+          <EmptyState
+            variant="page"
+            titleAs="h1"
+            tone="muted"
+            role="alert"
+            icon={faMagnifyingGlass}
+            title={t('group.groupNotFoundTitle')}
+            description={t('group.groupNotFoundDescription')}
+            action={goHome}
+          />
+        </GroupStatus>
+      );
+    }
+
     return (
       <GroupStatus>
         <EmptyState
@@ -198,9 +220,20 @@ function GroupPageContent({ groupId, token }: Readonly<{ groupId: string | undef
           tone="danger"
           role="alert"
           icon={faExclamationTriangle}
-          title={t('common.error')}
-          description={error}
-          action={goHome}
+          title={t('error.failedToLoadGroup')}
+          description={t('error.loadFailedDescription')}
+          action={(
+            <>
+              <button type="button" className="btn btn-primary" onClick={() => { void loadGroup(groupId, token); }}>
+                <FontAwesomeIcon icon={faRotateRight} aria-hidden="true" />
+                {t('common.retry')}
+              </button>
+              <Link to="/" className="btn btn-secondary">
+                <FontAwesomeIcon icon={faHome} aria-hidden="true" />
+                {t('common.goHome')}
+              </Link>
+            </>
+          )}
         />
       </GroupStatus>
     );

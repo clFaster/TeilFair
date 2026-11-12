@@ -1,5 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import i18n from '../i18n';
+import { isChunkReloadPending } from '../lib/chunkReload';
+import { RouteFallback } from './RouteFallback';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -25,9 +27,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    if (import.meta.env.DEV) {
-      console.error('Unhandled application error:', error, errorInfo);
-    }
+    console.error('Unhandled application error:', error, errorInfo);
   }
 
   handleReload = () => {
@@ -37,6 +37,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render() {
     if (!this.state.hasError) {
       return this.props.children;
+    }
+
+    // A missing route chunk is reloading the page: keep the loading state until it does.
+    if (isChunkReloadPending()) {
+      return <RouteFallback />;
     }
 
     return (

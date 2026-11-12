@@ -25,7 +25,7 @@ Web client for TeilFair. This package is a React + Vite frontend that creates an
 2. `useGroupStore().loadGroup(groupId, token)` starts the load sequence.
 3. Store actions come from `createGroupStoreState(...)` in `@teilfair/shared`.
 4. Web-specific API functions in `src/lib/api.ts` perform Supabase calls.
-5. Group-scoped clients are created by `createGroupClient(token)` in `src/lib/supabase.ts` and inject `x-group-token`.
+5. Group-scoped clients come from `createGroupClient(token)` in `src/lib/supabase.ts`, which keeps one client per token and injects `x-group-token`.
 6. Results map through shared row converters and are rendered by React components.
 
 ### Package structure
@@ -39,8 +39,10 @@ packages/web/
     components/              # Reusable UI modules and dialogs
     store/groupStore.ts      # Zustand store wrapper around shared store logic
     lib/api.ts               # Supabase CRUD adapter
-    lib/supabase.ts          # Supabase client and token header client
-    i18n/index.ts            # i18next setup + shared i18n registration
+    lib/supabase.ts          # Supabase clients with the token header, one per token
+    lib/chunkReload.ts       # One reload when a route chunk is missing after a deploy
+    hooks/useDocumentTitle.ts # Localized tab title per page, without group names
+    i18n/index.ts            # i18next setup + shared i18n registration + <html lang> sync
     theme/                   # Theme provider, hooks, and CSS tokens
   tests/system/
     expense-flow.spec.ts     # End-to-end add/remove expense flow

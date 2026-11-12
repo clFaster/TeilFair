@@ -11,6 +11,8 @@ export interface TestGroup {
 
 export interface MemberRow { id: string; group_id: string; name: string }
 
+export interface SeededExpense { id: string; date: string; payerId: string }
+
 export class LocalBackend {
   private readonly request: APIRequestContext;
   private readonly groups: TestGroup[] = [];
@@ -22,13 +24,14 @@ export class LocalBackend {
     if (!this.key) throw new Error('Missing local public API key. Use playwright.local.config.ts.');
   }
 
-  send(method: string, path: string, token?: string, data?: unknown) {
+  send(method: string, path: string, token?: string, data?: unknown, headers: Record<string, string> = {}) {
     return this.request.fetch(`${this.url}/rest/v1/${path}`, {
       method,
       headers: {
         apikey: this.key!, Authorization: `Bearer ${this.key}`,
         Prefer: 'return=representation',
         ...(token ? { 'x-group-token': token } : {}),
+        ...headers,
       },
       data,
     });
@@ -61,9 +64,12 @@ export class LocalBackend {
 
   track(group: TestGroup) { this.groups.push(group); }
 
-  async members(group: TestGroup) {
+  /** Anna and Ben, followed by `Member 003` and so on up to `count` members. */
+  async members(group: TestGroup, count = 2) {
+    const names = Array.from({ length: count }, (_, index) =>
+      ['Anna', 'Ben'][index] ?? `Member ${String(index + 1).padStart(3, '0')}`);
     return this.rows<MemberRow>('POST', 'members', group.writeToken,
-      ['Anna', 'Ben'].map(name => ({ group_id: group.id, name })));
+      names.map(name => ({ group_id: group.id, name })));
   }
 
   async expense(group: TestGroup, members: MemberRow[], shareType = 'ratio') {
@@ -80,6 +86,29 @@ export class LocalBackend {
     expect(response.ok(), `save expense: ${await response.text()}`).toBe(true);
     const saved = await response.json();
     return { id: saved.expense.id, payers: saved.payers, splits: saved.splits };
+  }
+
+  /**
+   * Seeds `count` expenses of `amount` each, split equally by all `members`. Anna and Ben
+   * take turns paying, and two expenses share each date so only the id orders them.
+   */
+  async expenses(group: TestGroup, members: MemberRow[], count: number, amount = 30) {
+    const seeded: SeededExpense[] = [];
+    for (let index = 0; index < count; index++) {
+      const id = randomUUID();
+      const date = new Date(Date.UTC(2026, 9, 1 + Math.floor(index / 2), 18, 30)).toISOString();
+      const payer = members[index % 2];
+      const response = await this.saveExpense(group, id, {
+        description: `Seeded expense ${index + 1}`,
+        total_amount: amount,
+        expense_date: date,
+        payers: [{ member_id: payer.id, amount }],
+        splits: members.map(member => ({ member_id: member.id, share: 1, share_type: 'ratio' })),
+      }, 0);
+      expect(response.ok(), `save expense ${index + 1}: ${await response.text()}`).toBe(true);
+      seeded.push({ id, date, payerId: payer.id });
+    }
+    return seeded;
   }
 
   async dispose() {

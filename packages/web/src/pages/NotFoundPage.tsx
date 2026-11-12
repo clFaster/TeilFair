@@ -5,9 +5,11 @@ import { faCompass, faHome } from '@fortawesome/free-solid-svg-icons';
 import { AppHeader } from '../components/AppHeader';
 import { AppFooter } from '../components/AppFooter';
 import { EmptyState } from '../components/EmptyState';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export function NotFoundPage() {
   const { t } = useTranslation();
+  useDocumentTitle(t('common.pageTitle', { page: t('notFound.title') }));
 
   return (
     <div className="app">

@@ -6,12 +6,12 @@ Groups are opened through private capability links (`/g/...`). These links conta
 
 ## Pages
 
-- [TeilFair home](https://teilfair.app/): Create a new group or reopen a recent group.
+- [TeilFair home](https://teilfair.moritzreis.dev/): Create a new group or reopen a recent group.
 
 ## Policies
 
-- [robots.txt](https://teilfair.app/robots.txt): Crawling rules. Group pages under `/g/` are excluded.
-- [Agent resource manifest](https://teilfair.app/.well-known/ard.json): Agentic Resource Discovery (ARD) entries for this site.
+- [robots.txt](https://teilfair.moritzreis.dev/robots.txt): Crawling rules. Group pages under `/g/` are excluded.
+- [Agent resource manifest](https://teilfair.moritzreis.dev/.well-known/ard.json): Agentic Resource Discovery (ARD) entries for this site.
 
 ## Optional
 

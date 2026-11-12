@@ -3,10 +3,10 @@
   "entries": [
     {
       "@context": "https://agenticresourcediscovery.org/context/v1",
-      "identifier": "urn:air:teilfair.app:web-app",
+      "identifier": "urn:air:teilfair.moritzreis.dev:web-app",
       "displayName": "TeilFair",
       "type": "text/html",
-      "url": "https://teilfair.app/",
+      "url": "https://teilfair.moritzreis.dev/",
       "description": "Free web app for splitting shared expenses fairly with friends, flatmates, and travel groups. Tracks who paid what, calculates balances, and suggests settlements without sign-up.",
       "representativeQueries": [
         "split travel costs fairly with friends",
@@ -15,10 +15,10 @@
     },
     {
       "@context": "https://agenticresourcediscovery.org/context/v1",
-      "identifier": "urn:air:teilfair.app:llms-txt",
+      "identifier": "urn:air:teilfair.moritzreis.dev:llms-txt",
       "displayName": "TeilFair llms.txt",
       "type": "text/markdown",
-      "url": "https://teilfair.app/llms.txt",
+      "url": "https://teilfair.moritzreis.dev/llms.txt",
       "description": "Machine-readable site summary and crawling guidance for language models.",
       "representativeQueries": [
         "what is TeilFair",

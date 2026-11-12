@@ -120,6 +120,12 @@ test('writer CRUD persists and deleted expense data is no longer visible', async
   expect(await backend.rows('GET', `members?id=eq.${members[0].id}`, group.writeToken)).toEqual([]);
 });
 
+test('a group ID that is not a UUID is rejected by get_group with 22P02', async ({ backend, group }) => {
+  const response = await backend.send('POST', 'rpc/get_group', group.readToken, { requested_group_id: group.id.slice(0, 13) });
+  expect(response.status()).toBe(400);
+  expect(await response.json()).toMatchObject({ code: '22P02' });
+});
+
 test('moving a member into another group is denied', async ({ backend, group, members }) => {
   const other = await backend.createGroup();
   const result = await backend.send('PATCH', `members?id=eq.${members[0].id}`, group.writeToken, { group_id: other.id });

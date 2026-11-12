@@ -23,10 +23,18 @@ i18n
       escapeValue: false, // React already escapes
     },
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
+      order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
     },
   });
+
+// Screen readers, hyphenation and browser translation read <html lang>. Resources are bundled,
+// so the language is resolved here, before React renders anything.
+const syncDocumentLanguage = () => {
+  document.documentElement.lang = i18n.resolvedLanguage ?? 'en';
+};
+syncDocumentLanguage();
+i18n.on('languageChanged', syncDocumentLanguage);
 
 // Set as the shared instance so shared library functions can use it
 setSharedI18n(i18n);
